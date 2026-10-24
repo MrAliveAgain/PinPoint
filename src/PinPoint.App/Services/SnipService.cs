@@ -1,5 +1,6 @@
 using PinPoint.Core.Capture;
 using PinPoint.Core.Diagnostics;
+using PinPoint.Core.Geometry;
 using PinPoint.Core.Windows;
 using PinPoint.Views;
 
@@ -22,13 +23,23 @@ public sealed class SnipService(PinManager pins, SnipStorage storage, SettingsSe
 
         try
         {
-            // Capture first, before any of our UI appears.
-            var frame = _capture.Capture(GdiScreenCapture.VirtualScreen);
+            // Pinned windows stay below the overlay until the selection is done
+            // (snipping from a pinned Chrome window or another snip is a normal use).
+            PixelRect? selection;
+            CapturedFrame? frame;
+            using (pins.SuspendRaising())
+            {
+                // Capture first, before any of our UI appears, with faded pins shown solid.
+                using (pins.ShowSolidForCapture())
+                {
+                    frame = _capture.Capture(GdiScreenCapture.VirtualScreen);
+                }
 
-            _overlay ??= new SnipOverlayWindow();
-            var targets = WindowEnumerator.GetSnapTargets(exclude: _overlay.Handle);
+                _overlay ??= new SnipOverlayWindow();
+                var targets = WindowEnumerator.GetSnapTargets(exclude: _overlay.Handle);
+                selection = await _overlay.SelectAsync(frame, targets);
+            }
 
-            var selection = await _overlay.SelectAsync(frame, targets);
             if (selection is not { } area) return;
 
             var snip = frame.Crop(area);

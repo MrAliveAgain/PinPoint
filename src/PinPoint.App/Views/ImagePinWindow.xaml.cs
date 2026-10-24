@@ -143,6 +143,15 @@ public sealed partial class ImagePinWindow : Window
 
     public void RaiseTopmost() => WindowStyler.RaiseTopmost(_hwnd);
 
+    /// <summary>Shows the snip fully opaque for a screen capture without changing its opacity setting.</summary>
+    public bool SetTemporarilyOpaque(bool opaque)
+    {
+        if (_opacity >= 0.999) return false;
+        if (opaque) WindowStyler.SetAlpha(_hwnd, 255);
+        else ApplyLayering();
+        return true;
+    }
+
     /// <summary>Steps opacity up or down by 10 % and shows the new value on the snip.</summary>
     public void NudgeOpacity(int direction)
     {

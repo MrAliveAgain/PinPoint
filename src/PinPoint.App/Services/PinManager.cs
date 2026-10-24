@@ -3,6 +3,7 @@ using Microsoft.UI.Dispatching;
 using PinPoint.Core.Capture;
 using PinPoint.Core.Interop;
 using PinPoint.Core.Windows;
+using PinPoint.Helpers;
 using PinPoint.ViewModels;
 using PinPoint.Views;
 
@@ -22,6 +23,7 @@ public sealed class PinManager : IDisposable
     private readonly Notifier _notifier;
     private readonly DispatcherQueueTimer _maintenance;
     private readonly DispatcherQueueTimer _raiseAgain;
+    private int _raiseSuspensions;
 
     public PinManager(DispatcherQueue dispatcher, SettingsService settings, SnipStorage storage, Notifier notifier)
     {
@@ -227,6 +229,47 @@ public sealed class PinManager : IDisposable
         foreach (var item in Items) item.Refresh();
     }
 
+    /// <summary>
+    /// Stops pins being pushed back to the top until disposed — otherwise the periodic re-raise
+    /// would pop live pins over the snip overlay mid-selection.
+    /// </summary>
+    public IDisposable SuspendRaising()
+    {
+        _raiseSuspensions++;
+        return new Scope(() =>
+        {
+            _raiseSuspensions--;
+            RaiseAll();
+        });
+    }
+
+    /// <summary>
+    /// Shows faded pins fully opaque until disposed, so a screen capture of a faded guide comes out
+    /// clean instead of blended with whatever is behind it. Their opacity settings are untouched.
+    /// </summary>
+    public IDisposable ShowSolidForCapture()
+    {
+        int changed = _windows.SetTemporarilyOpaque(true);
+        foreach (var snip in _snips)
+        {
+            if (!IsHidden && snip.SetTemporarilyOpaque(true)) changed++;
+        }
+
+        if (changed > 0)
+        {
+            // Let DWM compose a frame with the new alpha before anyone reads the screen.
+            Win32.DwmFlush();
+            Win32.DwmFlush();
+        }
+
+        return new Scope(() =>
+        {
+            if (changed == 0) return;
+            _windows.SetTemporarilyOpaque(false);
+            foreach (var snip in _snips) snip.SetTemporarilyOpaque(false);
+        });
+    }
+
     /// <summary>Puts every external window back exactly as it was. Safe to call more than once.</summary>
     public void RestoreExternalWindows() => _windows.UnpinAll();
 
@@ -249,7 +292,7 @@ public sealed class PinManager : IDisposable
 
     private void RaiseAll()
     {
-        if (IsHidden) return;
+        if (IsHidden || _raiseSuspensions > 0) return;
         _windows.RaiseAll();
         foreach (var snip in _snips) snip.RaiseTopmost();
     }

@@ -119,6 +119,25 @@ public sealed class WindowPinService
         }
     }
 
+    /// <summary>
+    /// Temporarily shows faded pins at full opacity (for a screen capture) without changing their
+    /// stored opacity. Returns how many windows changed.
+    /// </summary>
+    public int SetTemporarilyOpaque(bool opaque)
+    {
+        int changed = 0;
+        foreach (var pin in _pins)
+        {
+            if (!pin.SupportsOpacity || pin.Opacity >= 0.999 || pin.IsHidden || !Win32.IsWindow(pin.Handle)) continue;
+
+            if (opaque) WindowStyler.SetAlpha(pin.Handle, 255);
+            else ApplyLayering(pin);
+            changed++;
+        }
+
+        return changed;
+    }
+
     /// <summary>Re-asserts z-order; games that are themselves topmost can otherwise cover pins.</summary>
     public void RaiseAll()
     {

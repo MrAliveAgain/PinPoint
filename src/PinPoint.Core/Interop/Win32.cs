@@ -375,6 +375,10 @@ public static unsafe partial class Win32
     [LibraryImport("dwmapi.dll")]
     public static partial int DwmSetWindowAttribute(nint hwnd, uint dwAttribute, void* pvAttribute, uint cbAttribute);
 
+    /// <summary>Blocks until DWM has composed the next frame.</summary>
+    [LibraryImport("dwmapi.dll")]
+    public static partial int DwmFlush();
+
     [LibraryImport("dwmapi.dll")]
     public static partial int DwmGetWindowAttribute(nint hwnd, uint dwAttribute, void* pvAttribute, uint cbAttribute);
 
