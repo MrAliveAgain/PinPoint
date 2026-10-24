@@ -19,6 +19,8 @@
     <!-- Unpackaged + self-contained Windows App SDK: runs from its folder, no MSIX or runtime installer. -->
     <WindowsPackageType>None</WindowsPackageType>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <!-- Required even unpackaged: generates PinPoint.pri (compiled XAML). Without it Release builds crash at startup. -->
+    <EnableMsixTooling>true</EnableMsixTooling>
     <!-- Program.cs owns Main (single-instance redirection). -->
     <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
   </PropertyGroup>
