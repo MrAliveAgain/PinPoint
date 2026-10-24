@@ -30,7 +30,10 @@ It sits in the tray and doesn't do anything until you press a shortcut.
 
 - **Snip & pin.** <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>S</kbd> freezes the screen. Drag a box, or click a window to grab all of it, and that piece stays on top right where it was. It's also saved as a PNG and copied to your clipboard.
 - **Pin any window.** <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>P</kbd> keeps the window you're in above everything else, with a coloured border so you can tell which one it is. Press it again to unpin.
-- **Grab text out of snips.** If a snip has text in it, a **T** appears when you hover. Click it, drag over the words you want, and they're copied when you let go. Tables keep their rows and columns when you paste them. It uses the text recognition built into Windows, so it all happens on your PC.
+- **Grab text out of snips.** If a snip has text in it, a **T** appears when you hover. Click it, drag over the words you want, and they're copied when you let go. Tables keep their rows and columns when you paste them. It uses the text recognition built into Windows, so it all happens on your PC. You can also right-click a snip → **Copy text** to grab all of it at once.
+
+  <img src="docs/copy-text.png" alt="A quest description snipped from a game with text mode on: the words are highlighted in blue and the badge says Drag over text to copy it" width="720">
+
 - **Stays over games.** Anything in borderless or windowed mode. If a game puts itself back on top, PinPoint puts your pins back over it.
 - **Easy to get out of the way.** Hide every pin at once, fade them, or make them click-through so your clicks go straight to the game.
 - **Small and quick.** No installer, no account, no internet connection. Just an exe in a folder.
