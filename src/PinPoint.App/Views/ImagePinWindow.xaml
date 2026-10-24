@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="PinPoint.Views.ImagePinWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="PinPoint snip">
+
+    <Grid x:Name="Root"
+          Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+          PointerPressed="Root_PointerPressed"
+          PointerMoved="Root_PointerMoved"
+          PointerReleased="Root_PointerReleased"
+          PointerCaptureLost="Root_PointerCaptureLost"
+          PointerWheelChanged="Root_PointerWheelChanged"
+          PointerEntered="Root_PointerEntered"
+          PointerExited="Root_PointerExited"
+          DoubleTapped="Root_DoubleTapped">
+
+        <Grid.KeyboardAccelerators>
+            <KeyboardAccelerator Key="Escape" Invoked="Close_Invoked" />
+            <KeyboardAccelerator Key="C" Modifiers="Control" Invoked="Copy_Invoked" />
+        </Grid.KeyboardAccelerators>
+
+        <Grid.ContextFlyout>
+            <MenuFlyout x:Name="Menu" ShouldConstrainToRootBounds="False" Opening="Menu_Opening">
+                <MenuFlyoutItem Text="Copy" Click="Copy_Click">
+                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8C8;" /></MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Save as…" Click="SaveAs_Click">
+                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE792;" /></MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem x:Name="ShowInFolderItem" Text="Show in folder" Click="ShowInFolder_Click">
+                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE838;" /></MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutSeparator />
+                <MenuFlyoutSubItem Text="Opacity">
+                    <MenuFlyoutSubItem.Icon><FontIcon Glyph="&#xE706;" /></MenuFlyoutSubItem.Icon>
+                    <RadioMenuFlyoutItem x:Name="Opacity100" Text="100%" GroupName="Opacity" Tag="1.0" Click="Opacity_Click" />
+                    <RadioMenuFlyoutItem x:Name="Opacity80" Text="80%" GroupName="Opacity" Tag="0.8" Click="Opacity_Click" />
+                    <RadioMenuFlyoutItem x:Name="Opacity60" Text="60%" GroupName="Opacity" Tag="0.6" Click="Opacity_Click" />
+                    <RadioMenuFlyoutItem x:Name="Opacity40" Text="40%" GroupName="Opacity" Tag="0.4" Click="Opacity_Click" />
+                </MenuFlyoutSubItem>
+                <ToggleMenuFlyoutItem x:Name="ClickThroughItem" Text="Click-through" Click="ClickThrough_Click">
+                    <ToggleMenuFlyoutItem.Icon><FontIcon Glyph="&#xE8B0;" /></ToggleMenuFlyoutItem.Icon>
+                </ToggleMenuFlyoutItem>
+                <MenuFlyoutItem Text="Actual size" Click="ResetZoom_Click">
+                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE71E;" /></MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutSeparator />
+                <MenuFlyoutItem Text="Close" Click="Close_Click" KeyboardAcceleratorTextOverride="Middle-click">
+                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE711;" /></MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+            </MenuFlyout>
+        </Grid.ContextFlyout>
+
+        <Image x:Name="PinImage" Stretch="Fill" />
+
+        <!-- Hover chrome: accent outline + close button. -->
+        <Border x:Name="HoverOutline" IsHitTestVisible="False" Opacity="0"
+                BorderThickness="1" BorderBrush="{ThemeResource AccentFillColorDefaultBrush}">
+            <Border.OpacityTransition>
+                <ScalarTransition Duration="0:0:0.12" />
+            </Border.OpacityTransition>
+        </Border>
+
+        <Button x:Name="CloseButton" Opacity="0" Click="Close_Click"
+                HorizontalAlignment="Right" VerticalAlignment="Top" Margin="4"
+                Width="26" Height="26" Padding="0" CornerRadius="13"
+                Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                ToolTipService.ToolTip="Close (middle-click)">
+            <Button.OpacityTransition>
+                <ScalarTransition Duration="0:0:0.12" />
+            </Button.OpacityTransition>
+            <FontIcon Glyph="&#xE711;" FontSize="10" />
+        </Button>
+
+        <!-- Transient badge for zoom / opacity changes. -->
+        <Border x:Name="Badge" IsHitTestVisible="False" Opacity="0"
+                HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="6"
+                Padding="8,2" CornerRadius="4"
+                Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}">
+            <Border.OpacityTransition>
+                <ScalarTransition Duration="0:0:0.15" />
+            </Border.OpacityTransition>
+            <TextBlock x:Name="BadgeText" Style="{StaticResource CaptionTextBlockStyle}" />
+        </Border>
+    </Grid>
+</Window>

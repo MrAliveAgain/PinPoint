@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="PinPoint.Controls.HotkeyButton"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <StackPanel Orientation="Horizontal" Spacing="4">
+        <Button x:Name="RecordButton" MinWidth="132" MinHeight="34" Padding="8,4"
+                HorizontalContentAlignment="Center"
+                Click="RecordButton_Click"
+                PreviewKeyDown="RecordButton_PreviewKeyDown"
+                PreviewKeyUp="RecordButton_PreviewKeyUp"
+                LostFocus="RecordButton_LostFocus"
+                ToolTipService.ToolTip="Click, then press a new shortcut. Backspace clears it, Esc cancels.">
+            <Grid>
+                <ItemsControl x:Name="KeyCaps" IsTabStop="False">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="4" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource KeyCapStyle}">
+                                <TextBlock Text="{Binding}" Style="{StaticResource CaptionTextBlockStyle}"
+                                           HorizontalAlignment="Center" FontWeight="SemiBold" />
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock x:Name="Placeholder" Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Grid>
+        </Button>
+
+        <Button x:Name="ResetButton" Width="34" Height="34" Padding="0"
+                Background="Transparent" BorderThickness="0"
+                Click="ResetButton_Click"
+                ToolTipService.ToolTip="Reset to default">
+            <FontIcon Glyph="&#xE7A7;" FontSize="14" />
+        </Button>
+    </StackPanel>
+</UserControl>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="PinPoint.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:PinPoint.Controls">
+
+    <ScrollViewer>
+        <StackPanel MaxWidth="1000" Padding="36,8,36,36" Spacing="4">
+            <TextBlock Text="Settings" Style="{StaticResource TitleTextBlockStyle}" Margin="0,0,0,4" />
+
+            <!-- Shortcuts: one card per registered command, built in code. -->
+            <TextBlock Text="Shortcuts" Style="{StaticResource SectionHeaderStyle}" />
+            <InfoBar x:Name="HotkeyWarning" Severity="Warning" IsClosable="False" IsOpen="False"
+                     Title="Some shortcuts are taken"
+                     Message="Another app is already using them. Pick a different combination." />
+            <StackPanel x:Name="ShortcutCards" Spacing="4" />
+
+            <TextBlock Text="Snips" Style="{StaticResource SectionHeaderStyle}" />
+            <controls:SettingsCard Glyph="&#xE74E;" Header="Save snips automatically"
+                                   Description="Every snip is also saved as a PNG, so you never lose a guide.">
+                <ToggleSwitch x:Name="SaveSnipsToggle" OnContent="" OffContent="" MinWidth="0" Toggled="SaveSnips_Toggled" />
+            </controls:SettingsCard>
+            <controls:SettingsCard x:Name="FolderCard" Glyph="&#xE8B7;" Header="Snips folder">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="Change…" Click="ChangeFolder_Click" />
+                    <Button Content="Open" Click="OpenFolder_Click" />
+                </StackPanel>
+            </controls:SettingsCard>
+            <controls:SettingsCard Glyph="&#xE8C8;" Header="Copy snips to the clipboard"
+                                   Description="Paste a snip straight into Discord, notes, anywhere.">
+                <ToggleSwitch x:Name="ClipboardToggle" OnContent="" OffContent="" MinWidth="0" Toggled="Clipboard_Toggled" />
+            </controls:SettingsCard>
+
+            <TextBlock Text="Pins" Style="{StaticResource SectionHeaderStyle}" />
+            <controls:SettingsCard Glyph="&#xE706;" Header="Scroll to fade a snip"
+                                   Description="Hold this key and scroll over a snip to fade it. Holding the right mouse button while scrolling always works, even in games that block the key.">
+                <ComboBox x:Name="FadeModifierBox" MinWidth="140" SelectionChanged="FadeModifierBox_SelectionChanged" />
+            </controls:SettingsCard>
+            <controls:SettingsCard Glyph="&#xE7FC;" Header="Keep focus in my game"
+                                   Description="Clicking or dragging a snip won't take focus from the window underneath. Applies to new snips.">
+                <ToggleSwitch x:Name="KeepFocusToggle" OnContent="" OffContent="" MinWidth="0" Toggled="KeepFocus_Toggled" />
+            </controls:SettingsCard>
+            <controls:SettingsCard Glyph="&#xE790;" Header="Highlight pinned windows"
+                                   Description="Colour the border of windows you pin so you can tell at a glance.">
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <ComboBox x:Name="ColorBox" MinWidth="140" SelectionChanged="ColorBox_SelectionChanged" />
+                    <ToggleSwitch x:Name="HighlightToggle" OnContent="" OffContent="" MinWidth="0" Toggled="Highlight_Toggled" />
+                </StackPanel>
+            </controls:SettingsCard>
+            <controls:SettingsCard Glyph="&#xEA8F;" Header="Show on-screen confirmations"
+                                   Description="A small notice at the top of the screen when you pin, hide or toggle things.">
+                <ToggleSwitch x:Name="NotificationsToggle" OnContent="" OffContent="" MinWidth="0" Toggled="Notifications_Toggled" />
+            </controls:SettingsCard>
+
+            <TextBlock Text="General" Style="{StaticResource SectionHeaderStyle}" />
+            <controls:SettingsCard Glyph="&#xE7E8;" Header="Start with Windows"
+                                   Description="Launch quietly into the system tray when you sign in.">
+                <ToggleSwitch x:Name="StartupToggle" OnContent="" OffContent="" MinWidth="0" Toggled="Startup_Toggled" />
+            </controls:SettingsCard>
+            <controls:SettingsCard x:Name="AboutCard" Glyph="&#xE946;" Header="PinPoint">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="Settings file" Click="OpenSettingsFile_Click" />
+                    <Button Content="Logs" Click="OpenLogs_Click" />
+                </StackPanel>
+            </controls:SettingsCard>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

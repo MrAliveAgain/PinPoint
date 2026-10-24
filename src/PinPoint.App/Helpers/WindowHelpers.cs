@@ -1,0 +1,61 @@
+using Microsoft.UI.Windowing;
+using Microsoft.UI.Xaml;
+using PinPoint.Core.Geometry;
+using PinPoint.Core.Interop;
+using Windows.Graphics;
+
+namespace PinPoint.Helpers;
+
+public static class WindowHelpers
+{
+    public static string IconPath { get; } = Path.Combine(AppContext.BaseDirectory, "Assets", "PinPoint.ico");
+
+    public static nint GetHandle(this Window window) => WinRT.Interop.WindowNative.GetWindowHandle(window);
+
+    /// <summary>DPI scale of the monitor the window is on (1.0 = 100%).</summary>
+    public static double GetScale(nint hwnd) => Win32.GetDpiForWindow(hwnd) / 96.0;
+
+    /// <summary>
+    /// Borderless, caption-less window that still gets Windows 11 rounded corners, border and shadow.
+    /// Hidden from Alt+Tab and the taskbar.
+    /// </summary>
+    public static OverlappedPresenter MakeToolSurface(AppWindow appWindow, bool alwaysOnTop)
+    {
+        var presenter = OverlappedPresenter.Create();
+        presenter.IsResizable = false;
+        presenter.IsMaximizable = false;
+        presenter.IsMinimizable = false;
+        presenter.IsAlwaysOnTop = alwaysOnTop;
+        presenter.PreferredMinimumWidth = 1;
+        presenter.PreferredMinimumHeight = 1;
+        presenter.SetBorderAndTitleBar(hasBorder: true, hasTitleBar: false);
+        appWindow.SetPresenter(presenter);
+        appWindow.IsShownInSwitchers = false;
+        appWindow.SetIcon(IconPath);
+        return presenter;
+    }
+
+    /// <summary>Client area in screen pixels.</summary>
+    public static PixelRect GetClientScreenRect(nint hwnd, AppWindow appWindow)
+    {
+        var origin = new Win32.POINT();
+        Win32.ClientToScreen(hwnd, ref origin);
+        var size = appWindow.ClientSize;
+        return new PixelRect(origin.X, origin.Y, size.Width, size.Height);
+    }
+
+    /// <summary>Positions the window so its client area lands exactly on <paramref name="client"/>.</summary>
+    public static void SetClientScreenRect(nint hwnd, AppWindow appWindow, PixelRect client)
+    {
+        var current = GetClientScreenRect(hwnd, appWindow);
+        var pos = appWindow.Position;
+        var size = appWindow.Size;
+
+        int left = current.X - pos.X;
+        int top = current.Y - pos.Y;
+        int extraWidth = size.Width - current.Width;
+        int extraHeight = size.Height - current.Height;
+
+        appWindow.MoveAndResize(new RectInt32(client.X - left, client.Y - top, client.Width + extraWidth, client.Height + extraHeight));
+    }
+}

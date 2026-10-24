@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="PinPoint.Views.SnipOverlayWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="PinPoint snip overlay">
+
+    <Grid x:Name="Root" Background="Black" RequestedTheme="Dark"
+          PointerPressed="Root_PointerPressed"
+          PointerMoved="Root_PointerMoved"
+          PointerReleased="Root_PointerReleased"
+          KeyDown="Root_KeyDown">
+
+        <Canvas x:Name="Surface">
+            <!-- Frozen copy of the screen: what you see is exactly what you get. -->
+            <Image x:Name="Frozen" Stretch="Fill" />
+
+            <!-- Dimmed everywhere except the hole (selection / hovered window). -->
+            <Path x:Name="Shade" Fill="#99000000" IsHitTestVisible="False" Opacity="0">
+                <Path.OpacityTransition>
+                    <ScalarTransition Duration="0:0:0.12" />
+                </Path.OpacityTransition>
+                <Path.Data>
+                    <GeometryGroup FillRule="EvenOdd">
+                        <RectangleGeometry x:Name="ShadeFull" />
+                        <RectangleGeometry x:Name="ShadeHole" />
+                    </GeometryGroup>
+                </Path.Data>
+            </Path>
+
+            <Rectangle x:Name="SelectionOutline" IsHitTestVisible="False" Visibility="Collapsed"
+                       Stroke="{ThemeResource AccentFillColorDefaultBrush}" StrokeThickness="2" />
+
+            <Border x:Name="SizeBadge" IsHitTestVisible="False" Visibility="Collapsed"
+                    Padding="8,3" CornerRadius="4"
+                    Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}" BorderThickness="1">
+                <TextBlock x:Name="SizeText" Style="{StaticResource CaptionTextBlockStyle}" />
+            </Border>
+
+            <Border x:Name="HintPill" IsHitTestVisible="False"
+                    Padding="16,9" CornerRadius="18"
+                    Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}" BorderThickness="1">
+                <Border.OpacityTransition>
+                    <ScalarTransition Duration="0:0:0.15" />
+                </Border.OpacityTransition>
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <FontIcon Glyph="&#xE7A8;" FontSize="16" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                    <TextBlock Style="{StaticResource BodyTextBlockStyle}">
+                        <Run Text="Drag to snip" FontWeight="SemiBold" />
+                        <Run Text="  ·  Click a window to grab it  ·  Esc or right-click to cancel" />
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+        </Canvas>
+
+        <!-- Receives keyboard focus so Esc/Enter work. -->
+        <ContentControl x:Name="FocusSink" IsTabStop="True" UseSystemFocusVisuals="False"
+                        Width="1" Height="1" Opacity="0"
+                        HorizontalAlignment="Left" VerticalAlignment="Top" />
+    </Grid>
+</Window>
