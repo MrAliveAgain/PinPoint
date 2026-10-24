@@ -1,72 +1,103 @@
-# PinPoint
+<p align="center">
+  <img src="src/PinPoint.App/Assets/PinPoint.png" width="96" alt="PinPoint icon">
+</p>
 
-Pin any window, or any snipped part of the screen, on top of everything. That includes games running in borderless windowed mode. It's built for a single big monitor: keep a guide, map or build order floating over your game without alt-tabbing.
+<h1 align="center">PinPoint</h1>
 
-## Using it
+<p align="center">
+  Pin windows, or just the part of the screen you need, on top of everything. Including your game.
+</p>
 
-| Shortcut (default) | What it does |
+<p align="center">
+  <a href="https://github.com/MrAliveAgain/PinPoint/releases/latest"><img src="https://img.shields.io/github/v/release/MrAliveAgain/PinPoint?label=download" alt="Latest release"></a>
+  <img src="https://img.shields.io/badge/Windows-11-0078D4" alt="Windows 11">
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/MrAliveAgain/PinPoint" alt="MIT license"></a>
+</p>
+
+<!-- Screenshot or short GIF goes here: docs/screenshot.png -->
+
+---
+
+I play on one ultrawide monitor and got tired of alt-tabbing out of games to check a guide. A second monitor would solve it, but I didn't want to use one. Always-on-top tools get you halfway, but most of the time I don't want the whole Chrome window floating over my game. I want the one table or map from the guide, small and off in a corner.
+
+So I made PinPoint. Press a shortcut, drag a box around the bit you care about, and it stays pinned on top while you play. Move it out of the way, shrink it, fade it, and close it when you're done. It pins whole windows too, if that's what you need.
+
+It sits in the tray and doesn't do anything until you press a shortcut.
+
+## What it does
+
+- **Snip & pin.** <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>S</kbd> freezes the screen. Drag a box, or click a window to grab all of it, and that piece stays on top right where it was. It's also saved as a PNG and copied to your clipboard.
+- **Pin any window.** <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>P</kbd> keeps the window you're in above everything else, with a coloured border so you can tell which one it is. Press it again to unpin.
+- **Stays over games.** Anything in borderless or windowed mode. If a game puts itself back on top, PinPoint puts your pins back over it.
+- **Easy to get out of the way.** Hide every pin at once, fade them, or make them click-through so your clicks go straight to the game.
+- **Small and quick.** No installer, no account, no internet connection. Just an exe in a folder.
+
+## Download
+
+1. Grab the latest `.zip` from **[Releases](https://github.com/MrAliveAgain/PinPoint/releases/latest)**.
+2. Unzip it wherever you like.
+3. Run `PinPoint.exe`. It shows up in the system tray.
+
+Needs Windows 11 (64-bit). Everything else it needs is already in the folder.
+
+> **Heads up:** the exe isn't code-signed (certificates cost a lot for a hobby project), so the first time you run it Windows SmartScreen may say *"Windows protected your PC"*. Click **More info â†’ Run anyway**. All the source is right here if you'd rather build it yourself.
+
+If you want it to start with Windows, there's a toggle in Settings. It's off by default.
+
+## Shortcuts
+
+All of these can be changed in Settings.
+
+| Shortcut | What it does |
 |---|---|
-| **Ctrl+Alt+S** | **Snip & pin.** The screen freezes. Drag a region, or click a window to grab all of it. The snip pins exactly where it was. |
-| **Ctrl+Alt+P** | Pin or unpin the window you're in (it gets a coloured border while pinned). |
-| **Ctrl+Alt+H** | Hide or show every pin. |
-| **Ctrl+Alt+G** | Click-through: clicks pass through pins into the game. |
-| **Ctrl+Alt+Down / Up** | Fade / unfade the pin under the mouse (every pin if the mouse isn't over one). Works on pinned windows too, e.g. Chrome. |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>S</kbd> | Snip a part of the screen and pin it |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>P</kbd> | Pin / unpin the window you're in |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>H</kbd> | Hide / show all pins |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>G</kbd> | Click-through on / off |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>â†“</kbd> / <kbd>â†‘</kbd> | Fade / unfade the pin under your mouse |
 
-You can rebind every shortcut in **Settings**. A warning appears there if another app already owns a combination.
+## Moving snips around
 
-**On a snip:** drag to move · scroll to zoom · **Alt+scroll** or **hold right-click + scroll** to fade · double-click to reset size · middle-click or **Esc** to close · right-click for copy, save as, opacity, click-through.
+| | |
+|---|---|
+| Move | Drag it |
+| Resize | Scroll |
+| Fade | <kbd>Alt</kbd> + scroll, or hold right-click and scroll |
+| Back to original size | Double-click |
+| Close | Middle-click or <kbd>Esc</kbd> |
+| Copy, save as, opacity, click-through | Right-click |
 
-The fade key (Alt/Ctrl/Shift) is a setting. Holding the right mouse button while scrolling always works. Games that run as administrator hide keyboard state from normal apps, so a held key can go unseen while they're focused.
+You can snip from a pinned window or from another snip too. It works the same as snipping anything else.
 
-Snips are saved to `Pictures\PinPoint` (you can change this) and copied to the clipboard. PinPoint lives in the system tray: left-click opens it, right-click shows the menu and **Exit**.
+## Good to know
 
-**Limits:** exclusive-fullscreen games can't be overlaid by any app; switch them to borderless. To pin a window that runs as administrator, PinPoint must also run as administrator.
+- **Exclusive fullscreen games** can't be drawn over by anything. Switch them to borderless windowed.
+- **Games that run as administrator** (often ones with anti-cheat) stop normal apps from seeing held keys, so <kbd>Alt</kbd> + scroll may not fade a snip while that game has focus. Right-click + scroll and the fade shortcuts still work. To pin a window that's running as admin, run PinPoint as admin too.
 
 ## What it touches on your PC
 
-* `%LocalAppData%\PinPoint\` holds settings.json and logs.
-* `Pictures\PinPoint\` holds saved snips.
-* Optional **Start with Windows** adds one per-user Run key (`HKCU\…\Run\PinPoint`). It's off by default.
-* Pinned windows get topmost, border colour and opacity changes. All of these are undone when you unpin or exit, and also if PinPoint crashes.
+- Settings and logs: `%LocalAppData%\PinPoint`
+- Saved snips: `Pictures\PinPoint` (you can change this)
+- Start with Windows, only if you turn it on: one entry under `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`
 
-It needs no installer, no MSIX, no admin rights and no runtime install (the Windows App SDK ships alongside the exe).
+Pinned windows go back exactly how they were when you unpin them or quit. PinPoint never connects to the internet and doesn't collect anything.
 
-## Build & run
+**Uninstalling:** quit it from the tray and delete the folder. Delete `%LocalAppData%\PinPoint` too if you want your settings gone.
 
-Requires the .NET 10 SDK and Windows 11.
+## Building it yourself
+
+You'll need the .NET 10 SDK on Windows 11.
 
 ```bash
 dotnet build src/PinPoint.App
 ```
 
-```bash
-dotnet test tests/PinPoint.Core.Tests
-```
+[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) covers tests, release builds and how the code is laid out.
 
-Run `src/PinPoint.App/bin/Debug/net10.0-windows10.0.26100.0/win-x64/PinPoint.exe`, or open `PinPoint.sln` in Visual Studio and press F5.
+## Feedback
 
-To make a standalone folder you can copy anywhere:
+Found a bug or got an idea? [Open an issue](https://github.com/MrAliveAgain/PinPoint/issues). I'm always curious what games people are using it with, too.
 
-```bash
-dotnet publish src/PinPoint.App -c Release -r win-x64 --self-contained -o publish
-```
+## License
 
-## Architecture
-
-```
-src/PinPoint.Core     UI-free, unit-tested: Win32 interop, hotkeys, window pinning,
-                      screen capture, tray icon, settings
-src/PinPoint.App      WinUI 3 (Windows App SDK 2.x): windows, pages, services
-tests/                xUnit v3 tests for Core
-```
-
-* **`AppHost`** is the composition root. It creates every service and owns the tray, hotkeys and main window.
-* **Commands** (`Commands/AppCommand.cs`) are the extension point. When you register an `AppCommand` in `AppHost.RegisterCommands`, it automatically gets a rebindable global shortcut on the Settings page and a tray-menu entry.
-* **`PinManager`** is the single source of truth for pins (external windows plus snip windows). It re-raises pins when a topmost game grabs focus.
-* **`SnipService`** runs the snip flow: capture, then `SnipOverlayWindow`, then `ImagePinWindow`, then save/copy. Capture sits behind `IScreenCapture`, so a Windows.Graphics.Capture backend can drop in later.
-* Settings are plain JSON (`AppSettings`). New properties just need a default. Unknown or missing fields are tolerated, and a corrupt file is backed up rather than lost.
-* Package versions are pinned centrally in `Directory.Packages.props`. The icon is regenerated with `tools/make-icon.ps1`.
-
-### Ideas for later
-
-Restore snips after a restart · magnifier/colour picker in the snip overlay · per-pin hotkeys · Windows.Graphics.Capture backend · MSIX/winget packaging.
+[MIT](LICENSE)
