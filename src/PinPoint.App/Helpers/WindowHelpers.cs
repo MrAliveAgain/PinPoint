@@ -44,8 +44,12 @@ public static class WindowHelpers
         return new PixelRect(origin.X, origin.Y, size.Width, size.Height);
     }
 
-    /// <summary>Positions the window so its client area lands exactly on <paramref name="client"/>.</summary>
-    public static void SetClientScreenRect(nint hwnd, AppWindow appWindow, PixelRect client)
+    /// <summary>
+    /// Positions the window so its client area lands exactly on <paramref name="client"/>.
+    /// <paramref name="discardOldContent"/> stops Windows copying the old picture into the resized
+    /// window (SWP_NOCOPYBITS), which otherwise shows as afterimages during rapid resizes.
+    /// </summary>
+    public static void SetClientScreenRect(nint hwnd, AppWindow appWindow, PixelRect client, bool discardOldContent = false)
     {
         var current = GetClientScreenRect(hwnd, appWindow);
         var pos = appWindow.Position;
@@ -56,6 +60,15 @@ public static class WindowHelpers
         int extraWidth = size.Width - current.Width;
         int extraHeight = size.Height - current.Height;
 
-        appWindow.MoveAndResize(new RectInt32(client.X - left, client.Y - top, client.Width + extraWidth, client.Height + extraHeight));
+        var target = new RectInt32(client.X - left, client.Y - top, client.Width + extraWidth, client.Height + extraHeight);
+        if (discardOldContent)
+        {
+            Win32.SetWindowPos(hwnd, 0, target.X, target.Y, target.Width, target.Height,
+                Win32.SWP_NOZORDER | Win32.SWP_NOACTIVATE | Win32.SWP_NOOWNERZORDER | Win32.SWP_NOCOPYBITS);
+        }
+        else
+        {
+            appWindow.MoveAndResize(target);
+        }
     }
 }

@@ -29,6 +29,7 @@ public static unsafe partial class Win32
     public const uint SWP_NOZORDER = 0x0004;
     public const uint SWP_NOACTIVATE = 0x0010;
     public const uint SWP_FRAMECHANGED = 0x0020;
+    public const uint SWP_NOCOPYBITS = 0x0100;
     public const uint SWP_NOOWNERZORDER = 0x0200;
 
     // ---- Messages -----------------------------------------------------------------------------

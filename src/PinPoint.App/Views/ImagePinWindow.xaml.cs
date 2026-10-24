@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using PinPoint.Core.Capture;
 using PinPoint.Core.Diagnostics;
@@ -37,6 +38,9 @@ public sealed partial class ImagePinWindow : Window
     private readonly DispatcherQueueTimer _badgeTimer;
     private bool _isClosed;
     private bool _pointerOver;
+    private bool _zoomQueued;
+    private int _queuedZoomStep;
+    private Win32.POINT _queuedZoomAnchor;
 
     private int _zoomStep;
     private double _opacity = 1.0;
@@ -79,6 +83,7 @@ public sealed partial class ImagePinWindow : Window
         Closed += (_, _) =>
         {
             _isClosed = true;
+            if (_zoomQueued) CompositionTarget.Rendering -= ApplyQueuedZoom;
             _badgeTimer.Stop();
             PinImage.Source = null;
         };
@@ -143,7 +148,7 @@ public sealed partial class ImagePinWindow : Window
         WindowHelpers.SetClientScreenRect(_hwnd, AppWindow, client);
         WindowStyler.RaiseTopmost(_hwnd);
 
-        _ = DetectTextAsync(); // background; the "T" button appears if any text is found
+        _ = DetectTextAsync(); // background; the "A" button appears if any text is found
     }
 
     public void SetHidden(bool hidden)
@@ -244,7 +249,8 @@ public sealed partial class ImagePinWindow : Window
         else
         {
             Win32.GetCursorPos(out var cursor);
-            SetZoomStep(_zoomStep + (delta > 0 ? 1 : -1), cursor);
+            int from = _zoomQueued ? _queuedZoomStep : _zoomStep;
+            QueueZoomStep(from + (delta > 0 ? 1 : -1), cursor);
         }
 
         e.Handled = true;
@@ -289,9 +295,29 @@ public sealed partial class ImagePinWindow : Window
         int x = (int)Math.Round(anchor.X - rx * width);
         int y = (int)Math.Round(anchor.Y - ry * height);
 
-        WindowHelpers.SetClientScreenRect(_hwnd, AppWindow, new PixelRect(x, y, width, height));
+        WindowHelpers.SetClientScreenRect(_hwnd, AppWindow, new PixelRect(x, y, width, height), discardOldContent: true);
         _zoomStep = step;
         ShowBadge($"{zoom:P0}");
+    }
+
+    /// <summary>
+    /// Wheel notches can arrive several per frame; resizing on each one shows in-between frames as
+    /// jitter. Collect them and resize at most once per rendered frame.
+    /// </summary>
+    private void QueueZoomStep(int step, Win32.POINT anchor)
+    {
+        _queuedZoomStep = Math.Clamp(step, MinZoomStep, MaxZoomStep);
+        _queuedZoomAnchor = anchor;
+        if (_zoomQueued) return;
+        _zoomQueued = true;
+        CompositionTarget.Rendering += ApplyQueuedZoom;
+    }
+
+    private void ApplyQueuedZoom(object? sender, object e)
+    {
+        CompositionTarget.Rendering -= ApplyQueuedZoom;
+        _zoomQueued = false;
+        if (!_isClosed) SetZoomStep(_queuedZoomStep, _queuedZoomAnchor);
     }
 
     private void ResetZoom()

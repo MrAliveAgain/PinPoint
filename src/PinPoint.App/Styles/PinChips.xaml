@@ -1,48 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Round "chip" buttons drawn on top of snips (the T toggle and close).
+  Small round overlay buttons drawn on top of snips (the text-select toggle and close).
 
-  They sit over arbitrary content (white pages, black games, busy screenshots), so they use a solid,
-  theme-matched fill with a strong outline rather than the default near-transparent button fills.
-  The circle is a real Ellipse rather than a Border with CornerRadius: WinUI renders small rounded
-  borders from stretched corner images, which looks jagged on a 28 px circle; an Ellipse is vector
-  geometry and anti-aliases evenly all the way round.
+  Styled like video-player overlay controls: a dark, slightly translucent circle with a white icon.
+  That stays readable over white pages and dark games alike without a heavy outline, and doesn't
+  depend on the Windows theme. The circle is an Ellipse (vector geometry) rather than a Border with
+  CornerRadius, which WinUI draws from stretched corner images and looks uneven at this size.
+  Content should be a FontIcon so both buttons share one icon font and centre identically.
 -->
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <ResourceDictionary.ThemeDictionaries>
-        <ResourceDictionary x:Key="Default">
-            <StaticResource x:Key="PinChipFill" ResourceKey="SolidBackgroundFillColorBaseBrush" />
-            <StaticResource x:Key="PinChipFillPointerOver" ResourceKey="SolidBackgroundFillColorTertiaryBrush" />
-            <StaticResource x:Key="PinChipFillPressed" ResourceKey="SolidBackgroundFillColorSecondaryBrush" />
-            <StaticResource x:Key="PinChipRing" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
-            <StaticResource x:Key="PinChipForeground" ResourceKey="TextFillColorPrimaryBrush" />
-            <StaticResource x:Key="PinChipForegroundPressed" ResourceKey="TextFillColorSecondaryBrush" />
-        </ResourceDictionary>
-        <ResourceDictionary x:Key="Light">
-            <StaticResource x:Key="PinChipFill" ResourceKey="SolidBackgroundFillColorBaseBrush" />
-            <StaticResource x:Key="PinChipFillPointerOver" ResourceKey="SolidBackgroundFillColorTertiaryBrush" />
-            <StaticResource x:Key="PinChipFillPressed" ResourceKey="SolidBackgroundFillColorSecondaryBrush" />
-            <StaticResource x:Key="PinChipRing" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
-            <StaticResource x:Key="PinChipForeground" ResourceKey="TextFillColorPrimaryBrush" />
-            <StaticResource x:Key="PinChipForegroundPressed" ResourceKey="TextFillColorSecondaryBrush" />
-        </ResourceDictionary>
-    </ResourceDictionary.ThemeDictionaries>
+    <SolidColorBrush x:Key="PinChipFill" Color="#D91F1F1F" />
+    <SolidColorBrush x:Key="PinChipFillPointerOver" Color="#F2323232" />
+    <SolidColorBrush x:Key="PinChipFillPressed" Color="#F2141414" />
+    <SolidColorBrush x:Key="PinChipRing" Color="#33FFFFFF" />
+    <SolidColorBrush x:Key="PinChipForeground" Color="White" />
+    <SolidColorBrush x:Key="PinChipForegroundPressed" Color="#CCFFFFFF" />
+
+    <!-- Badge on a snip ("Copied", "Opacity 60%") in the same overlay look. -->
+    <Style x:Key="PinOverlayBadgeStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource PinChipFill}" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="7,2,7,3" />
+    </Style>
 
     <Style x:Key="PinChipButtonStyle" TargetType="Button">
-        <Setter Property="Width" Value="28" />
-        <Setter Property="Height" Value="28" />
+        <Setter Property="Width" Value="22" />
+        <Setter Property="Height" Value="22" />
         <Setter Property="Padding" Value="0" />
-        <Setter Property="Foreground" Value="{ThemeResource PinChipForeground}" />
+        <Setter Property="Foreground" Value="{StaticResource PinChipForeground}" />
         <Setter Property="UseSystemFocusVisuals" Value="True" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Grid Background="Transparent">
-                        <Ellipse x:Name="Chip" Fill="{ThemeResource PinChipFill}"
-                                 Stroke="{ThemeResource PinChipRing}" StrokeThickness="1" />
+                        <Ellipse x:Name="Chip" Fill="{StaticResource PinChipFill}"
+                                 Stroke="{StaticResource PinChipRing}" StrokeThickness="1" />
                         <ContentPresenter x:Name="ContentPresenter"
                                           Content="{TemplateBinding Content}"
                                           ContentTemplate="{TemplateBinding ContentTemplate}"
@@ -53,13 +48,13 @@
                                 <VisualState x:Name="Normal" />
                                 <VisualState x:Name="PointerOver">
                                     <VisualState.Setters>
-                                        <Setter Target="Chip.Fill" Value="{ThemeResource PinChipFillPointerOver}" />
+                                        <Setter Target="Chip.Fill" Value="{StaticResource PinChipFillPointerOver}" />
                                     </VisualState.Setters>
                                 </VisualState>
                                 <VisualState x:Name="Pressed">
                                     <VisualState.Setters>
-                                        <Setter Target="Chip.Fill" Value="{ThemeResource PinChipFillPressed}" />
-                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource PinChipForegroundPressed}" />
+                                        <Setter Target="Chip.Fill" Value="{StaticResource PinChipFillPressed}" />
+                                        <Setter Target="ContentPresenter.Foreground" Value="{StaticResource PinChipForegroundPressed}" />
                                     </VisualState.Setters>
                                 </VisualState>
                                 <VisualState x:Name="Disabled" />
@@ -73,17 +68,17 @@
 
     <!-- Same chip as a toggle; "on" switches to the accent colour so the state is obvious. -->
     <Style x:Key="PinChipToggleButtonStyle" TargetType="ToggleButton">
-        <Setter Property="Width" Value="28" />
-        <Setter Property="Height" Value="28" />
+        <Setter Property="Width" Value="22" />
+        <Setter Property="Height" Value="22" />
         <Setter Property="Padding" Value="0" />
-        <Setter Property="Foreground" Value="{ThemeResource PinChipForeground}" />
+        <Setter Property="Foreground" Value="{StaticResource PinChipForeground}" />
         <Setter Property="UseSystemFocusVisuals" Value="True" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ToggleButton">
                     <Grid Background="Transparent">
-                        <Ellipse x:Name="Chip" Fill="{ThemeResource PinChipFill}"
-                                 Stroke="{ThemeResource PinChipRing}" StrokeThickness="1" />
+                        <Ellipse x:Name="Chip" Fill="{StaticResource PinChipFill}"
+                                 Stroke="{StaticResource PinChipRing}" StrokeThickness="1" />
                         <ContentPresenter x:Name="ContentPresenter"
                                           Content="{TemplateBinding Content}"
                                           ContentTemplate="{TemplateBinding ContentTemplate}"
@@ -94,34 +89,31 @@
                                 <VisualState x:Name="Normal" />
                                 <VisualState x:Name="PointerOver">
                                     <VisualState.Setters>
-                                        <Setter Target="Chip.Fill" Value="{ThemeResource PinChipFillPointerOver}" />
+                                        <Setter Target="Chip.Fill" Value="{StaticResource PinChipFillPointerOver}" />
                                     </VisualState.Setters>
                                 </VisualState>
                                 <VisualState x:Name="Pressed">
                                     <VisualState.Setters>
-                                        <Setter Target="Chip.Fill" Value="{ThemeResource PinChipFillPressed}" />
-                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource PinChipForegroundPressed}" />
+                                        <Setter Target="Chip.Fill" Value="{StaticResource PinChipFillPressed}" />
+                                        <Setter Target="ContentPresenter.Foreground" Value="{StaticResource PinChipForegroundPressed}" />
                                     </VisualState.Setters>
                                 </VisualState>
                                 <VisualState x:Name="Disabled" />
                                 <VisualState x:Name="Checked">
                                     <VisualState.Setters>
                                         <Setter Target="Chip.Fill" Value="{ThemeResource AccentFillColorDefaultBrush}" />
-                                        <Setter Target="Chip.Stroke" Value="{ThemeResource AccentFillColorDefaultBrush}" />
                                         <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
                                     </VisualState.Setters>
                                 </VisualState>
                                 <VisualState x:Name="CheckedPointerOver">
                                     <VisualState.Setters>
                                         <Setter Target="Chip.Fill" Value="{ThemeResource AccentFillColorSecondaryBrush}" />
-                                        <Setter Target="Chip.Stroke" Value="{ThemeResource AccentFillColorSecondaryBrush}" />
                                         <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
                                     </VisualState.Setters>
                                 </VisualState>
                                 <VisualState x:Name="CheckedPressed">
                                     <VisualState.Setters>
                                         <Setter Target="Chip.Fill" Value="{ThemeResource AccentFillColorTertiaryBrush}" />
-                                        <Setter Target="Chip.Stroke" Value="{ThemeResource AccentFillColorTertiaryBrush}" />
                                         <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource TextOnAccentFillColorSecondaryBrush}" />
                                     </VisualState.Setters>
                                 </VisualState>

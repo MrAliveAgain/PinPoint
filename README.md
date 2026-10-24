@@ -30,7 +30,7 @@ It sits in the tray and doesn't do anything until you press a shortcut.
 
 - **Snip & pin.** <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>S</kbd> freezes the screen. Drag a box, or click a window to grab all of it, and that piece stays on top right where it was. It's also saved as a PNG and copied to your clipboard.
 - **Pin any window.** <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>P</kbd> keeps the window you're in above everything else, with a coloured border so you can tell which one it is. Press it again to unpin.
-- **Grab text out of snips.** If a snip has text in it, a **T** appears when you hover. Click it, drag over the words you want, and they're copied when you let go. Tables keep their rows and columns when you paste them. It uses the text recognition built into Windows, so it all happens on your PC. You can also right-click a snip → **Copy text** to grab all of it at once.
+- **Grab text out of snips.** If a snip has text in it, a small **A** button appears when you hover. Click it, drag over the words you want, and they're copied when you let go. Tables keep their rows and columns when you paste them. It uses the text recognition built into Windows, so it all happens on your PC. You can also right-click a snip → **Copy text** to grab all of it at once.
 
   <img src="docs/copy-text.png" alt="A quest description snipped from a game with text mode on: the words are highlighted in blue and the badge says Drag over text to copy it" width="720">
 
@@ -77,7 +77,7 @@ These mouse controls are for snips (the screenshots you pin). Pinned windows lik
 | Fade | Hold right-click and scroll |
 | Back to original size | Double-click |
 | Close | Middle-click or <kbd>Esc</kbd> |
-| Copy text | Click the **T** (shows on hover), then drag over the words. Click **T** again to go back to moving the snip. |
+| Copy text | Click the **A** button (shows on hover), then drag over the words. Click **A** again to go back to moving the snip. |
 | Copy image or all text, save as, opacity, click-through | Right-click |
 
 You can snip from a pinned window or from another snip too. It works the same as snipping anything else.

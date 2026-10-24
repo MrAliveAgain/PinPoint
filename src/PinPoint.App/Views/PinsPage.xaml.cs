@@ -60,7 +60,7 @@ public sealed partial class PinsPage : Page
         (["Hold right-click", "Scroll"], "Fade it"),
         (["Double-click"], "Back to original size"),
         (["Middle-click"], "Close it"),
-        (["Click T", "Drag over text"], "Copy text (the T appears on hover when a snip has text)"),
+        (["Click A", "Drag over text"], "Copy text (the A button appears on hover when a snip has text)"),
         (["Right-click"], "Copy image or text, save as, opacity and more"),
     ];
 
