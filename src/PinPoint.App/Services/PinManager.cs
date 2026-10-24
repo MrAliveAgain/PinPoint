@@ -20,15 +20,17 @@ public sealed class PinManager : IDisposable
     private readonly List<ImagePinWindow> _snips = [];
     private readonly SettingsService _settings;
     private readonly SnipStorage _storage;
+    private readonly OcrService _ocr;
     private readonly Notifier _notifier;
     private readonly DispatcherQueueTimer _maintenance;
     private readonly DispatcherQueueTimer _raiseAgain;
     private int _raiseSuspensions;
 
-    public PinManager(DispatcherQueue dispatcher, SettingsService settings, SnipStorage storage, Notifier notifier)
+    public PinManager(DispatcherQueue dispatcher, SettingsService settings, SnipStorage storage, OcrService ocr, Notifier notifier)
     {
         _settings = settings;
         _storage = storage;
+        _ocr = ocr;
         _notifier = notifier;
 
         _windows.HighlightColor = settings.HighlightColorRef;
@@ -129,7 +131,7 @@ public sealed class PinManager : IDisposable
     public ImagePinWindow PinSnip(CapturedFrame frame)
     {
         ShowAll();
-        var window = new ImagePinWindow(frame, _storage, _settings);
+        var window = new ImagePinWindow(frame, _storage, _ocr, _settings);
         window.Closed += (_, _) => OnSnipClosed(window);
         _snips.Add(window);
         Items.Add(new SnipPinItem(window));

@@ -20,7 +20,7 @@ namespace PinPoint.Views;
 
 /// <summary>
 /// A floating, always-on-top snip. Drag to move, wheel to zoom, right-button+wheel for opacity,
-/// middle-click/Esc to close, right-click for more.
+/// middle-click/Esc to close, right-click for more. Text selection lives in ImagePinWindow.Text.cs.
 /// </summary>
 public sealed partial class ImagePinWindow : Window
 {
@@ -32,7 +32,9 @@ public sealed partial class ImagePinWindow : Window
     private readonly nint _hwnd;
     private readonly bool _takesFocus;
     private readonly SnipStorage _storage;
+    private readonly OcrService _ocr;
     private readonly DispatcherQueueTimer _badgeTimer;
+    private bool _isClosed;
 
     private int _zoomStep;
     private double _opacity = 1.0;
@@ -44,11 +46,12 @@ public sealed partial class ImagePinWindow : Window
     private PointInt32 _dragWindowStart;
     private string? _savedPath;
 
-    public ImagePinWindow(CapturedFrame frame, SnipStorage storage, SettingsService settings)
+    public ImagePinWindow(CapturedFrame frame, SnipStorage storage, OcrService ocr, SettingsService settings)
     {
         InitializeComponent();
         Frame = frame;
         _storage = storage;
+        _ocr = ocr;
         _takesFocus = settings.Current.PinsTakeFocus;
         _hwnd = this.GetHandle();
 
@@ -66,6 +69,7 @@ public sealed partial class ImagePinWindow : Window
 
         Closed += (_, _) =>
         {
+            _isClosed = true;
             _badgeTimer.Stop();
             PinImage.Source = null;
         };
@@ -113,6 +117,7 @@ public sealed partial class ImagePinWindow : Window
             WindowStyler.SetExStyleFlag(_hwnd, Win32.WS_EX_TRANSPARENT, value);
             ApplyLayering();
             SetHoverChrome(false);
+            if (value) SetTextMode(false); // can't select what can't be clicked
         }
     }
 
@@ -125,6 +130,8 @@ public sealed partial class ImagePinWindow : Window
         AppWindow.Show(activateWindow: _takesFocus);
         WindowHelpers.SetClientScreenRect(_hwnd, AppWindow, client);
         WindowStyler.RaiseTopmost(_hwnd);
+
+        _ = DetectTextAsync(); // background; the "T" button appears if any text is found
     }
 
     public void SetHidden(bool hidden)
@@ -243,8 +250,8 @@ public sealed partial class ImagePinWindow : Window
     private void SetHoverChrome(bool visible)
     {
         HoverOutline.Opacity = visible ? 1 : 0;
-        CloseButton.Opacity = visible ? 1 : 0;
-        CloseButton.IsHitTestVisible = visible;
+        HoverButtons.Opacity = visible ? 1 : 0;
+        HoverButtons.IsHitTestVisible = visible;
     }
 
     // ---- Zoom / opacity ----------------------------------------------------------------------
@@ -297,6 +304,8 @@ public sealed partial class ImagePinWindow : Window
     private void Menu_Opening(object sender, object e)
     {
         ShowInFolderItem.Visibility = SavedPath is null ? Visibility.Collapsed : Visibility.Visible;
+        CopyTextItem.Visibility = SelectTextItem.Visibility = HasText ? Visibility.Visible : Visibility.Collapsed;
+        SelectTextItem.IsChecked = _textMode;
         ClickThroughItem.IsChecked = _clickThrough;
         Opacity100.IsChecked = _opacity > 0.9;
         Opacity80.IsChecked = _opacity is > 0.7 and <= 0.9;

@@ -30,7 +30,8 @@ public sealed class AppHost : IDisposable
         Settings = new SettingsService(dispatcher);
         Notifier = new Notifier(Settings);
         Storage = new SnipStorage(Settings);
-        Pins = new PinManager(dispatcher, Settings, Storage, Notifier);
+        Ocr = new OcrService();
+        Pins = new PinManager(dispatcher, Settings, Storage, Ocr, Notifier);
         Snips = new SnipService(Pins, Storage, Settings, Notifier);
         RegisterCommands();
     }
@@ -45,6 +46,8 @@ public sealed class AppHost : IDisposable
     public Notifier Notifier { get; }
 
     public SnipStorage Storage { get; }
+
+    public OcrService Ocr { get; }
 
     public PinManager Pins { get; }
 

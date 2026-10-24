@@ -40,6 +40,18 @@ tools/make-icon.ps1   regenerates the app icon
 * **Settings** are plain JSON (`AppSettings`) in `%LocalAppData%\PinPoint`. A new setting is just a property with a default. Unknown or missing fields are tolerated, and a corrupt file is backed up rather than lost.
 * Package versions live in one place: `Directory.Packages.props`.
 
+## Text recognition (OCR)
+
+`OcrService` wraps Windows' built-in `Windows.Media.Ocr` (offline, uses the user's installed languages). Each snip is read once in the background, enlarged 2× first because small UI text recognises much better that way. `RecognizedText` (in Core, unit-tested) turns the result into reading order and rebuilds table rows, so copied tables paste as tab-separated rows. The snip window's text mode lives in `ImagePinWindow.Text.cs`.
+
+To check OCR still works in a trimmed release build without clicking through the UI:
+
+```bash
+PinPoint.exe --ocr-selftest some-image.png out.txt
+```
+
+It writes the recognised text to `out.txt` and exits with 0 (text found), 2 (no text) or 1 (error). It runs without UI, so it works even while another PinPoint is open.
+
 ## Ideas
 
 * Bring snips back after a restart

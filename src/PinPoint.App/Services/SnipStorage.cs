@@ -54,6 +54,21 @@ public sealed class SnipStorage(SettingsService settings)
         }
     }
 
+    /// <summary>Must be called from the UI thread (the clipboard is STA-bound).</summary>
+    public static void CopyTextToClipboard(string text)
+    {
+        try
+        {
+            var package = new DataPackage { RequestedOperation = DataPackageOperation.Copy };
+            package.SetText(text);
+            Clipboard.SetContent(package);
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Could not copy text to clipboard", ex);
+        }
+    }
+
     public void OpenFolder()
     {
         string folder = settings.SnipFolder;

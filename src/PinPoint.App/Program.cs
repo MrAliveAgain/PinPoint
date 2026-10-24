@@ -13,9 +13,12 @@ public static class Program
     private const string InstanceKey = "PinPoint.Main";
 
     [STAThread]
-    private static int Main()
+    private static int Main(string[] args)
     {
         WinRT.ComWrappersSupport.InitializeComWrappers();
+
+        // Developer check, no UI: PinPoint.exe --ocr-selftest image.png out.txt
+        if (args is ["--ocr-selftest", var image, var output]) return Services.OcrService.RunSelfTest(image, output);
 
         if (RedirectToRunningInstance()) return 0;
 
