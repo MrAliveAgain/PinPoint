@@ -65,6 +65,9 @@ public sealed partial class ImagePinWindow : Window
         Bitmap = frame.ToWriteableBitmap();
         PinImage.Source = Bitmap;
 
+        Menu.Opened += (_, _) => IsShowingMenu = true;
+        Menu.Closed += (_, _) => IsShowingMenu = false;
+
         _badgeTimer = DispatcherQueue.CreateTimer();
         _badgeTimer.IsRepeating = false;
         _badgeTimer.Tick += (_, _) =>
@@ -99,6 +102,9 @@ public sealed partial class ImagePinWindow : Window
     }
 
     public nint Handle => _hwnd;
+
+    /// <summary>True while the right-click menu is open (PinManager must not re-order windows then).</summary>
+    public bool IsShowingMenu { get; private set; }
 
     public PixelRect ScreenBounds => WindowHelpers.GetClientScreenRect(_hwnd, AppWindow);
 

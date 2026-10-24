@@ -294,7 +294,8 @@ public sealed class PinManager : IDisposable
 
     private void RaiseAll()
     {
-        if (IsHidden || _raiseSuspensions > 0) return;
+        // Re-ordering windows closes any open WinUI menu, so leave everything alone while a snip's menu is up.
+        if (IsHidden || _raiseSuspensions > 0 || _snips.Exists(s => s.IsShowingMenu)) return;
         _windows.RaiseAll();
         foreach (var snip in _snips) snip.RaiseTopmost();
     }
