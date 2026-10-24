@@ -56,7 +56,7 @@ All of these can be changed in Settings.
 | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>P</kbd> | Pin / unpin the window you're in |
 | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>H</kbd> | Hide / show all pins |
 | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>G</kbd> | Click-through on / off |
-| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>â†“</kbd> / <kbd>â†‘</kbd> | Fade / unfade the pin under your mouse |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>↓</kbd> / <kbd>↑</kbd> | Fade / unfade the pin under your mouse |
 
 ## Moving snips around
 
