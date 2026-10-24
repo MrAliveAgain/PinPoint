@@ -34,6 +34,10 @@ It sits in the tray and doesn't do anything until you press a shortcut.
 - **Easy to get out of the way.** Hide every pin at once, fade them, or make them click-through so your clicks go straight to the game.
 - **Small and quick.** No installer, no account, no internet connection. Just an exe in a folder.
 
+<p align="center">
+  <img src="docs/app-window.png" alt="PinPoint's main window: the Pins page with Snip &amp; pin and Pin a window buttons and the list of shortcuts" width="720">
+</p>
+
 ## Download
 
 1. Grab the latest `.zip` from **[Releases](https://github.com/MrAliveAgain/PinPoint/releases/latest)**.
