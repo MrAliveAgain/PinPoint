@@ -120,13 +120,13 @@ public sealed partial class HotkeyButton : UserControl
     {
         if (_recording)
         {
-            var parts = pressed is { } m && m != HotkeyModifiers.None ? new Hotkey(m, 0).Parts.SkipLast(1).ToList() : [];
+            var parts = pressed is { } m ? Core.Hotkeys.Hotkey.ModifierNames(m) : [];
             KeyCaps.ItemsSource = parts;
             Placeholder.Text = parts.Count == 0 ? "Press a shortcut…" : string.Empty;
             return;
         }
 
-        KeyCaps.ItemsSource = _hotkey?.Parts;
+        KeyCaps.ItemsSource = _hotkey?.DisplayParts;
         Placeholder.Text = _hotkey is null ? "Not set" : string.Empty;
     }
 

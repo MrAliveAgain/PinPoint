@@ -46,13 +46,28 @@ public sealed partial class PinsPage : Page
         ClickThroughToggle.IsChecked = pins.IsClickThrough;
 
         var snip = _host.Commands.Get(CommandIds.SnipAndPin);
-        SnipHotkeyText.Text = _host.Settings.GetHotkey(snip)?.ToString() ?? string.Empty;
-
-        EmptyStateText.Text =
-            "Pins float above everything — including games in borderless windowed mode. Drag them anywhere and scroll to resize. " +
-            "To fade a snip, hold the right mouse button and scroll.";
+        SnipHotkeyText.Text = _host.Settings.GetHotkey(snip)?.ToDisplayString() ?? string.Empty;
 
         BuildShortcutHints();
+        BuildMouseHints();
+    }
+
+    /// <summary>Mouse gestures handled by ImagePinWindow. Keep in sync with its pointer handlers.</summary>
+    private static readonly (string[] Inputs, string Action)[] s_mouseControls =
+    [
+        (["Drag"], "Move it"),
+        (["Scroll"], "Resize it"),
+        (["Hold right-click", "Scroll"], "Fade it"),
+        (["Double-click"], "Back to original size"),
+        (["Middle-click"], "Close it"),
+        (["Right-click"], "Copy, save as, opacity, click-through and more"),
+    ];
+
+    private void BuildMouseHints()
+    {
+        MouseHints.Children.Clear();
+        foreach (var (inputs, action) in s_mouseControls)
+            MouseHints.Children.Add(CreateHintRow(inputs, action, joinWithPlus: true));
     }
 
     private void BuildShortcutHints()
@@ -61,30 +76,47 @@ public sealed partial class PinsPage : Page
         foreach (var command in _host.Commands.All)
         {
             if (_host.Settings.GetHotkey(command) is not { } hotkey) continue;
+            ShortcutHints.Children.Add(CreateHintRow(hotkey.DisplayParts, command.Title, joinWithPlus: false));
+        }
+    }
 
-            var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
-            foreach (string part in hotkey.Parts)
+    /// <summary>A row of key caps followed by what they do. Mouse combos get a "+" between caps.</summary>
+    private static StackPanel CreateHintRow(IReadOnlyList<string> caps, string action, bool joinWithPlus)
+    {
+        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
+        for (int i = 0; i < caps.Count; i++)
+        {
+            if (joinWithPlus && i > 0)
             {
-                row.Children.Add(new Border
+                row.Children.Add(new TextBlock
                 {
-                    Style = (Style)Application.Current.Resources["KeyCapStyle"],
-                    Child = new TextBlock
-                    {
-                        Text = part,
-                        FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-                        Style = (Style)Application.Current.Resources["CaptionTextBlockStyle"],
-                    },
+                    Text = "+",
+                    Margin = new Thickness(2, 0, 2, 0),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["TextFillColorSecondaryBrush"],
                 });
             }
 
-            row.Children.Add(new TextBlock
+            row.Children.Add(new Border
             {
-                Text = command.Title,
-                Margin = new Thickness(8, 0, 0, 0),
-                VerticalAlignment = VerticalAlignment.Center,
+                Style = (Style)Application.Current.Resources["KeyCapStyle"],
+                Child = new TextBlock
+                {
+                    Text = caps[i],
+                    FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+                    Style = (Style)Application.Current.Resources["CaptionTextBlockStyle"],
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                },
             });
-            ShortcutHints.Children.Add(row);
         }
+
+        row.Children.Add(new TextBlock
+        {
+            Text = action,
+            Margin = new Thickness(8, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+        });
+        return row;
     }
 
     private async void Snip_Click(object sender, RoutedEventArgs e)

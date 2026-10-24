@@ -9,7 +9,18 @@ public static class KeyNames
     private static readonly FrozenDictionary<string, int> s_keys =
         s_names.ToFrozenDictionary(kv => kv.Value, kv => kv.Key, StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>Stable name used in settings files, e.g. "Up". Never change these.</summary>
     public static string? GetName(int vk) => s_names.GetValueOrDefault(vk);
+
+    /// <summary>Name shown to people, e.g. "↑" for the up arrow. Free to change; never parsed.</summary>
+    public static string? GetDisplayName(int vk) => vk switch
+    {
+        0x25 => "←",
+        0x26 => "↑",
+        0x27 => "→",
+        0x28 => "↓",
+        _ => GetName(vk),
+    };
 
     public static int GetKey(string name) => s_keys.GetValueOrDefault(name);
 

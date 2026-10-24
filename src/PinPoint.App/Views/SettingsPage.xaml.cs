@@ -97,7 +97,7 @@ public sealed partial class SettingsPage : Page
             };
 
             string description = _host.HotkeyConflicts.TryGetValue(command.Id, out var taken)
-                ? $"{command.Description}\n⚠ {taken} is already used by another app."
+                ? $"{command.Description}\n⚠ {taken.ToDisplayString()} is already used by another app."
                 : command.Description;
 
             ShortcutCards.Children.Add(new SettingsCard

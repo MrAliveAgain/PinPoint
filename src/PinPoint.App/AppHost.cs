@@ -188,7 +188,7 @@ public sealed class AppHost : IDisposable
         {
             Id = CommandIds.MoreTransparent,
             Title = "Fade pin",
-            Description = "Make the pin under the mouse more see-through (every pin if the mouse isn't over one).",
+            Description = "Press to make the pin under your mouse more see-through, or every pin if the mouse isn't over one. Works on pinned windows too. (On a snip you can also hold right-click and scroll.)",
             Glyph = "",
             DefaultHotkey = "Ctrl+Alt+Down",
             ShowInTray = false,
@@ -199,7 +199,7 @@ public sealed class AppHost : IDisposable
         {
             Id = CommandIds.MoreOpaque,
             Title = "Unfade pin",
-            Description = "Make the pin under the mouse more solid (every pin if the mouse isn't over one).",
+            Description = "Press to make the pin under your mouse more solid again, or every pin if the mouse isn't over one.",
             Glyph = "",
             DefaultHotkey = "Ctrl+Alt+Up",
             ShowInTray = false,
@@ -222,7 +222,7 @@ public sealed class AppHost : IDisposable
         var items = new List<TrayMenuItem>();
         foreach (var command in Commands.All.Where(c => c.ShowInTray))
         {
-            string text = Settings.GetHotkey(command) is { } hotkey ? $"{command.Title}\t{hotkey}" : command.Title;
+            string text = Settings.GetHotkey(command) is { } hotkey ? $"{command.Title}\t{hotkey.ToDisplayString()}" : command.Title;
             items.Add(new TrayMenuItem(text, Deferred(command.Execute),
                 IsChecked: command.IsChecked?.Invoke() ?? false,
                 IsEnabled: command.CanExecute?.Invoke() ?? true));

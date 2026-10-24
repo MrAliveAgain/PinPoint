@@ -102,14 +102,39 @@
             </ItemsControl>
 
             <!-- Empty state -->
-            <Border x:Name="EmptyState" Style="{StaticResource CardStyle}" Padding="24">
-                <StackPanel Spacing="14">
+            <Border x:Name="EmptyState" Style="{StaticResource CardStyle}" Padding="24,20">
+                <StackPanel Spacing="6">
                     <TextBlock Text="Nothing pinned yet" Style="{StaticResource SubtitleTextBlockStyle}" />
-                    <TextBlock x:Name="EmptyStateText" Style="{StaticResource BodyTextBlockStyle}" TextWrapping="Wrap"
-                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                    <StackPanel x:Name="ShortcutHints" Spacing="10" />
+                    <TextBlock Style="{StaticResource BodyTextBlockStyle}" TextWrapping="Wrap"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               Text="Snip part of the screen or pin a window and it'll show up here. Pins float above everything, including games in borderless windowed mode." />
                 </StackPanel>
             </Border>
+
+            <!-- Always-visible cheat sheet: keyboard shortcuts vs. mouse controls on a snip. -->
+            <TextBlock Text="Controls" Style="{StaticResource SectionHeaderStyle}" />
+            <StackPanel Spacing="4">
+                <Border Style="{StaticResource CardStyle}" Padding="20,16">
+                    <StackPanel Spacing="12">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Keyboard shortcuts" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Style="{StaticResource CardDescriptionStyle}"
+                                       Text="Press these anywhere, even in a game. You can change them in Settings." />
+                        </StackPanel>
+                        <StackPanel x:Name="ShortcutHints" Spacing="10" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource CardStyle}" Padding="20,16">
+                    <StackPanel Spacing="12">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Mouse controls on a snip" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Style="{StaticResource CardDescriptionStyle}"
+                                       Text="With the mouse over a pinned snip." />
+                        </StackPanel>
+                        <StackPanel x:Name="MouseHints" Spacing="10" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
         </StackPanel>
     </ScrollViewer>
 </Page>

@@ -35,6 +35,16 @@ public class HotkeyTests
     }
 
     [Fact]
+    public void Arrow_keys_display_as_arrows_but_store_as_names()
+    {
+        var hotkey = Hotkey.Parse("Ctrl+Alt+Down")!.Value;
+        Assert.Equal("Ctrl+Alt+↓", hotkey.ToDisplayString());
+        Assert.Equal("Ctrl+Alt+Down", hotkey.ToString()); // what settings.json keeps
+        Assert.Equal(["←", "↑", "→"], new[] { 0x25, 0x26, 0x27 }.Select(vk => KeyNames.GetDisplayName(vk)));
+        Assert.Equal("P", KeyNames.GetDisplayName(0x50));
+    }
+
+    [Fact]
     public void Every_named_key_round_trips()
     {
         for (int vk = 1; vk < 256; vk++)

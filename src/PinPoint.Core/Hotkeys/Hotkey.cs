@@ -21,22 +21,28 @@ public readonly record struct Hotkey(HotkeyModifiers Modifiers, int Key)
         KeyNames.GetName(Key) is not null &&
         (Modifiers != HotkeyModifiers.None || KeyNames.CanStandAlone(Key));
 
-    /// <summary>Display parts in canonical order, e.g. ["Ctrl", "Alt", "P"].</summary>
-    public IReadOnlyList<string> Parts
-    {
-        get
-        {
-            var parts = new List<string>(5);
-            if (Modifiers.HasFlag(HotkeyModifiers.Win)) parts.Add("Win");
-            if (Modifiers.HasFlag(HotkeyModifiers.Control)) parts.Add("Ctrl");
-            if (Modifiers.HasFlag(HotkeyModifiers.Alt)) parts.Add("Alt");
-            if (Modifiers.HasFlag(HotkeyModifiers.Shift)) parts.Add("Shift");
-            parts.Add(KeyNames.GetName(Key) ?? $"0x{Key:X2}");
-            return parts;
-        }
-    }
+    /// <summary>Canonical parts as stored in settings, e.g. ["Ctrl", "Alt", "Up"].</summary>
+    public IReadOnlyList<string> Parts => [.. ModifierNames(Modifiers), KeyNames.GetName(Key) ?? $"0x{Key:X2}"];
 
+    /// <summary>Parts for showing to people (key caps, menus), e.g. ["Ctrl", "Alt", "↑"].</summary>
+    public IReadOnlyList<string> DisplayParts => [.. ModifierNames(Modifiers), KeyNames.GetDisplayName(Key) ?? $"0x{Key:X2}"];
+
+    /// <summary>Settings form, e.g. "Ctrl+Alt+Up". Round-trips through <see cref="TryParse"/>.</summary>
     public override string ToString() => string.Join('+', Parts);
+
+    /// <summary>Human form, e.g. "Ctrl+Alt+↑". Not parseable; use <see cref="ToString"/> to store.</summary>
+    public string ToDisplayString() => string.Join('+', DisplayParts);
+
+    /// <summary>Modifier names in canonical order, e.g. ["Ctrl", "Alt"].</summary>
+    public static IReadOnlyList<string> ModifierNames(HotkeyModifiers modifiers)
+    {
+        var names = new List<string>(4);
+        if (modifiers.HasFlag(HotkeyModifiers.Win)) names.Add("Win");
+        if (modifiers.HasFlag(HotkeyModifiers.Control)) names.Add("Ctrl");
+        if (modifiers.HasFlag(HotkeyModifiers.Alt)) names.Add("Alt");
+        if (modifiers.HasFlag(HotkeyModifiers.Shift)) names.Add("Shift");
+        return names;
+    }
 
     public static Hotkey? Parse(string? text) => TryParse(text, out var hotkey) ? hotkey : null;
 
