@@ -39,7 +39,7 @@ It sits in the tray and doesn't do anything until you press a shortcut.
 - **Small and quick.** No installer, no account, no internet connection. Just an exe in a folder.
 
 <p align="center">
-  <img src="docs/app-window.png" alt="PinPoint's main window: the Pins page with Snip &amp; pin and Pin a window buttons and the list of shortcuts" width="720">
+  <img src="docs/app-window.png" alt="PinPoint's main window: the Pins page with Snip &amp; pin and Pin a window buttons, and a Controls section listing the keyboard shortcuts and mouse controls" width="720">
 </p>
 
 ## Download
