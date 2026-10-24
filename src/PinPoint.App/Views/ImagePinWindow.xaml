@@ -89,20 +89,17 @@
             <StackPanel.OpacityTransition>
                 <ScalarTransition Duration="0:0:0.12" />
             </StackPanel.OpacityTransition>
-            <StackPanel.Resources>
-                <!-- Solid fills so the buttons stay readable on white, black or busy snips. -->
-                <ResourceDictionary Source="ms-appx:///Styles/PinChips.xaml" />
-            </StackPanel.Resources>
 
+            <!-- Round chips (Styles/PinChips.xaml): solid and smooth over any snip content. -->
             <ToggleButton x:Name="TextModeButton" Visibility="Collapsed" Click="TextModeButton_Click"
-                          Width="26" Height="26" Padding="0" CornerRadius="13"
+                          Style="{StaticResource PinChipToggleButtonStyle}"
                           ToolTipService.ToolTip="Select text: drag over words to copy them">
                 <TextBlock Text="T" FontSize="12" FontWeight="SemiBold"
                            HorizontalAlignment="Center" VerticalAlignment="Center" />
             </ToggleButton>
 
             <Button x:Name="CloseButton" Click="Close_Click"
-                    Width="26" Height="26" Padding="0" CornerRadius="13"
+                    Style="{StaticResource PinChipButtonStyle}"
                     ToolTipService.ToolTip="Close (middle-click)">
                 <FontIcon Glyph="&#xE711;" FontSize="10" />
             </Button>

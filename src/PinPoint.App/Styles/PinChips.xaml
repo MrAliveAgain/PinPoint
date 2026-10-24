@@ -1,57 +1,140 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Buttons drawn on top of a snip sit over arbitrary content (white pages, black games, busy
-  screenshots). The default button fills are mostly transparent, so they vanish on some snips.
-  These lightweight-styling overrides give them a solid, theme-matched fill and a strong outline
-  in every state except "checked", which keeps the accent colour so a toggle's state stays clear.
-  Merge into the Resources of the element that holds the buttons.
+  Round "chip" buttons drawn on top of snips (the T toggle and close).
+
+  They sit over arbitrary content (white pages, black games, busy screenshots), so they use a solid,
+  theme-matched fill with a strong outline rather than the default near-transparent button fills.
+  The circle is a real Ellipse rather than a Border with CornerRadius: WinUI renders small rounded
+  borders from stretched corner images, which looks jagged on a 28 px circle; an Ellipse is vector
+  geometry and anti-aliases evenly all the way round.
 -->
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
     <ResourceDictionary.ThemeDictionaries>
         <ResourceDictionary x:Key="Default">
-            <StaticResource x:Key="ButtonBackground" ResourceKey="SolidBackgroundFillColorBaseBrush" />
-            <StaticResource x:Key="ButtonBackgroundPointerOver" ResourceKey="SolidBackgroundFillColorTertiaryBrush" />
-            <StaticResource x:Key="ButtonBackgroundPressed" ResourceKey="SolidBackgroundFillColorSecondaryBrush" />
-            <StaticResource x:Key="ButtonForeground" ResourceKey="TextFillColorPrimaryBrush" />
-            <StaticResource x:Key="ButtonForegroundPointerOver" ResourceKey="TextFillColorPrimaryBrush" />
-            <StaticResource x:Key="ButtonForegroundPressed" ResourceKey="TextFillColorSecondaryBrush" />
-            <StaticResource x:Key="ButtonBorderBrush" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
-            <StaticResource x:Key="ButtonBorderBrushPointerOver" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
-            <StaticResource x:Key="ButtonBorderBrushPressed" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
-
-            <StaticResource x:Key="ToggleButtonBackground" ResourceKey="SolidBackgroundFillColorBaseBrush" />
-            <StaticResource x:Key="ToggleButtonBackgroundPointerOver" ResourceKey="SolidBackgroundFillColorTertiaryBrush" />
-            <StaticResource x:Key="ToggleButtonBackgroundPressed" ResourceKey="SolidBackgroundFillColorSecondaryBrush" />
-            <StaticResource x:Key="ToggleButtonForeground" ResourceKey="TextFillColorPrimaryBrush" />
-            <StaticResource x:Key="ToggleButtonForegroundPointerOver" ResourceKey="TextFillColorPrimaryBrush" />
-            <StaticResource x:Key="ToggleButtonForegroundPressed" ResourceKey="TextFillColorSecondaryBrush" />
-            <StaticResource x:Key="ToggleButtonBorderBrush" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
-            <StaticResource x:Key="ToggleButtonBorderBrushPointerOver" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
-            <StaticResource x:Key="ToggleButtonBorderBrushPressed" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
+            <StaticResource x:Key="PinChipFill" ResourceKey="SolidBackgroundFillColorBaseBrush" />
+            <StaticResource x:Key="PinChipFillPointerOver" ResourceKey="SolidBackgroundFillColorTertiaryBrush" />
+            <StaticResource x:Key="PinChipFillPressed" ResourceKey="SolidBackgroundFillColorSecondaryBrush" />
+            <StaticResource x:Key="PinChipRing" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
+            <StaticResource x:Key="PinChipForeground" ResourceKey="TextFillColorPrimaryBrush" />
+            <StaticResource x:Key="PinChipForegroundPressed" ResourceKey="TextFillColorSecondaryBrush" />
         </ResourceDictionary>
-
         <ResourceDictionary x:Key="Light">
-            <StaticResource x:Key="ButtonBackground" ResourceKey="SolidBackgroundFillColorBaseBrush" />
-            <StaticResource x:Key="ButtonBackgroundPointerOver" ResourceKey="SolidBackgroundFillColorTertiaryBrush" />
-            <StaticResource x:Key="ButtonBackgroundPressed" ResourceKey="SolidBackgroundFillColorSecondaryBrush" />
-            <StaticResource x:Key="ButtonForeground" ResourceKey="TextFillColorPrimaryBrush" />
-            <StaticResource x:Key="ButtonForegroundPointerOver" ResourceKey="TextFillColorPrimaryBrush" />
-            <StaticResource x:Key="ButtonForegroundPressed" ResourceKey="TextFillColorSecondaryBrush" />
-            <StaticResource x:Key="ButtonBorderBrush" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
-            <StaticResource x:Key="ButtonBorderBrushPointerOver" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
-            <StaticResource x:Key="ButtonBorderBrushPressed" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
-
-            <StaticResource x:Key="ToggleButtonBackground" ResourceKey="SolidBackgroundFillColorBaseBrush" />
-            <StaticResource x:Key="ToggleButtonBackgroundPointerOver" ResourceKey="SolidBackgroundFillColorTertiaryBrush" />
-            <StaticResource x:Key="ToggleButtonBackgroundPressed" ResourceKey="SolidBackgroundFillColorSecondaryBrush" />
-            <StaticResource x:Key="ToggleButtonForeground" ResourceKey="TextFillColorPrimaryBrush" />
-            <StaticResource x:Key="ToggleButtonForegroundPointerOver" ResourceKey="TextFillColorPrimaryBrush" />
-            <StaticResource x:Key="ToggleButtonForegroundPressed" ResourceKey="TextFillColorSecondaryBrush" />
-            <StaticResource x:Key="ToggleButtonBorderBrush" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
-            <StaticResource x:Key="ToggleButtonBorderBrushPointerOver" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
-            <StaticResource x:Key="ToggleButtonBorderBrushPressed" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
+            <StaticResource x:Key="PinChipFill" ResourceKey="SolidBackgroundFillColorBaseBrush" />
+            <StaticResource x:Key="PinChipFillPointerOver" ResourceKey="SolidBackgroundFillColorTertiaryBrush" />
+            <StaticResource x:Key="PinChipFillPressed" ResourceKey="SolidBackgroundFillColorSecondaryBrush" />
+            <StaticResource x:Key="PinChipRing" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
+            <StaticResource x:Key="PinChipForeground" ResourceKey="TextFillColorPrimaryBrush" />
+            <StaticResource x:Key="PinChipForegroundPressed" ResourceKey="TextFillColorSecondaryBrush" />
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
+
+    <Style x:Key="PinChipButtonStyle" TargetType="Button">
+        <Setter Property="Width" Value="28" />
+        <Setter Property="Height" Value="28" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Foreground" Value="{ThemeResource PinChipForeground}" />
+        <Setter Property="UseSystemFocusVisuals" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid Background="Transparent">
+                        <Ellipse x:Name="Chip" Fill="{ThemeResource PinChipFill}"
+                                 Stroke="{ThemeResource PinChipRing}" StrokeThickness="1" />
+                        <ContentPresenter x:Name="ContentPresenter"
+                                          Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          Foreground="{TemplateBinding Foreground}"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="Chip.Fill" Value="{ThemeResource PinChipFillPointerOver}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="Chip.Fill" Value="{ThemeResource PinChipFillPressed}" />
+                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource PinChipForegroundPressed}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Disabled" />
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Same chip as a toggle; "on" switches to the accent colour so the state is obvious. -->
+    <Style x:Key="PinChipToggleButtonStyle" TargetType="ToggleButton">
+        <Setter Property="Width" Value="28" />
+        <Setter Property="Height" Value="28" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Foreground" Value="{ThemeResource PinChipForeground}" />
+        <Setter Property="UseSystemFocusVisuals" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Grid Background="Transparent">
+                        <Ellipse x:Name="Chip" Fill="{ThemeResource PinChipFill}"
+                                 Stroke="{ThemeResource PinChipRing}" StrokeThickness="1" />
+                        <ContentPresenter x:Name="ContentPresenter"
+                                          Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          Foreground="{TemplateBinding Foreground}"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="Chip.Fill" Value="{ThemeResource PinChipFillPointerOver}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="Chip.Fill" Value="{ThemeResource PinChipFillPressed}" />
+                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource PinChipForegroundPressed}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Disabled" />
+                                <VisualState x:Name="Checked">
+                                    <VisualState.Setters>
+                                        <Setter Target="Chip.Fill" Value="{ThemeResource AccentFillColorDefaultBrush}" />
+                                        <Setter Target="Chip.Stroke" Value="{ThemeResource AccentFillColorDefaultBrush}" />
+                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="CheckedPointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="Chip.Fill" Value="{ThemeResource AccentFillColorSecondaryBrush}" />
+                                        <Setter Target="Chip.Stroke" Value="{ThemeResource AccentFillColorSecondaryBrush}" />
+                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="CheckedPressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="Chip.Fill" Value="{ThemeResource AccentFillColorTertiaryBrush}" />
+                                        <Setter Target="Chip.Stroke" Value="{ThemeResource AccentFillColorTertiaryBrush}" />
+                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource TextOnAccentFillColorSecondaryBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="CheckedDisabled" />
+                                <VisualState x:Name="Indeterminate" />
+                                <VisualState x:Name="IndeterminatePointerOver" />
+                                <VisualState x:Name="IndeterminatePressed" />
+                                <VisualState x:Name="IndeterminateDisabled" />
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 </ResourceDictionary>
