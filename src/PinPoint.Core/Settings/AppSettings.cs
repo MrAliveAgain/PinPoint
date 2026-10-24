@@ -31,10 +31,6 @@ public sealed class AppSettings
     public bool PinsTakeFocus { get; set; }
 
     public bool ShowNotifications { get; set; } = true;
-
-    /// <summary>Key held while scrolling over a snip to fade it: "Alt", "Ctrl" or "Shift".</summary>
-    public string FadeScrollModifier { get; set; } = "Alt";
-
     /// <summary>One-time hint that closing the window keeps PinPoint in the tray.</summary>
     public bool HasShownTrayHint { get; set; }
 }

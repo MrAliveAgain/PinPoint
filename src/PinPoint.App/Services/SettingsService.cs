@@ -52,16 +52,6 @@ public sealed class SettingsService
 
     public void ResetHotkey(AppCommand command) => Update(s => s.Hotkeys.Remove(command.Id));
 
-    public static IReadOnlyList<string> FadeModifiers { get; } = ["Alt", "Ctrl", "Shift"];
-
-    /// <summary>Virtual-key code of the "scroll to fade" modifier.</summary>
-    public int FadeModifierKey => Current.FadeScrollModifier switch
-    {
-        "Ctrl" => 0x11,  // VK_CONTROL
-        "Shift" => 0x10, // VK_SHIFT
-        _ => 0x12,       // VK_MENU (Alt)
-    };
-
     /// <summary>Highlight border as COLORREF, or null when disabled.</summary>
     public uint? HighlightColorRef =>
         Current.HighlightPinnedWindows && HexColor.TryParse(Current.HighlightColor, out byte r, out byte g, out byte b)

@@ -50,7 +50,7 @@ public sealed partial class PinsPage : Page
 
         EmptyStateText.Text =
             "Pins float above everything — including games in borderless windowed mode. Drag them anywhere and scroll to resize. " +
-            $"To fade a snip, scroll while holding {_host.Settings.Current.FadeScrollModifier} or the right mouse button.";
+            "To fade a snip, hold the right mouse button and scroll.";
 
         BuildShortcutHints();
     }

@@ -57,11 +57,6 @@ public sealed partial class SettingsPage : Page
             FolderCard.Description = _host.Settings.SnipFolder;
             AboutCard.Description = $"Version {typeof(App).Assembly.GetName().Version?.ToString(3)} · Pin windows and snips on top of anything.";
 
-            FadeModifierBox.ItemsSource = Services.SettingsService.FadeModifiers;
-            FadeModifierBox.SelectedItem = Services.SettingsService.FadeModifiers.Contains(settings.FadeScrollModifier)
-                ? settings.FadeScrollModifier
-                : Services.SettingsService.FadeModifiers[0];
-
             BuildColorChoices(settings.HighlightColor);
             ColorBox.IsEnabled = settings.HighlightPinnedWindows;
             BuildShortcutCards();
@@ -160,11 +155,6 @@ public sealed partial class SettingsPage : Page
     {
         if (_loading || ColorBox.SelectedItem is not ComboBoxItem { Tag: string hex }) return;
         _host.Settings.Update(s => s.HighlightColor = hex);
-    }
-
-    private void FadeModifierBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (FadeModifierBox.SelectedItem is string modifier) Set(s => s.FadeScrollModifier = modifier);
     }
 
     // ---- Toggles -----------------------------------------------------------------------------

@@ -33,10 +33,6 @@
             </controls:SettingsCard>
 
             <TextBlock Text="Pins" Style="{StaticResource SectionHeaderStyle}" />
-            <controls:SettingsCard Glyph="&#xE706;" Header="Scroll to fade a snip"
-                                   Description="Hold this key and scroll over a snip to fade it. Holding the right mouse button while scrolling always works, even in games that block the key.">
-                <ComboBox x:Name="FadeModifierBox" MinWidth="140" SelectionChanged="FadeModifierBox_SelectionChanged" />
-            </controls:SettingsCard>
             <controls:SettingsCard Glyph="&#xE7FC;" Header="Keep focus in my game"
                                    Description="Clicking or dragging a snip won't take focus from the window underneath. Applies to new snips.">
                 <ToggleSwitch x:Name="KeepFocusToggle" OnContent="" OffContent="" MinWidth="0" Toggled="KeepFocus_Toggled" />

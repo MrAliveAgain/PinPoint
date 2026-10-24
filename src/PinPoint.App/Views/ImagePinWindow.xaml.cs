@@ -19,8 +19,8 @@ using Windows.Storage.Pickers;
 namespace PinPoint.Views;
 
 /// <summary>
-/// A floating, always-on-top snip. Drag to move, wheel to zoom, fade-key+wheel or
-/// right-button+wheel for opacity, middle-click/Esc to close, right-click for more.
+/// A floating, always-on-top snip. Drag to move, wheel to zoom, right-button+wheel for opacity,
+/// middle-click/Esc to close, right-click for more.
 /// </summary>
 public sealed partial class ImagePinWindow : Window
 {
@@ -32,7 +32,6 @@ public sealed partial class ImagePinWindow : Window
     private readonly nint _hwnd;
     private readonly bool _takesFocus;
     private readonly SnipStorage _storage;
-    private readonly SettingsService _settings;
     private readonly DispatcherQueueTimer _badgeTimer;
 
     private int _zoomStep;
@@ -50,7 +49,6 @@ public sealed partial class ImagePinWindow : Window
         InitializeComponent();
         Frame = frame;
         _storage = storage;
-        _settings = settings;
         _takesFocus = settings.Current.PinsTakeFocus;
         _hwnd = this.GetHandle();
 
@@ -217,13 +215,11 @@ public sealed partial class ImagePinWindow : Window
         int delta = properties.MouseWheelDelta;
         if (delta == 0) return;
 
-        // The right button comes with the wheel message itself, so it works even when Windows hides
-        // keyboard state from us (e.g. an elevated game has focus). The fade key is the convenient path;
-        // GetAsyncKeyState because our thread's key state is stale while unfocused.
-        bool rightButton = properties.IsRightButtonPressed;
-        if (rightButton || Win32.IsKeyDown(_settings.FadeModifierKey))
+        // Right button + wheel fades. The button state arrives with the wheel message itself, so it works
+        // even over games that keep keyboard state from other apps (keyboard modifiers proved unreliable).
+        if (properties.IsRightButtonPressed)
         {
-            if (rightButton) _scrolledWhileRightHeld = true;
+            _scrolledWhileRightHeld = true;
             NudgeOpacity(delta > 0 ? 1 : -1);
         }
         else

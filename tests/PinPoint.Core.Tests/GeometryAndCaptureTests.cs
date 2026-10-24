@@ -55,6 +55,27 @@ public class GeometryAndCaptureTests
     }
 
     [Fact]
+    public void Settings_ignore_fields_from_older_versions()
+    {
+        string dir = Path.Combine(Path.GetTempPath(), "PinPointTests", Guid.NewGuid().ToString("N"));
+        var store = new SettingsStore(Path.Combine(dir, "settings.json"));
+        try
+        {
+            Directory.CreateDirectory(dir);
+            // fadeScrollModifier was removed in 0.1.1; old files must still load with their other values.
+            File.WriteAllText(store.FilePath, """{ "saveSnips": false, "fadeScrollModifier": "Alt" }""");
+
+            var loaded = store.Load();
+            Assert.False(loaded.SaveSnips);
+            Assert.False(File.Exists(store.FilePath + ".corrupt"));
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [Fact]
     public void Settings_round_trip_and_survive_corruption()
     {
         string dir = Path.Combine(Path.GetTempPath(), "PinPointTests", Guid.NewGuid().ToString("N"));
