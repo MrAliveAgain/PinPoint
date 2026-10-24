@@ -64,6 +64,8 @@ All of these can be changed in Settings.
 
 ## Moving snips around
 
+These mouse controls are for snips (the screenshots you pin). Pinned windows like Chrome keep their normal mouse behaviour; fade those with <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>↓</kbd> / <kbd>↑</kbd> instead.
+
 | | |
 |---|---|
 | Move | Drag it |

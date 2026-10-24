@@ -127,9 +127,9 @@
                 <Border Style="{StaticResource CardStyle}" Padding="20,16">
                     <StackPanel Spacing="12">
                         <StackPanel Spacing="2">
-                            <TextBlock Text="Mouse controls on a snip" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Text="Mouse controls (snips only)" Style="{StaticResource BodyStrongTextBlockStyle}" />
                             <TextBlock Style="{StaticResource CardDescriptionStyle}"
-                                       Text="With the mouse over a pinned snip." />
+                                       Text="These work on snips, the screenshots you pin. Pinned windows like Chrome keep their normal mouse behaviour, so use the Fade pin shortcuts above to fade those." />
                         </StackPanel>
                         <StackPanel x:Name="MouseHints" Spacing="10" />
                     </StackPanel>
