@@ -68,7 +68,7 @@ All of these can be changed in Settings.
 |---|---|
 | Move | Drag it |
 | Resize | Scroll |
-| Fade | <kbd>Alt</kbd> + scroll, or hold right-click and scroll |
+| Fade | Hold right-click and scroll |
 | Back to original size | Double-click |
 | Close | Middle-click or <kbd>Esc</kbd> |
 | Copy, save as, opacity, click-through | Right-click |
@@ -78,7 +78,7 @@ You can snip from a pinned window or from another snip too. It works the same as
 ## Good to know
 
 - **Exclusive fullscreen games** can't be drawn over by anything. Switch them to borderless windowed.
-- **Games that run as administrator** (often ones with anti-cheat) stop normal apps from seeing held keys, so <kbd>Alt</kbd> + scroll may not fade a snip while that game has focus. Right-click + scroll and the fade shortcuts still work. To pin a window that's running as admin, run PinPoint as admin too.
+- **Windows running as administrator** (often games with anti-cheat) can only be pinned if PinPoint runs as admin too.
 
 ## What it touches on your PC
 
