@@ -95,11 +95,11 @@
                           Style="{StaticResource PinChipToggleButtonStyle}"
                           ToolTipService.ToolTip="Select text: drag over words to copy them">
                 <!--
-                  A T drawn as geometry in a 7×8 box: 1 px crossbar and a centred 1 px stem, on whole
-                  pixels so it stays crisp. Sized and weighted to match the X icon; no font metrics
-                  involved, so it centres exactly. PathIcon takes the button's foreground colour.
+                  A T drawn as geometry in a 7×7 box (the X icon's visible shape is ~6.2×6.2 px):
+                  1 px crossbar and a 1 px stem on the centre pixel, on whole pixels so it stays crisp.
+                  No font metrics involved, so it centres exactly. PathIcon takes the button's foreground.
                 -->
-                <PathIcon Width="7" Height="8" Data="M0,0 H7 V1 H0 Z M3,1 H4 V8 H3 Z" />
+                <PathIcon Width="7" Height="7" Data="M0,0 H7 V1 H0 Z M3,1 H4 V7 H3 Z" />
             </ToggleButton>
 
             <Button x:Name="CloseButton" Click="Close_Click"
