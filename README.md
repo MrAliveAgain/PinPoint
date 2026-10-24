@@ -14,7 +14,9 @@
   <a href="LICENSE"><img src="https://img.shields.io/github/license/MrAliveAgain/PinPoint" alt="MIT license"></a>
 </p>
 
-<!-- Screenshot or short GIF goes here: docs/screenshot.png -->
+<p align="center">
+  <img src="docs/demo.gif" alt="Snipping part of a guide in Chrome and pinning it over Where Winds Meet, then moving and fading it" width="960">
+</p>
 
 ---
 
