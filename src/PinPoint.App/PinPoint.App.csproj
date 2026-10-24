@@ -28,7 +28,6 @@
     <!-- Partial trimming strips unused Windows SDK projections (212 MB → 85 MB) while leaving our own code intact. -->
     <PublishTrimmed>true</PublishTrimmed>
     <TrimMode>partial</TrimMode>
-    <DebugType>none</DebugType>
   </PropertyGroup>
 
   <ItemGroup>
@@ -52,5 +51,18 @@
   <ItemGroup>
     <ProjectReference Include="..\PinPoint.Core\PinPoint.Core.csproj" />
   </ItemGroup>
+
+  <!--
+    WinUI ships translated strings for its built-in controls in ~85 language folders.
+    PinPoint's UI is English, and Windows falls back to en-US for missing languages,
+    so only ship English. Delete this target if the app is ever localised.
+  -->
+  <Target Name="KeepEnglishWinUIResourcesOnly" AfterTargets="AddMicrosoftWindowsAppSDKPayloadFilesFromComponents">
+    <ItemGroup>
+      <!-- Link is the output path, e.g. "de-DE\Microsoft.ui.xaml.dll.mui". -->
+      <None Remove="@(None)"
+          Condition="'%(None.Extension)' == '.mui' and !$([System.String]::Copy('%(None.Link)').StartsWith('en-'))" />
+    </ItemGroup>
+  </Target>
 
 </Project>
