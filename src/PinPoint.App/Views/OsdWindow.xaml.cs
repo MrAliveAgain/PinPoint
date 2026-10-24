@@ -66,9 +66,12 @@ public sealed partial class OsdWindow : Window
         AppWindow.Move(new PointInt32(work.X + work.Width / 2, work.Y + 40));
         double scale = WindowHelpers.GetScale(_hwnd);
         Root.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-        int width = (int)Math.Ceiling(Root.DesiredSize.Width * scale);
-        int height = (int)Math.Ceiling(Math.Max(Root.DesiredSize.Height, 44) * scale);
-        AppWindow.MoveAndResize(new RectInt32(work.X + (work.Width - width) / 2, work.Y + (int)(36 * scale), width, height));
+        // Size the client area (not the whole window: its border would clip the text), plus a little slack
+        // for text rounding.
+        int width = (int)Math.Ceiling((Root.DesiredSize.Width + 2) * scale);
+        int height = (int)Math.Ceiling((Math.Max(Root.DesiredSize.Height, 44) + 2) * scale);
+        AppWindow.ResizeClient(new SizeInt32(width, height));
+        AppWindow.Move(new PointInt32(work.X + (work.Width - AppWindow.Size.Width) / 2, work.Y + (int)(36 * scale)));
 
         _fadeTimer.Stop();
         _hideTimer.Stop();

@@ -3,6 +3,7 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
 using PinPoint.Core.Capture;
@@ -38,7 +39,8 @@ public sealed partial class ImagePinWindow : Window
     private double _opacity = 1.0;
     private bool _clickThrough;
     private bool _dragging;
-    private bool _suppressContextMenu;
+    private bool _rightHeld;
+    private bool _scrolledWhileRightHeld;
     private Win32.POINT _dragCursorStart;
     private PointInt32 _dragWindowStart;
     private string? _savedPath;
@@ -55,14 +57,6 @@ public sealed partial class ImagePinWindow : Window
         WindowHelpers.MakeToolSurface(AppWindow, alwaysOnTop: true);
         WindowStyler.SetExStyleFlag(_hwnd, Win32.WS_EX_TOOLWINDOW, true);
         if (!_takesFocus) WindowStyler.SetExStyleFlag(_hwnd, Win32.WS_EX_NOACTIVATE, true);
-
-        // Right-button + wheel fades; don't pop the menu when that button is released.
-        Root.ContextRequested += (_, e) =>
-        {
-            if (!_suppressContextMenu) return;
-            _suppressContextMenu = false;
-            e.Handled = true;
-        };
 
         Bitmap = frame.ToWriteableBitmap();
         PinImage.Source = Bitmap;
@@ -171,7 +165,14 @@ public sealed partial class ImagePinWindow : Window
             return;
         }
 
-        if (properties.IsRightButtonPressed) _suppressContextMenu = false; // fresh right-click
+        if (properties.IsRightButtonPressed)
+        {
+            // Menu decision waits for the release: a scroll while held means "fade", not "menu".
+            _rightHeld = true;
+            _scrolledWhileRightHeld = false;
+            e.Handled = true;
+            return;
+        }
 
         if (!properties.IsLeftButtonPressed) return;
 
@@ -193,6 +194,16 @@ public sealed partial class ImagePinWindow : Window
 
     private void Root_PointerReleased(object sender, PointerRoutedEventArgs e)
     {
+        var point = e.GetCurrentPoint(Root);
+        if (point.Properties.PointerUpdateKind == PointerUpdateKind.RightButtonReleased)
+        {
+            bool showMenu = _rightHeld && !_scrolledWhileRightHeld;
+            _rightHeld = false;
+            if (showMenu) Menu.ShowAt(Root, new FlyoutShowOptions { Position = point.Position });
+            e.Handled = true;
+            return;
+        }
+
         if (!_dragging) return;
         _dragging = false;
         Root.ReleasePointerCapture(e.Pointer);
@@ -212,7 +223,7 @@ public sealed partial class ImagePinWindow : Window
         bool rightButton = properties.IsRightButtonPressed;
         if (rightButton || Win32.IsKeyDown(_settings.FadeModifierKey))
         {
-            if (rightButton) _suppressContextMenu = true;
+            if (rightButton) _scrolledWhileRightHeld = true;
             NudgeOpacity(delta > 0 ? 1 : -1);
         }
         else

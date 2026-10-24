@@ -21,7 +21,8 @@
             <KeyboardAccelerator Key="C" Modifiers="Control" Invoked="Copy_Invoked" />
         </Grid.KeyboardAccelerators>
 
-        <Grid.ContextFlyout>
+        <!-- Opened from code on right-button release (not ContextFlyout), so right-hold + scroll can skip it. -->
+        <FlyoutBase.AttachedFlyout>
             <MenuFlyout x:Name="Menu" ShouldConstrainToRootBounds="False" Opening="Menu_Opening">
                 <MenuFlyoutItem Text="Copy" Click="Copy_Click">
                     <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8C8;" /></MenuFlyoutItem.Icon>
@@ -51,7 +52,7 @@
                     <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE711;" /></MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
             </MenuFlyout>
-        </Grid.ContextFlyout>
+        </FlyoutBase.AttachedFlyout>
 
         <Image x:Name="PinImage" Stretch="Fill" />
 
