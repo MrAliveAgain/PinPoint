@@ -71,6 +71,7 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
 
                                 <Border Width="64" Height="42" CornerRadius="4"
@@ -94,7 +95,15 @@
                                             Value="{x:Bind OpacityPercent, Mode=TwoWay}" />
                                 </StackPanel>
 
-                                <Button Grid.Column="3" Content="{x:Bind RemoveLabel}" Click="Remove_Click" MinWidth="80" />
+                                <Button Grid.Column="3" Click="CopyText_Click" Visibility="{x:Bind CanCopyText, Mode=OneWay}"
+                                        ToolTipService.ToolTip="Copy all the text in this snip">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon Glyph="&#xE8D2;" FontSize="14" />
+                                        <TextBlock Text="Copy text" />
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Grid.Column="4" Content="{x:Bind RemoveLabel}" Click="Remove_Click" MinWidth="80" />
                             </Grid>
                         </Border>
                     </DataTemplate>
@@ -107,7 +116,7 @@
                     <TextBlock Text="Nothing pinned yet" Style="{StaticResource SubtitleTextBlockStyle}" />
                     <TextBlock Style="{StaticResource BodyTextBlockStyle}" TextWrapping="Wrap"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                               Text="Snip part of the screen or pin a window and it'll show up here. Pins float above everything, including games in borderless windowed mode." />
+                               Text="Snip part of the screen or pin a window and it'll show up here. Pins float above everything, including games in borderless windowed mode. If a snip has text in it, you can copy the text too." />
                 </StackPanel>
             </Border>
 

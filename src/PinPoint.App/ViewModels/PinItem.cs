@@ -27,12 +27,20 @@ public abstract class PinItem : ObservableObject
 
     public abstract void Remove();
 
-    /// <summary>Called by the manager's maintenance tick so titles stay current.</summary>
+    /// <summary>True when this pin has recognised text that can be copied.</summary>
+    public virtual bool CanCopyText => false;
+
+    public virtual void CopyText()
+    {
+    }
+
+    /// <summary>Called when the pin changes (title, opacity, text found) so the row stays current.</summary>
     public void Refresh()
     {
         OnPropertyChanged(nameof(Title));
         OnPropertyChanged(nameof(Subtitle));
         OnPropertyChanged(nameof(OpacityPercent));
+        OnPropertyChanged(nameof(CanCopyText));
     }
 }
 
@@ -98,4 +106,8 @@ public sealed class SnipPinItem : PinItem
     public override string RemoveLabel => "Close";
 
     public override void Remove() => Window.Close();
+
+    public override bool CanCopyText => Window.HasText;
+
+    public override void CopyText() => Window.CopyAllText();
 }

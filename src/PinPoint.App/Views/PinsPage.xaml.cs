@@ -171,4 +171,9 @@ public sealed partial class PinsPage : Page
     {
         if (sender is FrameworkElement { DataContext: PinItem item }) item.Remove();
     }
+
+    private void CopyText_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: PinItem item }) item.CopyText();
+    }
 }

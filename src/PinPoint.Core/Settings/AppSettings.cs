@@ -33,6 +33,9 @@ public sealed class AppSettings
     public bool ShowNotifications { get; set; } = true;
     /// <summary>One-time hint that closing the window keeps PinPoint in the tray.</summary>
     public bool HasShownTrayHint { get; set; }
+
+    /// <summary>How many times a snip has pointed out "text found, click T". Stops after a few.</summary>
+    public int TextHintsShown { get; set; }
 }
 
 [JsonSourceGenerationOptions(WriteIndented = true, PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,

@@ -33,8 +33,10 @@ public sealed partial class ImagePinWindow : Window
     private readonly bool _takesFocus;
     private readonly SnipStorage _storage;
     private readonly OcrService _ocr;
+    private readonly SettingsService _settings;
     private readonly DispatcherQueueTimer _badgeTimer;
     private bool _isClosed;
+    private bool _pointerOver;
 
     private int _zoomStep;
     private double _opacity = 1.0;
@@ -52,6 +54,7 @@ public sealed partial class ImagePinWindow : Window
         Frame = frame;
         _storage = storage;
         _ocr = ocr;
+        _settings = settings;
         _takesFocus = settings.Current.PinsTakeFocus;
         _hwnd = this.GetHandle();
 
@@ -64,8 +67,11 @@ public sealed partial class ImagePinWindow : Window
 
         _badgeTimer = DispatcherQueue.CreateTimer();
         _badgeTimer.IsRepeating = false;
-        _badgeTimer.Interval = TimeSpan.FromMilliseconds(900);
-        _badgeTimer.Tick += (_, _) => Badge.Opacity = 0;
+        _badgeTimer.Tick += (_, _) =>
+        {
+            Badge.Opacity = 0;
+            EndTextHint();
+        };
 
         Closed += (_, _) =>
         {
@@ -240,11 +246,16 @@ public sealed partial class ImagePinWindow : Window
 
     private void Root_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e) => ResetZoom();
 
-    private void Root_PointerEntered(object sender, PointerRoutedEventArgs e) => SetHoverChrome(!_clickThrough);
+    private void Root_PointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        _pointerOver = true;
+        SetHoverChrome(!_clickThrough);
+    }
 
     private void Root_PointerExited(object sender, PointerRoutedEventArgs e)
     {
-        if (!_dragging) SetHoverChrome(false);
+        _pointerOver = false;
+        if (!_dragging && !_showingTextHint) SetHoverChrome(false);
     }
 
     private void SetHoverChrome(bool visible)
@@ -291,11 +302,13 @@ public sealed partial class ImagePinWindow : Window
             WindowStyler.ClearLayered(_hwnd);
     }
 
-    private void ShowBadge(string text)
+    private void ShowBadge(string text, double seconds = 0.9)
     {
+        EndTextHint(); // any newer message replaces the first-time hint
         BadgeText.Text = text;
         Badge.Opacity = 1;
         _badgeTimer.Stop();
+        _badgeTimer.Interval = TimeSpan.FromSeconds(seconds);
         _badgeTimer.Start();
     }
 

@@ -31,7 +31,22 @@ public sealed partial class ImagePinWindow
     private InputCursor? _textCursor;
     private InputCursor? _arrowCursor;
 
-    private bool HasText => !_text.IsEmpty;
+    /// <summary>First-time hints shown before PinPoint stops pointing out the T button.</summary>
+    private const int TextHintLimit = 3;
+
+    private bool _showingTextHint;
+
+    /// <summary>True once text has been found in this snip.</summary>
+    public bool HasText => !_text.IsEmpty;
+
+    /// <summary>Copies all of the snip's text (tables as tab-separated rows). False if there is none.</summary>
+    public bool CopyAllText()
+    {
+        if (!HasText) return false;
+        SnipStorage.CopyTextToClipboard(_text.AllText);
+        ShowBadge("Text copied");
+        return true;
+    }
 
     private async Task DetectTextAsync()
     {
@@ -43,6 +58,26 @@ public sealed partial class ImagePinWindow
         _text = text;
         BuildWordBoxes();
         TextModeButton.Visibility = Visibility.Visible;
+        Changed?.Invoke(this, EventArgs.Empty); // lets the Pins list offer "Copy text"
+        ShowTextHintIfNeeded();
+    }
+
+    /// <summary>For the first few snips with text, briefly show the T button and say what it's for.</summary>
+    private void ShowTextHintIfNeeded()
+    {
+        if (_clickThrough || _settings.Current.TextHintsShown >= TextHintLimit) return;
+
+        _settings.Update(s => s.TextHintsShown++);
+        ShowBadge("Text found · click T to copy it", seconds: 4);
+        _showingTextHint = true;
+        SetHoverChrome(true);
+    }
+
+    private void EndTextHint()
+    {
+        if (!_showingTextHint) return;
+        _showingTextHint = false;
+        if (!_pointerOver && !_dragging) SetHoverChrome(false);
     }
 
     private void BuildWordBoxes()
@@ -89,12 +124,7 @@ public sealed partial class ImagePinWindow
 
     private void SelectText_Click(object sender, RoutedEventArgs e) => SetTextMode(SelectTextItem.IsChecked);
 
-    private void CopyText_Click(object sender, RoutedEventArgs e)
-    {
-        if (!HasText) return;
-        SnipStorage.CopyTextToClipboard(_text.AllText);
-        ShowBadge("Text copied");
-    }
+    private void CopyText_Click(object sender, RoutedEventArgs e) => CopyAllText();
 
     // ---- Selection ---------------------------------------------------------------------------
 
