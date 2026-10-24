@@ -11,7 +11,7 @@ using Windows.UI;
 namespace PinPoint.Views;
 
 /// <summary>
-/// Text selection on a snip. Text is recognised once in the background; the hover "A" button
+/// Text selection on a snip. Text is recognised once in the background; the hover "T" button
 /// switches into text mode, where dragging over words selects them (instead of moving the snip)
 /// and the selection is copied to the clipboard on release.
 /// </summary>
@@ -31,7 +31,7 @@ public sealed partial class ImagePinWindow
     private InputCursor? _textCursor;
     private InputCursor? _arrowCursor;
 
-    /// <summary>First-time hints shown before PinPoint stops pointing out the A button.</summary>
+    /// <summary>First-time hints shown before PinPoint stops pointing out the T button.</summary>
     private const int TextHintLimit = 3;
 
     private bool _showingTextHint;
@@ -62,13 +62,13 @@ public sealed partial class ImagePinWindow
         ShowTextHintIfNeeded();
     }
 
-    /// <summary>For the first few snips with text, briefly show the A button and say what it's for.</summary>
+    /// <summary>For the first few snips with text, briefly show the T button and say what it's for.</summary>
     private void ShowTextHintIfNeeded()
     {
         if (_clickThrough || _settings.Current.TextHintsShown >= TextHintLimit) return;
 
         _settings.Update(s => s.TextHintsShown++);
-        ShowBadge("Text found · click A to copy it", seconds: 4);
+        ShowBadge("Text found · click T to copy it", seconds: 4);
         _showingTextHint = true;
         SetHoverChrome(true);
     }

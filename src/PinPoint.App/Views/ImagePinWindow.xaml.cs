@@ -148,7 +148,7 @@ public sealed partial class ImagePinWindow : Window
         WindowHelpers.SetClientScreenRect(_hwnd, AppWindow, client);
         WindowStyler.RaiseTopmost(_hwnd);
 
-        _ = DetectTextAsync(); // background; the "A" button appears if any text is found
+        _ = DetectTextAsync(); // background; the "T" button appears if any text is found
     }
 
     public void SetHidden(bool hidden)

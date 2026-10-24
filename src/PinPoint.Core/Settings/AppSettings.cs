@@ -34,7 +34,7 @@ public sealed class AppSettings
     /// <summary>One-time hint that closing the window keeps PinPoint in the tray.</summary>
     public bool HasShownTrayHint { get; set; }
 
-    /// <summary>How many times a snip has pointed out "text found, click A". Stops after a few.</summary>
+    /// <summary>How many times a snip has pointed out "text found, click T". Stops after a few.</summary>
     public int TextHintsShown { get; set; }
 }
 

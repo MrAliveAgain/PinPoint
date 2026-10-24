@@ -6,7 +6,9 @@
   That stays readable over white pages and dark games alike without a heavy outline, and doesn't
   depend on the Windows theme. The circle is an Ellipse (vector geometry) rather than a Border with
   CornerRadius, which WinUI draws from stretched corner images and looks uneven at this size.
-  Content should be a FontIcon so both buttons share one icon font and centre identically.
+  Content is centred by its visible shape: use a FontIcon, or for a letter a TextBlock with
+  TextLineBounds="Tight" and OpticalMarginAlignment="TrimSideBearings" (otherwise the letter's
+  line height and side bearings push it off-centre).
 -->
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"

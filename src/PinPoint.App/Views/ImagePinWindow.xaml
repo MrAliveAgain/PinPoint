@@ -94,7 +94,10 @@
             <ToggleButton x:Name="TextModeButton" Visibility="Collapsed" Click="TextModeButton_Click"
                           Style="{StaticResource PinChipToggleButtonStyle}"
                           ToolTipService.ToolTip="Select text: drag over words to copy them">
-                <FontIcon Glyph="&#xE97E;" FontSize="11" />
+                <!-- Tight line bounds + trimmed side bearings: centre the T's ink, not its line box. -->
+                <TextBlock Text="T" FontSize="12" FontWeight="Medium"
+                           TextLineBounds="Tight" OpticalMarginAlignment="TrimSideBearings"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" />
             </ToggleButton>
 
             <Button x:Name="CloseButton" Click="Close_Click"
