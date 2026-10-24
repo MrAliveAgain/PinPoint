@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Buttons drawn on top of a snip sit over arbitrary content (white pages, black games, busy
+  screenshots). The default button fills are mostly transparent, so they vanish on some snips.
+  These lightweight-styling overrides give them a solid, theme-matched fill and a strong outline
+  in every state except "checked", which keeps the accent colour so a toggle's state stays clear.
+  Merge into the Resources of the element that holds the buttons.
+-->
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Default">
+            <StaticResource x:Key="ButtonBackground" ResourceKey="SolidBackgroundFillColorBaseBrush" />
+            <StaticResource x:Key="ButtonBackgroundPointerOver" ResourceKey="SolidBackgroundFillColorTertiaryBrush" />
+            <StaticResource x:Key="ButtonBackgroundPressed" ResourceKey="SolidBackgroundFillColorSecondaryBrush" />
+            <StaticResource x:Key="ButtonForeground" ResourceKey="TextFillColorPrimaryBrush" />
+            <StaticResource x:Key="ButtonForegroundPointerOver" ResourceKey="TextFillColorPrimaryBrush" />
+            <StaticResource x:Key="ButtonForegroundPressed" ResourceKey="TextFillColorSecondaryBrush" />
+            <StaticResource x:Key="ButtonBorderBrush" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
+            <StaticResource x:Key="ButtonBorderBrushPointerOver" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
+            <StaticResource x:Key="ButtonBorderBrushPressed" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
+
+            <StaticResource x:Key="ToggleButtonBackground" ResourceKey="SolidBackgroundFillColorBaseBrush" />
+            <StaticResource x:Key="ToggleButtonBackgroundPointerOver" ResourceKey="SolidBackgroundFillColorTertiaryBrush" />
+            <StaticResource x:Key="ToggleButtonBackgroundPressed" ResourceKey="SolidBackgroundFillColorSecondaryBrush" />
+            <StaticResource x:Key="ToggleButtonForeground" ResourceKey="TextFillColorPrimaryBrush" />
+            <StaticResource x:Key="ToggleButtonForegroundPointerOver" ResourceKey="TextFillColorPrimaryBrush" />
+            <StaticResource x:Key="ToggleButtonForegroundPressed" ResourceKey="TextFillColorSecondaryBrush" />
+            <StaticResource x:Key="ToggleButtonBorderBrush" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
+            <StaticResource x:Key="ToggleButtonBorderBrushPointerOver" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
+            <StaticResource x:Key="ToggleButtonBorderBrushPressed" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
+        </ResourceDictionary>
+
+        <ResourceDictionary x:Key="Light">
+            <StaticResource x:Key="ButtonBackground" ResourceKey="SolidBackgroundFillColorBaseBrush" />
+            <StaticResource x:Key="ButtonBackgroundPointerOver" ResourceKey="SolidBackgroundFillColorTertiaryBrush" />
+            <StaticResource x:Key="ButtonBackgroundPressed" ResourceKey="SolidBackgroundFillColorSecondaryBrush" />
+            <StaticResource x:Key="ButtonForeground" ResourceKey="TextFillColorPrimaryBrush" />
+            <StaticResource x:Key="ButtonForegroundPointerOver" ResourceKey="TextFillColorPrimaryBrush" />
+            <StaticResource x:Key="ButtonForegroundPressed" ResourceKey="TextFillColorSecondaryBrush" />
+            <StaticResource x:Key="ButtonBorderBrush" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
+            <StaticResource x:Key="ButtonBorderBrushPointerOver" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
+            <StaticResource x:Key="ButtonBorderBrushPressed" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
+
+            <StaticResource x:Key="ToggleButtonBackground" ResourceKey="SolidBackgroundFillColorBaseBrush" />
+            <StaticResource x:Key="ToggleButtonBackgroundPointerOver" ResourceKey="SolidBackgroundFillColorTertiaryBrush" />
+            <StaticResource x:Key="ToggleButtonBackgroundPressed" ResourceKey="SolidBackgroundFillColorSecondaryBrush" />
+            <StaticResource x:Key="ToggleButtonForeground" ResourceKey="TextFillColorPrimaryBrush" />
+            <StaticResource x:Key="ToggleButtonForegroundPointerOver" ResourceKey="TextFillColorPrimaryBrush" />
+            <StaticResource x:Key="ToggleButtonForegroundPressed" ResourceKey="TextFillColorSecondaryBrush" />
+            <StaticResource x:Key="ToggleButtonBorderBrush" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
+            <StaticResource x:Key="ToggleButtonBorderBrushPointerOver" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
+            <StaticResource x:Key="ToggleButtonBorderBrushPressed" ResourceKey="ControlStrongStrokeColorDefaultBrush" />
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>

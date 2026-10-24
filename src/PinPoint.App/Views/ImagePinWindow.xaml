@@ -89,6 +89,10 @@
             <StackPanel.OpacityTransition>
                 <ScalarTransition Duration="0:0:0.12" />
             </StackPanel.OpacityTransition>
+            <StackPanel.Resources>
+                <!-- Solid fills so the buttons stay readable on white, black or busy snips. -->
+                <ResourceDictionary Source="ms-appx:///Styles/PinChips.xaml" />
+            </StackPanel.Resources>
 
             <ToggleButton x:Name="TextModeButton" Visibility="Collapsed" Click="TextModeButton_Click"
                           Width="26" Height="26" Padding="0" CornerRadius="13"
@@ -99,8 +103,6 @@
 
             <Button x:Name="CloseButton" Click="Close_Click"
                     Width="26" Height="26" Padding="0" CornerRadius="13"
-                    Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
                     ToolTipService.ToolTip="Close (middle-click)">
                 <FontIcon Glyph="&#xE711;" FontSize="10" />
             </Button>
@@ -110,7 +112,8 @@
         <Border x:Name="Badge" IsHitTestVisible="False" Opacity="0"
                 HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="6"
                 Padding="8,2" CornerRadius="4"
-                Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}">
+                Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+                BorderBrush="{ThemeResource ControlStrongStrokeColorDefaultBrush}" BorderThickness="1">
             <Border.OpacityTransition>
                 <ScalarTransition Duration="0:0:0.15" />
             </Border.OpacityTransition>
