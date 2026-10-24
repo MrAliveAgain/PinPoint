@@ -35,8 +35,8 @@ It sits in the tray and doesn't do anything until you press a shortcut.
 ## Download
 
 1. Grab the latest `.zip` from **[Releases](https://github.com/MrAliveAgain/PinPoint/releases/latest)**.
-2. Unzip it wherever you like.
-3. Run `PinPoint.exe`. It shows up in the system tray.
+2. Right-click the zip → **Extract All**, and put the folder wherever you like. (Don't run it from inside the zip; it needs the files next to it.)
+3. Run `PinPoint.exe` from the extracted folder. It shows up in the system tray.
 
 Needs Windows 11 (64-bit). Everything else it needs is already in the folder.
 
