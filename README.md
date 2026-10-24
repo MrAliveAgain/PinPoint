@@ -42,7 +42,7 @@ It sits in the tray and doesn't do anything until you press a shortcut.
 
 Needs Windows 11 (64-bit). Everything else it needs is already in the folder.
 
-> **Heads up:** the exe isn't code-signed (certificates cost a lot for a hobby project), so the first time you run it Windows SmartScreen may say *"Windows protected your PC"*. Click **More info â†’ Run anyway**. All the source is right here if you'd rather build it yourself.
+> **Heads up:** the exe isn't code-signed (certificates cost a lot for a hobby project), so the first time you run it Windows SmartScreen may say *"Windows protected your PC"*. Click **More info > Run anyway**. All the source is right here if you'd rather build it yourself.
 
 If you want it to start with Windows, there's a toggle in Settings. It's off by default.
 
