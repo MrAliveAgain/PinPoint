@@ -5,7 +5,7 @@
 <h1 align="center">PinPoint</h1>
 
 <p align="center">
-  Pin windows, or just the part of the screen you need, on top of everything. Including your game. Copy text off of pinned screenshots, draw on them, and more coming soon.
+  Pin windows, or just the part of the screen you need, on top of everything. Including your game. Copy text off of pinned screenshots, draw on them, pin notes, and more coming soon.
 </p>
 
 <p align="center">
