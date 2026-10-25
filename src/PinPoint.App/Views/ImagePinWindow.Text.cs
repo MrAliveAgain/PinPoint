@@ -77,7 +77,7 @@ public sealed partial class ImagePinWindow
     {
         if (!_showingTextHint) return;
         _showingTextHint = false;
-        if (!_pointerOver && !_dragging) SetHoverChrome(false);
+        if (!_pointerOver && !_drag.IsDragging) SetHoverChrome(false);
     }
 
     private void BuildWordBoxes()

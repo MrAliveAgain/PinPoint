@@ -14,6 +14,7 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
@@ -37,20 +38,22 @@
                     </DropDownButton.Flyout>
                 </DropDownButton>
 
-                <ToggleButton x:Name="HideAllToggle" Grid.Column="3" Click="HideAll_Click"
-                              ToolTipService.ToolTip="Hide or show every pin">
+                <Button Grid.Column="2" Click="NewNote_Click" ToolTipService.ToolTip="Open a note that floats on top">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon Glyph="&#xED1A;" FontSize="16" />
-                        <TextBlock Text="Hide all" />
+                        <FontIcon Glyph="&#xE70B;" FontSize="16" />
+                        <TextBlock Text="New note" />
                     </StackPanel>
+                </Button>
+
+                <!-- Icon-only toggles keep the row from overflowing; tooltips name them. -->
+                <ToggleButton x:Name="HideAllToggle" Grid.Column="4" Click="HideAll_Click"
+                              ToolTipService.ToolTip="Hide all pins (click again to show them)">
+                    <FontIcon Glyph="&#xED1A;" FontSize="16" />
                 </ToggleButton>
 
-                <ToggleButton x:Name="ClickThroughToggle" Grid.Column="4" Click="ClickThrough_Click"
-                              ToolTipService.ToolTip="Let clicks pass through every pin">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon Glyph="&#xE8B0;" FontSize="16" />
-                        <TextBlock Text="Click-through" />
-                    </StackPanel>
+                <ToggleButton x:Name="ClickThroughToggle" Grid.Column="5" Click="ClickThrough_Click"
+                              ToolTipService.ToolTip="Click-through: clicks pass through every pin">
+                    <FontIcon Glyph="&#xE8B0;" FontSize="16" />
                 </ToggleButton>
             </Grid>
 
@@ -116,7 +119,7 @@
                     <TextBlock Text="Nothing pinned yet" Style="{StaticResource SubtitleTextBlockStyle}" />
                     <TextBlock Style="{StaticResource BodyTextBlockStyle}" TextWrapping="Wrap"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                               Text="Snip part of the screen or pin a window and it'll show up here. Pins float above everything, including games in borderless windowed mode. If a snip has text in it, you can copy the text too." />
+                               Text="Snip part of the screen, pin a window or open a note and it'll show up here. Pins float above everything, including games in borderless windowed mode. If a snip has text in it, you can copy the text too." />
                 </StackPanel>
             </Border>
 

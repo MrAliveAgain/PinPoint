@@ -111,3 +111,45 @@ public sealed class SnipPinItem : PinItem
 
     public override void CopyText() => Window.CopyAllText();
 }
+
+public sealed class NotePinItem : PinItem
+{
+    public NotePinItem(NotePinWindow window)
+    {
+        Window = window;
+        window.Changed += (_, _) => Refresh();
+    }
+
+    public NotePinWindow Window { get; }
+
+    /// <summary>The note's first line, like a sticky note's title.</summary>
+    public override string Title
+    {
+        get
+        {
+            string first = Window.Text.Split('\r', '\n').FirstOrDefault(l => l.Trim().Length > 0)?.Trim() ?? string.Empty;
+            return first.Length == 0 ? "Empty note" : first.Length > 60 ? first[..57] + "…" : first;
+        }
+    }
+
+    public override string Subtitle => "Note";
+
+    public override string Glyph => ""; // quick note
+
+    public override bool SupportsOpacity => true;
+
+    public override double OpacityPercent
+    {
+        get => Math.Round(Window.PinOpacity * 100);
+        set
+        {
+            if (Math.Abs(value - OpacityPercent) < 0.5) return;
+            Window.PinOpacity = value / 100;
+            OnPropertyChanged();
+        }
+    }
+
+    public override string RemoveLabel => "Close";
+
+    public override void Remove() => Window.CloseNote();
+}

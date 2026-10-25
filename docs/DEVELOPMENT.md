@@ -35,7 +35,9 @@ tools/make-icon.ps1   regenerates the app icon
 
 * **`AppHost`** is the composition root. It creates every service and owns the tray icon, hotkeys and the main window.
 * **Commands** (`Commands/AppCommand.cs`) are the main extension point. Register an `AppCommand` in `AppHost.RegisterCommands` and it automatically gets a rebindable global shortcut on the Settings page and, if you want, a tray-menu entry.
-* **`PinManager`** is the single source of truth for pins: other apps' windows plus PinPoint's own snip windows. It also pushes pins back on top when a topmost game grabs focus.
+* **`PinManager`** is the single source of truth for pins: other apps' windows plus PinPoint's own windows. It also pushes pins back on top when a topmost game grabs focus.
+* **`IPinSurface`** is what a PinPoint-owned pin window implements (today `ImagePinWindow` for snips and `NotePinWindow` for notes). PinManager drives all surfaces the same way (re-raising, hide all, click-through, fading), so a new pin kind is one window class plus a `PinItem` for the Pins list. `WindowDragger` handles drag-to-move for borderless windows.
+* **Notes** are stored by `NoteStore` (Core, unit-tested): one `.txt` per note plus `layout.json` for position, size and opacity. Closing a note with text moves it to `notes\closed`.
 * **`SnipService`** runs the snip flow: capture → `SnipOverlayWindow` → `ImagePinWindow` → save/copy. Capture sits behind `IScreenCapture`, so a Windows.Graphics.Capture backend can be swapped in.
 * **Settings** are plain JSON (`AppSettings`) in `%LocalAppData%\PinPoint`. A new setting is just a property with a default. Unknown or missing fields are tolerated, and a corrupt file is backed up rather than lost.
 * Package versions live in one place: `Directory.Packages.props`.

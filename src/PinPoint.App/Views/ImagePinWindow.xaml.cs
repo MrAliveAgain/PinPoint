@@ -23,7 +23,7 @@ namespace PinPoint.Views;
 /// A floating, always-on-top snip. Drag to move, wheel to zoom, right-button+wheel for opacity,
 /// middle-click/Esc to close, right-click for more. Text selection lives in ImagePinWindow.Text.cs.
 /// </summary>
-public sealed partial class ImagePinWindow : Window
+public sealed partial class ImagePinWindow : Window, IPinSurface
 {
     private const double ZoomStep = 1.1;
     private const int MinZoomStep = -24; // ≈ 10 %
@@ -45,11 +45,9 @@ public sealed partial class ImagePinWindow : Window
     private int _zoomStep;
     private double _opacity = 1.0;
     private bool _clickThrough;
-    private bool _dragging;
     private bool _rightHeld;
     private bool _scrolledWhileRightHeld;
-    private Win32.POINT _dragCursorStart;
-    private PointInt32 _dragWindowStart;
+    private readonly WindowDragger _drag;
     private string? _savedPath;
 
     public ImagePinWindow(CapturedFrame frame, SnipStorage storage, OcrService ocr, SettingsService settings)
@@ -61,6 +59,7 @@ public sealed partial class ImagePinWindow : Window
         _settings = settings;
         _takesFocus = settings.Current.PinsTakeFocus;
         _hwnd = this.GetHandle();
+        _drag = new WindowDragger(AppWindow);
 
         WindowHelpers.MakeToolSurface(AppWindow, alwaysOnTop: true);
         WindowStyler.SetExStyleFlag(_hwnd, Win32.WS_EX_TOOLWINDOW, true);
@@ -110,6 +109,8 @@ public sealed partial class ImagePinWindow : Window
 
     /// <summary>True while the right-click menu is open (PinManager must not re-order windows then).</summary>
     public bool IsShowingMenu { get; private set; }
+
+    public bool IsInteracting => IsShowingMenu;
 
     public PixelRect ScreenBounds => WindowHelpers.GetClientScreenRect(_hwnd, AppWindow);
 
@@ -198,21 +199,11 @@ public sealed partial class ImagePinWindow : Window
 
         if (!properties.IsLeftButtonPressed) return;
 
-        // Track in screen space: pointer coords relative to a moving window would feed back on themselves.
-        Win32.GetCursorPos(out _dragCursorStart);
-        _dragWindowStart = AppWindow.Position;
-        _dragging = Root.CapturePointer(e.Pointer);
+        _drag.Begin(Root, e.Pointer);
         e.Handled = true;
     }
 
-    private void Root_PointerMoved(object sender, PointerRoutedEventArgs e)
-    {
-        if (!_dragging) return;
-        Win32.GetCursorPos(out var cursor);
-        AppWindow.Move(new PointInt32(
-            _dragWindowStart.X + cursor.X - _dragCursorStart.X,
-            _dragWindowStart.Y + cursor.Y - _dragCursorStart.Y));
-    }
+    private void Root_PointerMoved(object sender, PointerRoutedEventArgs e) => _drag.Update();
 
     private void Root_PointerReleased(object sender, PointerRoutedEventArgs e)
     {
@@ -226,12 +217,10 @@ public sealed partial class ImagePinWindow : Window
             return;
         }
 
-        if (!_dragging) return;
-        _dragging = false;
-        Root.ReleasePointerCapture(e.Pointer);
+        _drag.End(Root, e.Pointer);
     }
 
-    private void Root_PointerCaptureLost(object sender, PointerRoutedEventArgs e) => _dragging = false;
+    private void Root_PointerCaptureLost(object sender, PointerRoutedEventArgs e) => _drag.Cancel();
 
     private void Root_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
     {
@@ -267,7 +256,7 @@ public sealed partial class ImagePinWindow : Window
     private void Root_PointerExited(object sender, PointerRoutedEventArgs e)
     {
         _pointerOver = false;
-        if (!_dragging && !_showingTextHint) SetHoverChrome(false);
+        if (!_drag.IsDragging && !_showingTextHint) SetHoverChrome(false);
     }
 
     private void SetHoverChrome(bool visible)

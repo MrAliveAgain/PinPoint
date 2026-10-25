@@ -1,7 +1,9 @@
 using System.Collections.ObjectModel;
 using Microsoft.UI.Dispatching;
+using PinPoint.Core;
 using PinPoint.Core.Capture;
 using PinPoint.Core.Interop;
+using PinPoint.Core.Notes;
 using PinPoint.Core.Windows;
 using PinPoint.Helpers;
 using PinPoint.ViewModels;
@@ -10,14 +12,16 @@ using PinPoint.Views;
 namespace PinPoint.Services;
 
 /// <summary>
-/// Single source of truth for everything pinned: other apps' windows and PinPoint's own snip windows.
-/// Also keeps pins above games that make themselves topmost.
+/// Single source of truth for everything pinned: other apps' windows plus PinPoint's own surfaces
+/// (snips and notes, see <see cref="IPinSurface"/>). Also keeps pins above games that make themselves topmost.
 /// </summary>
 public sealed class PinManager : IDisposable
 {
     private readonly WindowPinService _windows = new();
     private readonly ForegroundWatcher _foreground = new();
     private readonly List<ImagePinWindow> _snips = [];
+    private readonly List<NotePinWindow> _notes = [];
+    private readonly NoteStore _noteStore = new(AppPaths.NotesDirectory);
     private readonly SettingsService _settings;
     private readonly SnipStorage _storage;
     private readonly OcrService _ocr;
@@ -67,11 +71,16 @@ public sealed class PinManager : IDisposable
     public bool IsHidden { get; private set; }
 
     public bool IsClickThrough =>
-        _snips.Exists(s => s.IsClickThrough) || _windows.Pins.Any(p => p.IsClickThrough);
+        Surfaces.Any(s => s.IsClickThrough) || _windows.Pins.Any(p => p.IsClickThrough);
 
     public bool HasPins => Items.Count > 0;
 
     public bool HasSnips => _snips.Count > 0;
+
+    public string NotesFolder => _noteStore.Directory;
+
+    /// <summary>Every PinPoint-owned pin window (snips and notes), treated alike for raise/hide/fade.</summary>
+    private IEnumerable<IPinSurface> Surfaces => _snips.Cast<IPinSurface>().Concat(_notes);
 
     // ---- Window pins --------------------------------------------------------------------------
 
@@ -152,6 +161,39 @@ public sealed class PinManager : IDisposable
         OnStateChanged();
     }
 
+    // ---- Notes --------------------------------------------------------------------------------
+
+    /// <summary>Opens a new, empty note near the mouse and puts the cursor in it.</summary>
+    public void CreateNote()
+    {
+        ShowAll();
+        AddNote(new StoredNote(NoteStore.CreateId(), string.Empty, null), activate: true);
+    }
+
+    /// <summary>Reopens the notes that were open when PinPoint last exited (without taking focus).</summary>
+    public void RestoreNotes()
+    {
+        foreach (var note in _noteStore.LoadAll()) AddNote(note, activate: false);
+    }
+
+    private void AddNote(StoredNote note, bool activate)
+    {
+        var window = new NotePinWindow(note, _noteStore);
+        window.Closed += (_, _) => OnNoteClosed(window);
+        _notes.Add(window);
+        Items.Add(new NotePinItem(window));
+        window.ShowAt(note.Layout, activate);
+        if (IsHidden) window.SetHidden(true);
+        OnStateChanged();
+    }
+
+    private void OnNoteClosed(NotePinWindow window)
+    {
+        _notes.Remove(window);
+        if (Items.OfType<NotePinItem>().FirstOrDefault(i => i.Window == window) is { } item) Items.Remove(item);
+        OnStateChanged();
+    }
+
     // ---- Global toggles -----------------------------------------------------------------------
 
     public void ToggleHidden()
@@ -164,7 +206,7 @@ public sealed class PinManager : IDisposable
 
         IsHidden = !IsHidden;
         _windows.SetHidden(IsHidden);
-        foreach (var snip in _snips) snip.SetHidden(IsHidden);
+        foreach (var surface in Surfaces) surface.SetHidden(IsHidden);
         _notifier.Show(IsHidden ? "" : "", IsHidden ? "Pins hidden" : "Pins shown");
         OnStateChanged();
     }
@@ -178,7 +220,7 @@ public sealed class PinManager : IDisposable
         }
 
         bool enable = !IsClickThrough;
-        foreach (var snip in _snips) snip.IsClickThrough = enable;
+        foreach (var surface in Surfaces) surface.IsClickThrough = enable;
         foreach (var pin in _windows.Pins) _windows.SetClickThrough(pin, enable);
 
         _notifier.Show("", enable ? "Click-through on" : "Click-through off",
@@ -201,14 +243,16 @@ public sealed class PinManager : IDisposable
 
         // Hit-test by bounds rather than WindowFromPoint, which skips click-through pins.
         Win32.GetCursorPos(out var cursor);
-        var snip = _snips.FindLast(s => s.ScreenBounds.Contains(cursor.X, cursor.Y));
-        var window = snip is null
+        var surface = Surfaces.LastOrDefault(s => s.ScreenBounds.Contains(cursor.X, cursor.Y));
+        var window = surface is null
             ? _windows.Pins.LastOrDefault(p => WindowEnumerator.GetBounds(p.Handle).Contains(cursor.X, cursor.Y))
             : null;
 
-        if (snip is not null)
+        if (surface is not null)
         {
-            snip.NudgeOpacity(direction);
+            surface.NudgeOpacity(direction);
+            // Snips show their own badge; notes have nowhere to show one.
+            if (surface is NotePinWindow) _notifier.Show("", $"Opacity {surface.PinOpacity:P0}", "Note");
         }
         else if (window is not null)
         {
@@ -222,9 +266,9 @@ public sealed class PinManager : IDisposable
         }
         else
         {
-            foreach (var s in _snips) s.PinOpacity += direction * 0.1;
+            foreach (var s in Surfaces) s.PinOpacity += direction * 0.1;
             foreach (var p in _windows.Pins) _windows.SetOpacity(p, p.Opacity + direction * 0.1);
-            double shown = _snips.Count > 0 ? _snips[^1].PinOpacity : _windows.Pins[^1].Opacity;
+            double shown = Surfaces.LastOrDefault()?.PinOpacity ?? _windows.Pins[^1].Opacity;
             _notifier.Show("", $"All pins · opacity {shown:P0}");
         }
 
@@ -252,9 +296,9 @@ public sealed class PinManager : IDisposable
     public IDisposable ShowSolidForCapture()
     {
         int changed = _windows.SetTemporarilyOpaque(true);
-        foreach (var snip in _snips)
+        foreach (var surface in Surfaces)
         {
-            if (!IsHidden && snip.SetTemporarilyOpaque(true)) changed++;
+            if (!IsHidden && surface.SetTemporarilyOpaque(true)) changed++;
         }
 
         if (changed > 0)
@@ -268,7 +312,7 @@ public sealed class PinManager : IDisposable
         {
             if (changed == 0) return;
             _windows.SetTemporarilyOpaque(false);
-            foreach (var snip in _snips) snip.SetTemporarilyOpaque(false);
+            foreach (var surface in Surfaces) surface.SetTemporarilyOpaque(false);
         });
     }
 
@@ -282,6 +326,7 @@ public sealed class PinManager : IDisposable
         _foreground.Dispose();
         RestoreExternalWindows();
         CloseAllSnips();
+        foreach (var note in _notes.ToArray()) note.Shutdown(); // saved, and back next launch
     }
 
     private void ShowAll()
@@ -289,15 +334,15 @@ public sealed class PinManager : IDisposable
         if (!IsHidden) return;
         IsHidden = false;
         _windows.SetHidden(false);
-        foreach (var snip in _snips) snip.SetHidden(false);
+        foreach (var surface in Surfaces) surface.SetHidden(false);
     }
 
     private void RaiseAll()
     {
-        // Re-ordering windows closes any open WinUI menu, so leave everything alone while a snip's menu is up.
-        if (IsHidden || _raiseSuspensions > 0 || _snips.Exists(s => s.IsShowingMenu)) return;
+        // Re-ordering windows closes open menus and can cover a note being typed in, so hold off then.
+        if (IsHidden || _raiseSuspensions > 0 || Surfaces.Any(s => s.IsInteracting)) return;
         _windows.RaiseAll();
-        foreach (var snip in _snips) snip.RaiseTopmost();
+        foreach (var surface in Surfaces) surface.RaiseTopmost();
     }
 
     private void Maintain()

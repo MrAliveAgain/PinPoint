@@ -73,6 +73,8 @@ public sealed class AppHost : IDisposable
         _tray = new TrayIcon(_messageWindow, WindowHelpers.IconPath, "PinPoint") { MenuFactory = BuildTrayMenu };
         _tray.Invoked += () => ShowManager();
 
+        Pins.RestoreNotes(); // notes that were open last time come back where they were
+
         // Last line of defence: never leave other apps' windows topmost/transparent behind us.
         AppDomain.CurrentDomain.ProcessExit += (_, _) => RestoreExternalWindows();
     }
@@ -161,6 +163,16 @@ public sealed class AppHost : IDisposable
             Glyph = "",
             DefaultHotkey = "Ctrl+Alt+S",
             Execute = Snips.Start,
+        });
+
+        Commands.Add(new AppCommand
+        {
+            Id = CommandIds.NewNote,
+            Title = "New note",
+            Description = "Open a blank note that floats on top. It saves as you type and comes back after a restart.",
+            Glyph = "",
+            DefaultHotkey = "Ctrl+Alt+N",
+            Execute = Pins.CreateNote,
         });
 
         Commands.Add(new AppCommand

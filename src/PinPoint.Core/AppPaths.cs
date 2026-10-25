@@ -14,4 +14,7 @@ public static class AppPaths
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), AppName);
 
     public static string SettingsFile { get; } = Path.Combine(DataDirectory, "settings.json");
+
+    /// <summary>%LocalAppData%\PinPoint\notes — one .txt per note.</summary>
+    public static string NotesDirectory { get; } = Path.Combine(DataDirectory, "notes");
 }

@@ -34,6 +34,7 @@ It sits in the tray and doesn't do anything until you press a shortcut.
 
   <img src="docs/copy-text.png" alt="In-game dialogue snipped and pinned with text mode on: the words are highlighted, the T button is switched on, and the badge says Drag over text to copy it" width="720">
 
+- **Scratch-pad notes.** <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd> opens a little note that floats on top, for jotting down a quest step, a code, or text you copied from a snip. Drag it by its header and resize it from the edges. It saves as you type and comes back where you left it after a restart.
 - **Stays over games.** Anything in borderless or windowed mode. If a game puts itself back on top, PinPoint puts your pins back over it.
 - **Easy to get out of the way.** Hide every pin at once, fade them, or make them click-through so your clicks go straight to the game.
 - **Small and quick.** No installer, no account, no internet connection. Just an exe in a folder.
@@ -62,6 +63,7 @@ All of these can be changed in Settings.
 |---|---|
 | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>S</kbd> | Snip a part of the screen and pin it |
 | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>P</kbd> | Pin / unpin the window you're in |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd> | New note |
 | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>H</kbd> | Hide / show all pins |
 | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>G</kbd> | Click-through on / off |
 | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>↓</kbd> / <kbd>↑</kbd> | Fade / unfade the pin under your mouse |
@@ -91,11 +93,12 @@ You can snip from a pinned window or from another snip too. It works the same as
 
 - Settings and logs: `%LocalAppData%\PinPoint`
 - Saved snips: `Pictures\PinPoint` (you can change this)
+- Notes: `%LocalAppData%\PinPoint\notes`, one plain `.txt` file per note. When you close a note that has text in it, it's moved to `notes\closed` rather than deleted, in case you closed it by accident.
 - Start with Windows, only if you turn it on: one entry under `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`
 
 Pinned windows go back exactly how they were when you unpin them or quit. PinPoint never connects to the internet and doesn't collect anything.
 
-**Uninstalling:** quit it from the tray and delete the folder. Delete `%LocalAppData%\PinPoint` too if you want your settings gone.
+**Uninstalling:** quit it from the tray and delete the folder. Delete `%LocalAppData%\PinPoint` too if you want your settings and notes gone.
 
 ## Building it yourself
 
