@@ -49,14 +49,16 @@ public sealed class BoardService
 
     public IReadOnlyList<BoardInfo> List() => _store.List();
 
-    /// <summary>Saves what's pinned now as a new board and keeps working in it.</summary>
-    public async Task SaveAsNewAsync(string name)
+    /// <summary>Saves what's pinned now as a new board and keeps working in it. False if it couldn't be written.</summary>
+    public async Task<bool> SaveAsNewAsync(string name)
     {
         string id = BoardStore.CreateId();
-        await WriteAsync(id, name);
+        if (!await WriteAsync(id, name)) return false; // leave the notes where they are
 
         foreach (var note in _pins.Notes) note.MoveToBoard(); // the board owns them now
         SetCurrent(id, name);
+        Log.Info($"Saved new board {id}");
+        return true;
     }
 
     /// <summary>Opens a board, replacing what's pinned. Callers ask about unsaved pins first.</summary>
@@ -97,6 +99,7 @@ public sealed class BoardService
 
         SetCurrent(id, board.Name);
         _lastSavedJson = BoardStore.ToJson(Snapshot(board.Name));
+        Log.Info($"Opened board {id} ({images.Count} snips, {board.Notes.Count} notes)");
     }
 
     /// <summary>Saves and closes the open board, leaving nothing pinned (pinned windows stay).</summary>
@@ -188,15 +191,15 @@ public sealed class BoardService
         _writing = WriteSnapshotAsync(id, board, NewImages(id));
     }
 
-    private async Task WriteAsync(string id, string name)
+    private Task<bool> WriteAsync(string id, string name)
     {
         var board = Snapshot(name);
         _lastSavedJson = BoardStore.ToJson(board);
-        await WriteSnapshotAsync(id, board, NewImages(id));
+        return WriteSnapshotAsync(id, board, NewImages(id));
     }
 
-    /// <summary>Encodes new snip images and writes everything, off the UI thread.</summary>
-    private Task WriteSnapshotAsync(string id, Board board, List<(string SnipId, CapturedFrame Frame)> images) =>
+    /// <summary>Encodes new snip images and writes everything, off the UI thread. False if it failed.</summary>
+    private Task<bool> WriteSnapshotAsync(string id, Board board, List<(string SnipId, CapturedFrame Frame)> images) =>
         Task.Run(async () =>
         {
             try
@@ -204,11 +207,13 @@ public sealed class BoardService
                 foreach (var (snipId, frame) in images)
                     _store.SaveImage(id, snipId, await SnipStorage.EncodePngAsync(frame));
                 _store.Save(id, board);
+                return true;
             }
             catch (Exception ex)
             {
                 Log.Error($"Could not save board {id}", ex);
                 _lastSavedJson = null; // try again on the next tick
+                return false;
             }
         });
 

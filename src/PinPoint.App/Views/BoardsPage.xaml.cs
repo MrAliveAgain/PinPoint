@@ -166,8 +166,16 @@ public sealed partial class BoardsPage : Page
     {
         if (!_host.Boards.HasPinsToSave) return false;
         if (await AskNameAsync("Save as board", $"Board {DateTime.Now:d MMM}") is not { } name) return false;
-        await _host.Boards.SaveAsNewAsync(name);
-        return true;
+        if (await _host.Boards.SaveAsNewAsync(name)) return true;
+
+        await new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = "Couldn't save the board",
+            Content = "Nothing was changed: your snips and notes are still pinned. The log in %LocalAppData%\\PinPoint\\logs has the details.",
+            CloseButtonText = "OK",
+        }.ShowAsync();
+        return false;
     }
 
     private async Task<string?> AskNameAsync(string title, string? initial)
