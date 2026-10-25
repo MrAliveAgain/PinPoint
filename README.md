@@ -35,6 +35,9 @@ It sits in the tray and doesn't do anything until you press a shortcut.
   <img src="docs/copy-text.png" alt="In-game dialogue snipped and pinned with text mode on: the words are highlighted, the T button is switched on, and the badge says Drag over text to copy it" width="720">
 
 - **Mark up snips.** Click the pen on a snip and draw on it in red: circle the bit that matters, cross off what you've done. Right-drag erases a line, and undo, redo and erase-all sit right next to the pen. Lines stay on what they mark when you zoom.
+
+  <img src="docs/drawing.png" alt="A pinned guide table with finished entries crossed out in red, and the drawing buttons (undo, redo, erase all, pen) along the top" width="424">
+
 - **Scratch-pad notes.** <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd> opens a little note that floats on top, for jotting down a quest step, a code, or text you copied from a snip. Drag it by its header and resize it from the edges. It saves as you type and comes back where you left it after a restart.
 - **Stays over games.** Anything in borderless or windowed mode. If a game puts itself back on top, PinPoint puts your pins back over it.
 - **Easy to get out of the way.** Hide every pin at once, fade them, or make them click-through so your clicks go straight to the game.
