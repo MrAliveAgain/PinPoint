@@ -111,6 +111,7 @@ public sealed partial class ImagePinWindow
     private void SetTextMode(bool on)
     {
         on &= HasText && !_clickThrough;
+        if (on) SetDrawMode(false); // one mode at a time
         bool changed = on != _textMode;
         _textMode = on;
         TextModeButton.IsChecked = on;

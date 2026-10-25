@@ -67,6 +67,7 @@ public sealed partial class ImagePinWindow : Window, IPinSurface
 
         Bitmap = frame.ToWriteableBitmap();
         PinImage.Source = Bitmap;
+        InitInk();
 
         Menu.Opened += (_, _) => IsShowingMenu = true;
         Menu.Closed += (_, _) => IsShowingMenu = false;
@@ -135,7 +136,12 @@ public sealed partial class ImagePinWindow : Window, IPinSurface
             WindowStyler.SetExStyleFlag(_hwnd, Win32.WS_EX_TRANSPARENT, value);
             ApplyLayering();
             SetHoverChrome(false);
-            if (value) SetTextMode(false); // can't select what can't be clicked
+            if (value)
+            {
+                // Can't select or draw on what can't be clicked.
+                SetTextMode(false);
+                SetDrawMode(false);
+            }
         }
     }
 
@@ -210,7 +216,7 @@ public sealed partial class ImagePinWindow : Window, IPinSurface
         var point = e.GetCurrentPoint(Root);
         if (point.Properties.PointerUpdateKind == PointerUpdateKind.RightButtonReleased)
         {
-            bool showMenu = _rightHeld && !_scrolledWhileRightHeld;
+            bool showMenu = _rightHeld && !_scrolledWhileRightHeld && !RightPressWasErase;
             _rightHeld = false;
             if (showMenu) Menu.ShowAt(Root, new FlyoutShowOptions { Position = point.Position });
             e.Handled = true;
@@ -340,6 +346,8 @@ public sealed partial class ImagePinWindow : Window, IPinSurface
         ShowInFolderItem.Visibility = SavedPath is null ? Visibility.Collapsed : Visibility.Visible;
         CopyTextItem.Visibility = SelectTextItem.Visibility = HasText ? Visibility.Visible : Visibility.Collapsed;
         SelectTextItem.IsChecked = _textMode;
+        DrawItem.IsChecked = _drawMode;
+        ClearDrawingItem.Visibility = _ink.Strokes.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         ClickThroughItem.IsChecked = _clickThrough;
         Opacity100.IsChecked = _opacity > 0.9;
         Opacity80.IsChecked = _opacity is > 0.7 and <= 0.9;

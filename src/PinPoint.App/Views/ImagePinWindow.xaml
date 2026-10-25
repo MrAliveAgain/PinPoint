@@ -34,6 +34,12 @@
                 <ToggleMenuFlyoutItem x:Name="SelectTextItem" Text="Select text" Click="SelectText_Click">
                     <ToggleMenuFlyoutItem.Icon><FontIcon Glyph="&#xE8E9;" /></ToggleMenuFlyoutItem.Icon>
                 </ToggleMenuFlyoutItem>
+                <ToggleMenuFlyoutItem x:Name="DrawItem" Text="Draw" Click="DrawItem_Click">
+                    <ToggleMenuFlyoutItem.Icon><FontIcon Glyph="&#xE70F;" /></ToggleMenuFlyoutItem.Icon>
+                </ToggleMenuFlyoutItem>
+                <MenuFlyoutItem x:Name="ClearDrawingItem" Text="Clear drawing" Click="ClearInk_Click">
+                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE75C;" /></MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
                 <MenuFlyoutItem Text="Save as…" Click="SaveAs_Click">
                     <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE792;" /></MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
@@ -64,6 +70,20 @@
         <Image x:Name="PinImage" Stretch="Fill" />
 
         <!--
+          Drawing: strokes live in snip pixels on a canvas the size of the snip, scaled with the image by
+          the Viewbox, so they stay on what they mark and get thicker as you zoom in. Always visible;
+          only takes the mouse while draw mode is on.
+        -->
+        <Viewbox x:Name="InkLayer" Stretch="Fill">
+            <controls:CursorCanvas x:Name="InkCanvas" IsHitTestVisible="False"
+                                   PointerPressed="InkCanvas_PointerPressed"
+                                   PointerMoved="InkCanvas_PointerMoved"
+                                   PointerReleased="InkCanvas_PointerReleased"
+                                   PointerCaptureLost="InkCanvas_PointerCaptureLost"
+                                   DoubleTapped="InkCanvas_DoubleTapped" />
+        </Viewbox>
+
+        <!--
           Text-select mode: word boxes drawn in snip pixels on a canvas the size of the snip,
           scaled with the image by the Viewbox, so zooming needs no extra work.
         -->
@@ -91,6 +111,29 @@
             </StackPanel.OpacityTransition>
 
             <!-- Round chips (Styles/PinChips.xaml): solid and smooth over any snip content. -->
+
+            <!-- Drawing tools, only while draw mode is on. Buttons, not Ctrl+Z: snips usually lack keyboard focus. -->
+            <StackPanel x:Name="DrawTools" Orientation="Horizontal" Spacing="4" Visibility="Collapsed">
+                <Button x:Name="UndoButton" Click="UndoInk_Click" Style="{StaticResource PinChipButtonStyle}"
+                        ToolTipService.ToolTip="Undo">
+                    <FontIcon Glyph="&#xE7A7;" FontSize="10" />
+                </Button>
+                <Button x:Name="RedoButton" Click="RedoInk_Click" Style="{StaticResource PinChipButtonStyle}"
+                        ToolTipService.ToolTip="Redo">
+                    <FontIcon Glyph="&#xE7A6;" FontSize="10" />
+                </Button>
+                <Button x:Name="ClearInkButton" Click="ClearInk_Click" Style="{StaticResource PinChipButtonStyle}"
+                        ToolTipService.ToolTip="Erase all (undo brings it back)">
+                    <FontIcon Glyph="&#xE75C;" FontSize="10" />
+                </Button>
+            </StackPanel>
+
+            <ToggleButton x:Name="DrawModeButton" Click="DrawModeButton_Click"
+                          Style="{StaticResource PinChipToggleButtonStyle}"
+                          ToolTipService.ToolTip="Draw: mark things up in red">
+                <FontIcon Glyph="&#xE70F;" FontSize="10" />
+            </ToggleButton>
+
             <ToggleButton x:Name="TextModeButton" Visibility="Collapsed" Click="TextModeButton_Click"
                           Style="{StaticResource PinChipToggleButtonStyle}"
                           ToolTipService.ToolTip="Select text: drag over words to copy them">

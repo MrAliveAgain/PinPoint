@@ -61,6 +61,7 @@ public sealed partial class PinsPage : Page
         (["Double-click"], "Back to original size"),
         (["Middle-click"], "Close it"),
         (["Click T", "Drag over text"], "Copy text (the T button appears on hover when a snip has text)"),
+        (["Click pen", "Drag"], "Draw in red to mark it up; right-drag erases (undo, redo and erase all sit by the pen)"),
         (["Right-click"], "Copy image or text, save as, opacity and more"),
     ];
 

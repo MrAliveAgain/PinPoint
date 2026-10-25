@@ -59,7 +59,11 @@
                                         <Setter Target="ContentPresenter.Foreground" Value="{StaticResource PinChipForegroundPressed}" />
                                     </VisualState.Setters>
                                 </VisualState>
-                                <VisualState x:Name="Disabled" />
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="ContentPresenter.Opacity" Value="0.35" />
+                                    </VisualState.Setters>
+                                </VisualState>
                             </VisualStateGroup>
                         </VisualStateManager.VisualStateGroups>
                     </Grid>

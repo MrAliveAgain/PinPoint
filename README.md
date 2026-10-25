@@ -34,6 +34,7 @@ It sits in the tray and doesn't do anything until you press a shortcut.
 
   <img src="docs/copy-text.png" alt="In-game dialogue snipped and pinned with text mode on: the words are highlighted, the T button is switched on, and the badge says Drag over text to copy it" width="720">
 
+- **Mark up snips.** Click the pen on a snip and draw on it in red: circle the bit that matters, cross off what you've done. Right-drag erases a line, and undo, redo and erase-all sit right next to the pen. Lines stay on what they mark when you zoom.
 - **Scratch-pad notes.** <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd> opens a little note that floats on top, for jotting down a quest step, a code, or text you copied from a snip. Drag it by its header and resize it from the edges. It saves as you type and comes back where you left it after a restart.
 - **Stays over games.** Anything in borderless or windowed mode. If a game puts itself back on top, PinPoint puts your pins back over it.
 - **Easy to get out of the way.** Hide every pin at once, fade them, or make them click-through so your clicks go straight to the game.
@@ -80,6 +81,7 @@ These mouse controls are for snips (the screenshots you pin). Pinned windows lik
 | Back to original size | Double-click |
 | Close | Middle-click or <kbd>Esc</kbd> |
 | Copy text | Click the **T** button (shows on hover), then drag over the words. Click **T** again to go back to moving the snip. |
+| Draw / erase | Click the **pen** button (shows on hover), then drag to draw. Right-drag over a line to erase it. Undo, redo and erase-all appear next to the pen. Click the pen again to go back to moving the snip. |
 | Copy image or all text, save as, opacity, click-through | Right-click |
 
 You can snip from a pinned window or from another snip too. It works the same as snipping anything else.
