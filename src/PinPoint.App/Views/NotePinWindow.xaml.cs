@@ -26,9 +26,11 @@ public sealed partial class NotePinWindow : Window, IPinSurface
     private readonly WindowDragger _drag;
     private readonly DispatcherQueueTimer _saveTimer;
     private readonly DispatcherQueueTimer _layoutTimer;
+    private readonly DispatcherQueueTimer _headerTimer;
     private double _opacity;
     private bool _clickThrough;
     private bool _shown;
+    private string? _exportPath;
 
     public NotePinWindow(StoredNote note, NoteStore store)
     {
@@ -38,6 +40,7 @@ public sealed partial class NotePinWindow : Window, IPinSurface
         _hwnd = this.GetHandle();
         _drag = new WindowDragger(AppWindow);
         _opacity = Math.Clamp(note.Layout?.Opacity ?? 1.0, 0.1, 1.0);
+        _exportPath = note.Layout?.ExportPath;
 
         var presenter = WindowHelpers.MakeToolSurface(AppWindow, alwaysOnTop: true);
         presenter.IsResizable = true;
@@ -57,11 +60,21 @@ public sealed partial class NotePinWindow : Window, IPinSurface
         _layoutTimer.Interval = TimeSpan.FromMilliseconds(600);
         _layoutTimer.Tick += (_, _) => SaveLayout();
 
+        _headerTimer = DispatcherQueue.CreateTimer();
+        _headerTimer.IsRepeating = false;
+        _headerTimer.Interval = TimeSpan.FromSeconds(1.5);
+        _headerTimer.Tick += (_, _) => UpdateHeader();
+
         AppWindow.Changed += (_, e) =>
         {
             if (_shown && (e.DidPositionChange || e.DidSizeChange)) RestartTimer(_layoutTimer);
         };
+
+        UpdateHeader();
     }
+
+    /// <summary>The .txt file this note was saved to with Save/Save as, if any.</summary>
+    public string? ExportPath => _exportPath;
 
     /// <summary>Raised when the note's title or opacity changes (for the Pins list).</summary>
     public event EventHandler? Changed;
@@ -142,6 +155,7 @@ public sealed partial class NotePinWindow : Window, IPinSurface
     {
         _saveTimer.Stop();
         _layoutTimer.Stop();
+        _headerTimer.Stop();
         _store.SaveText(Id, Editor.Text);
         _store.Close(Id);
         Close();
@@ -152,6 +166,7 @@ public sealed partial class NotePinWindow : Window, IPinSurface
     {
         _saveTimer.Stop();
         _layoutTimer.Stop();
+        _headerTimer.Stop();
         if (string.IsNullOrWhiteSpace(Editor.Text))
         {
             _store.SaveText(Id, string.Empty);
@@ -180,7 +195,83 @@ public sealed partial class NotePinWindow : Window, IPinSurface
     {
         var pos = AppWindow.Position;
         var size = AppWindow.Size;
-        _store.SaveLayout(Id, new NoteLayout(pos.X, pos.Y, size.Width, size.Height, _opacity));
+        _store.SaveLayout(Id, new NoteLayout(pos.X, pos.Y, size.Width, size.Height, _opacity, _exportPath));
+    }
+
+    // ---- Save to a file of the user's choosing (like Notepad) ---------------------------------
+
+    private async void SaveButton_Click(object sender, RoutedEventArgs e) => await SaveToFileAsync(askForPlace: false);
+
+    private async void Save_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        args.Handled = true;
+        await SaveToFileAsync(askForPlace: false);
+    }
+
+    private async void SaveAs_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        args.Handled = true;
+        await SaveToFileAsync(askForPlace: true);
+    }
+
+    /// <summary>
+    /// First save (or Save as) asks where; after that, saves straight back to the same file.
+    /// The note's own auto-save copy is unaffected.
+    /// </summary>
+    private async Task SaveToFileAsync(bool askForPlace)
+    {
+        try
+        {
+            string? path = askForPlace || _exportPath is null || !Directory.Exists(Path.GetDirectoryName(_exportPath))
+                ? await PickFileAsync()
+                : _exportPath;
+            if (path is null) return; // cancelled
+
+            await File.WriteAllTextAsync(path, Editor.Text);
+            _exportPath = path;
+            SaveLayout();
+            Changed?.Invoke(this, EventArgs.Empty);
+            FlashHeader("Saved");
+        }
+        catch (Exception ex)
+        {
+            Core.Diagnostics.Log.Error("Could not save note to file", ex);
+            FlashHeader("Couldn't save");
+        }
+    }
+
+    private async Task<string?> PickFileAsync()
+    {
+        var picker = new Windows.Storage.Pickers.FileSavePicker
+        {
+            SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary,
+            SuggestedFileName = _exportPath is not null ? Path.GetFileNameWithoutExtension(_exportPath) : SuggestedName(),
+        };
+        picker.FileTypeChoices.Add("Text file", [".txt"]);
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, _hwnd);
+
+        var file = await picker.PickSaveFileAsync();
+        return file?.Path;
+    }
+
+    /// <summary>The note's first line, made safe for a file name (like Notepad's untitled → first line).</summary>
+    private string SuggestedName()
+    {
+        string first = Editor.Text.Split('\r', '\n').FirstOrDefault(l => l.Trim().Length > 0)?.Trim() ?? string.Empty;
+        string safe = string.Concat(first.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? ' ' : c)).Trim();
+        return safe.Length == 0 ? "Note" : safe.Length > 50 ? safe[..50].TrimEnd() : safe;
+    }
+
+    private void UpdateHeader()
+    {
+        HeaderText.Text = _exportPath is null ? "Note" : Path.GetFileName(_exportPath);
+        ToolTipService.SetToolTip(HeaderText, _exportPath);
+    }
+
+    private void FlashHeader(string message)
+    {
+        HeaderText.Text = _exportPath is null ? message : $"{message} · {Path.GetFileName(_exportPath)}";
+        RestartTimer(_headerTimer);
     }
 
     private static void RestartTimer(DispatcherQueueTimer timer)

@@ -132,7 +132,8 @@ public sealed class NotePinItem : PinItem
         }
     }
 
-    public override string Subtitle => "Note";
+    public override string Subtitle =>
+        Window.ExportPath is { } path ? $"Note · saved as {Path.GetFileName(path)}" : "Note";
 
     public override string Glyph => ""; // quick note
 

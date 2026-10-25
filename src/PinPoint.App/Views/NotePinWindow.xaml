@@ -6,6 +6,10 @@
     Title="PinPoint note">
 
     <Grid x:Name="Root" Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
+        <Grid.KeyboardAccelerators>
+            <KeyboardAccelerator Key="S" Modifiers="Control" Invoked="Save_Invoked" />
+            <KeyboardAccelerator Key="S" Modifiers="Control,Shift" Invoked="SaveAs_Invoked" />
+        </Grid.KeyboardAccelerators>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -29,12 +33,20 @@
                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
             </StackPanel>
 
-            <Button x:Name="CloseButton" Grid.Column="1" Click="CloseButton_Click"
-                    Width="34" Height="28" Padding="0" CornerRadius="0"
-                    Background="Transparent" BorderThickness="0"
-                    ToolTipService.ToolTip="Close note (its text is kept in the notes\closed folder)">
-                <FontIcon Glyph="&#xE711;" FontSize="10" />
-            </Button>
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button x:Name="SaveButton" Click="SaveButton_Click"
+                        Width="34" Height="28" Padding="0" CornerRadius="0"
+                        Background="Transparent" BorderThickness="0"
+                        ToolTipService.ToolTip="Save as a .txt file (Ctrl+S · Ctrl+Shift+S to save as)">
+                    <FontIcon Glyph="&#xE74E;" FontSize="11" />
+                </Button>
+                <Button x:Name="CloseButton" Click="CloseButton_Click"
+                        Width="34" Height="28" Padding="0" CornerRadius="0"
+                        Background="Transparent" BorderThickness="0"
+                        ToolTipService.ToolTip="Close note (its text is kept in the notes\closed folder)">
+                    <FontIcon Glyph="&#xE711;" FontSize="10" />
+                </Button>
+            </StackPanel>
         </Grid>
 
         <TextBox x:Name="Editor" Grid.Row="1"

@@ -29,6 +29,21 @@ public sealed class NoteStoreTests : IDisposable
     }
 
     [Fact]
+    public void Saved_file_path_is_remembered_and_old_layouts_still_load()
+    {
+        var store = new NoteStore(_dir);
+        store.SaveText("a", "x");
+        store.SaveLayout("a", new NoteLayout(1, 2, 3, 4, 1.0, @"D:\Guides\quest.txt"));
+        Assert.Equal(@"D:\Guides\quest.txt", Assert.Single(store.LoadAll()).Layout!.ExportPath);
+
+        // A layout written before ExportPath existed.
+        File.WriteAllText(Path.Combine(_dir, "layout.json"), """{ "a": { "x": 1, "y": 2, "width": 3, "height": 4, "opacity": 0.5 } }""");
+        var layout = Assert.Single(store.LoadAll()).Layout!;
+        Assert.Null(layout.ExportPath);
+        Assert.Equal(0.5, layout.Opacity);
+    }
+
+    [Fact]
     public void Closing_keeps_notes_with_text_and_deletes_empty_ones()
     {
         var store = new NoteStore(_dir);

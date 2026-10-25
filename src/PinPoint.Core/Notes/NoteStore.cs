@@ -4,8 +4,11 @@ using PinPoint.Core.Diagnostics;
 
 namespace PinPoint.Core.Notes;
 
-/// <summary>Where a note window sits (physical pixels) and how faded it is.</summary>
-public sealed record NoteLayout(int X, int Y, int Width, int Height, double Opacity = 1.0);
+/// <summary>
+/// Where a note window sits (physical pixels), how faded it is, and the .txt file the user saved it to
+/// with Save/Save as (null until then; Ctrl+S then saves straight back to it, like Notepad).
+/// </summary>
+public sealed record NoteLayout(int X, int Y, int Width, int Height, double Opacity = 1.0, string? ExportPath = null);
 
 public sealed record StoredNote(string Id, string Text, NoteLayout? Layout);
 
