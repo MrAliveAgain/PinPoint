@@ -34,6 +34,9 @@ public sealed class AppSettings
     /// <summary>One-time hint that closing the window keeps PinPoint in the tray.</summary>
     public bool HasShownTrayHint { get; set; }
 
+    /// <summary>Board that was open when PinPoint last exited; reopened on start. Null = none.</summary>
+    public string? OpenBoardId { get; set; }
+
     /// <summary>How many times a snip has pointed out "text found, click T". Stops after a few.</summary>
     public int TextHintsShown { get; set; }
 }

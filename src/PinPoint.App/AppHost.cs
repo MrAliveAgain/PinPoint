@@ -33,6 +33,7 @@ public sealed class AppHost : IDisposable
         Ocr = new OcrService();
         Pins = new PinManager(dispatcher, Settings, Storage, Ocr, Notifier);
         Snips = new SnipService(Pins, Storage, Settings, Notifier);
+        Boards = new BoardService(dispatcher, Pins, Settings);
         RegisterCommands();
     }
 
@@ -52,6 +53,8 @@ public sealed class AppHost : IDisposable
     public PinManager Pins { get; }
 
     public SnipService Snips { get; }
+
+    public BoardService Boards { get; }
 
     public CommandRegistry Commands { get; } = new();
 
@@ -74,6 +77,7 @@ public sealed class AppHost : IDisposable
         _tray.Invoked += () => ShowManager();
 
         Pins.RestoreNotes(); // notes that were open last time come back where they were
+        _ = Boards.RestoreLastAsync(); // and so does the board you were working on
 
         // Last line of defence: never leave other apps' windows topmost/transparent behind us.
         AppDomain.CurrentDomain.ProcessExit += (_, _) => RestoreExternalWindows();
@@ -132,6 +136,7 @@ public sealed class AppHost : IDisposable
         if (_disposed) return;
         _disposed = true;
 
+        Boards.FlushForExit(); // before pins close: the open board is saved as it looks right now
         Settings.Flush();
         _manager?.Close();
         Pins.Dispose();
@@ -245,6 +250,7 @@ public sealed class AppHost : IDisposable
 
         items.Add(TrayMenuItem.Separator);
         items.Add(new TrayMenuItem("Open snips folder", Deferred(Storage.OpenFolder)));
+        items.Add(new TrayMenuItem(Boards.CurrentName is { } board ? $"Boards  ({board})" : "Boards", Deferred(() => ShowManager(ManagerWindow.BoardsPageTag))));
         items.Add(new TrayMenuItem("Open PinPoint", Deferred(() => ShowManager())));
         items.Add(new TrayMenuItem("Settings", Deferred(() => ShowManager(ManagerWindow.SettingsPageTag))));
         items.Add(TrayMenuItem.Separator);

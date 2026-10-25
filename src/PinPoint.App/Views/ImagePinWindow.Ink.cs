@@ -98,16 +98,7 @@ public sealed partial class ImagePinWindow
 
         if (!point.Properties.IsLeftButtonPressed) return;
 
-        _inkBrush ??= new SolidColorBrush(InkColor);
-        _currentStroke = new Polyline
-        {
-            Stroke = _inkBrush,
-            StrokeThickness = InkThickness,
-            StrokeLineJoin = PenLineJoin.Round,
-            StrokeStartLineCap = PenLineCap.Round,
-            StrokeEndLineCap = PenLineCap.Round,
-            IsHitTestVisible = false,
-        };
+        _currentStroke = NewStroke();
         _currentStroke.Points.Add(point.Position);
         _currentStroke.Points.Add(new Point(point.Position.X + 0.01, point.Position.Y)); // a click leaves a dot
         InkCanvas.Children.Add(_currentStroke);
@@ -174,7 +165,39 @@ public sealed partial class ImagePinWindow
     /// <summary>True if the last right-press erased or moved (so releasing it mustn't open the menu).</summary>
     private bool RightPressWasErase => _drawMode && _rightDragged;
 
+    // ---- Boards ------------------------------------------------------------------------------
+
+    /// <summary>The drawing as plain data: each stroke as flat x,y pairs in snip pixels.</summary>
+    public List<double[]> GetStrokePoints() =>
+        [.. _ink.Strokes.Select(s => s.Points.SelectMany(p => new[] { p.X, p.Y }).ToArray())];
+
+    /// <summary>Restores a saved drawing as the starting point (not undoable, like opening a document).</summary>
+    public void SetStrokePoints(IEnumerable<double[]> strokes)
+    {
+        var lines = new List<Polyline>();
+        foreach (double[] flat in strokes)
+        {
+            if (flat.Length < 2) continue;
+            var line = NewStroke();
+            for (int i = 0; i + 1 < flat.Length; i += 2) line.Points.Add(new Point(flat[i], flat[i + 1]));
+            if (line.Points.Count == 1) line.Points.Add(new Point(flat[0] + 0.01, flat[1])); // a dot
+            lines.Add(line);
+        }
+
+        _ink.Reset(lines);
+    }
+
     // ---- Helpers -----------------------------------------------------------------------------
+
+    private Polyline NewStroke() => new()
+    {
+        Stroke = _inkBrush ??= new SolidColorBrush(InkColor),
+        StrokeThickness = InkThickness,
+        StrokeLineJoin = PenLineJoin.Round,
+        StrokeStartLineCap = PenLineCap.Round,
+        StrokeEndLineCap = PenLineCap.Round,
+        IsHitTestVisible = false,
+    };
 
     private void EraseAt(Point position)
     {

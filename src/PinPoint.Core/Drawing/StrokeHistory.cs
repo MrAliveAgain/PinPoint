@@ -23,6 +23,16 @@ public sealed class StrokeHistory<T>
 
     public void Add(T stroke) => Do(new Step(StepKind.Add, [(stroke, _strokes.Count)]));
 
+    /// <summary>Replaces everything with <paramref name="strokes"/> as the starting point (no undo history).</summary>
+    public void Reset(IEnumerable<T> strokes)
+    {
+        _strokes.Clear();
+        _strokes.AddRange(strokes);
+        _undo.Clear();
+        _redo.Clear();
+        OnChanged();
+    }
+
     /// <summary>Removes the given strokes as one undoable step (e.g. everything one eraser drag touched).</summary>
     public void Remove(IEnumerable<T> strokes)
     {

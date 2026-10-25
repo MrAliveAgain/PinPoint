@@ -22,7 +22,8 @@ public sealed partial class NotePinWindow : Window, IPinSurface
     private const int MinWidth = 180, MinHeight = 110;
 
     private readonly nint _hwnd;
-    private readonly NoteStore _store;
+    /// <summary>Loose notes save to the notes folder; notes on a board have no store (the board saves them).</summary>
+    private NoteStore? _store;
     private readonly WindowDragger _drag;
     private readonly DispatcherQueueTimer _saveTimer;
     private readonly DispatcherQueueTimer _layoutTimer;
@@ -32,7 +33,7 @@ public sealed partial class NotePinWindow : Window, IPinSurface
     private bool _shown;
     private string? _exportPath;
 
-    public NotePinWindow(StoredNote note, NoteStore store)
+    public NotePinWindow(StoredNote note, NoteStore? store)
     {
         InitializeComponent();
         Id = note.Id;
@@ -156,8 +157,8 @@ public sealed partial class NotePinWindow : Window, IPinSurface
         _saveTimer.Stop();
         _layoutTimer.Stop();
         _headerTimer.Stop();
-        _store.SaveText(Id, Editor.Text);
-        _store.Close(Id);
+        _store?.SaveText(Id, Editor.Text);
+        _store?.Close(Id);
         Close();
     }
 
@@ -169,8 +170,8 @@ public sealed partial class NotePinWindow : Window, IPinSurface
         _headerTimer.Stop();
         if (string.IsNullOrWhiteSpace(Editor.Text))
         {
-            _store.SaveText(Id, string.Empty);
-            _store.Close(Id);
+            _store?.SaveText(Id, string.Empty);
+            _store?.Close(Id);
         }
         else
         {
@@ -187,7 +188,7 @@ public sealed partial class NotePinWindow : Window, IPinSurface
 
     private void SaveText()
     {
-        _store.SaveText(Id, Editor.Text);
+        _store?.SaveText(Id, Editor.Text);
         Changed?.Invoke(this, EventArgs.Empty); // title in the Pins list follows the first line
     }
 
@@ -195,7 +196,35 @@ public sealed partial class NotePinWindow : Window, IPinSurface
     {
         var pos = AppWindow.Position;
         var size = AppWindow.Size;
-        _store.SaveLayout(Id, new NoteLayout(pos.X, pos.Y, size.Width, size.Height, _opacity, _exportPath));
+        _store?.SaveLayout(Id, new NoteLayout(pos.X, pos.Y, size.Width, size.Height, _opacity, _exportPath));
+    }
+
+    // ---- Boards ------------------------------------------------------------------------------
+
+    public bool IsOnBoard => _store is null;
+
+    /// <summary>
+    /// This loose note is now saved in a board: stop writing to the notes folder. Its old copy moves to
+    /// notes\closed (kept as a backup) so it isn't also reopened as a loose note next launch.
+    /// </summary>
+    public void MoveToBoard()
+    {
+        if (_store is null) return;
+        _saveTimer.Stop();
+        _layoutTimer.Stop();
+        _store.SaveText(Id, Editor.Text);
+        _store.Close(Id);
+        _store = null;
+    }
+
+    public Core.Boards.BoardNote ToBoardNote()
+    {
+        var pos = AppWindow.Position;
+        var size = AppWindow.Size;
+        return new Core.Boards.BoardNote(Id, Editor.Text, new Core.Boards.BoardRect(pos.X, pos.Y, size.Width, size.Height), _opacity)
+        {
+            ExportPath = _exportPath,
+        };
     }
 
     // ---- Save to a file of the user's choosing (like Notepad) ---------------------------------

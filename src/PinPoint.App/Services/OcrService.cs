@@ -64,15 +64,7 @@ public sealed class OcrService
         {
             try
             {
-                var file = await StorageFile.GetFileFromPathAsync(Path.GetFullPath(imagePath));
-                using var stream = await file.OpenAsync(FileAccessMode.Read);
-                var decoder = await BitmapDecoder.CreateAsync(stream);
-                using var bitmap = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Ignore);
-
-                var pixels = new byte[bitmap.PixelWidth * bitmap.PixelHeight * 4];
-                bitmap.CopyToBuffer(pixels.AsBuffer());
-                var frame = new CapturedFrame(new PixelRect(0, 0, bitmap.PixelWidth, bitmap.PixelHeight), pixels);
-
+                var frame = await SnipStorage.LoadPngAsync(imagePath);
                 var text = await new OcrService().RecognizeAsync(frame);
                 await File.WriteAllTextAsync(outputPath, text.AllText);
                 return text.IsEmpty ? 2 : 0;

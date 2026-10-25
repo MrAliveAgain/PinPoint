@@ -17,4 +17,7 @@ public static class AppPaths
 
     /// <summary>%LocalAppData%\PinPoint\notes — one .txt per note.</summary>
     public static string NotesDirectory { get; } = Path.Combine(DataDirectory, "notes");
+
+    /// <summary>%LocalAppData%\PinPoint\boards — one folder per saved board.</summary>
+    public static string BoardsDirectory { get; } = Path.Combine(DataDirectory, "boards");
 }

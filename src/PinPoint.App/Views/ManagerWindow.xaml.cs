@@ -14,6 +14,7 @@ namespace PinPoint.Views;
 public sealed partial class ManagerWindow : Window
 {
     public const string PinsPageTag = "pins";
+    public const string BoardsPageTag = "boards";
     public const string SettingsPageTag = "settings";
 
     private readonly nint _hwnd;
@@ -49,11 +50,18 @@ public sealed partial class ManagerWindow : Window
 
     public void Navigate(string tag)
     {
-        var pageType = tag == SettingsPageTag ? typeof(SettingsPage) : typeof(PinsPage);
+        var pageType = tag switch
+        {
+            SettingsPageTag => typeof(SettingsPage),
+            BoardsPageTag => typeof(BoardsPage),
+            _ => typeof(PinsPage),
+        };
         if (ContentFrame.CurrentSourcePageType != pageType)
             ContentFrame.Navigate(pageType, null, new EntranceNavigationTransitionInfo());
 
-        Nav.SelectedItem = tag == SettingsPageTag ? Nav.SettingsItem : Nav.MenuItems[0];
+        Nav.SelectedItem = tag == SettingsPageTag
+            ? Nav.SettingsItem
+            : Nav.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(i => (string)i.Tag == tag) ?? Nav.MenuItems[0];
     }
 
     private void Nav_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args) =>

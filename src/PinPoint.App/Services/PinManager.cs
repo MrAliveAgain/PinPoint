@@ -167,18 +167,61 @@ public sealed class PinManager : IDisposable
     public void CreateNote()
     {
         ShowAll();
-        AddNote(new StoredNote(NoteStore.CreateId(), string.Empty, null), activate: true);
+        // With a board open, new notes belong to the board (it saves them); otherwise they're loose notes.
+        AddNote(new StoredNote(NoteStore.CreateId(), string.Empty, null), activate: true, BoardMode ? null : _noteStore);
     }
 
     /// <summary>Reopens the notes that were open when PinPoint last exited (without taking focus).</summary>
     public void RestoreNotes()
     {
-        foreach (var note in _noteStore.LoadAll()) AddNote(note, activate: false);
+        foreach (var note in _noteStore.LoadAll()) AddNote(note, activate: false, _noteStore);
     }
 
-    private void AddNote(StoredNote note, bool activate)
+    // ---- Boards -------------------------------------------------------------------------------
+
+    /// <summary>True while a board is open: new notes then belong to the board rather than the notes folder.</summary>
+    public bool BoardMode { get; set; }
+
+    public IReadOnlyList<ImagePinWindow> Snips => _snips;
+
+    public IReadOnlyList<NotePinWindow> Notes => _notes;
+
+    public bool HasNotes => _notes.Count > 0;
+
+    /// <summary>Re-pins a snip from a board where it was, with its zoom, opacity and drawing.</summary>
+    public void RestoreSnip(CapturedFrame frame, Core.Boards.BoardSnip saved)
     {
-        var window = new NotePinWindow(note, _noteStore);
+        var window = new ImagePinWindow(frame, _storage, _ocr, _settings, saved.Id);
+        window.Closed += (_, _) => OnSnipClosed(window);
+        _snips.Add(window);
+        Items.Add(new SnipPinItem(window));
+        var b = saved.Bounds;
+        window.ShowAt(new Core.Geometry.PixelRect(b.X, b.Y, b.Width, b.Height));
+        window.RestoreBoardState(saved.ZoomStep, saved.Opacity, saved.Strokes);
+        OnStateChanged();
+    }
+
+    /// <summary>Re-opens a note from a board (it belongs to the board, not the notes folder).</summary>
+    public void RestoreBoardNote(Core.Boards.BoardNote saved)
+    {
+        var b = saved.Bounds;
+        var layout = new NoteLayout(b.X, b.Y, b.Width, b.Height, saved.Opacity, saved.ExportPath);
+        AddNote(new StoredNote(saved.Id, saved.Text, layout), activate: false, store: null);
+    }
+
+    /// <summary>
+    /// Closes every snip and note (used when switching boards). Loose notes keep their text in
+    /// notes\closed; board notes were already saved with their board.
+    /// </summary>
+    public void CloseSnipsAndNotes()
+    {
+        foreach (var snip in _snips.ToArray()) snip.Close();
+        foreach (var note in _notes.ToArray()) note.CloseNote();
+    }
+
+    private void AddNote(StoredNote note, bool activate, NoteStore? store)
+    {
+        var window = new NotePinWindow(note, store);
         window.Closed += (_, _) => OnNoteClosed(window);
         _notes.Add(window);
         Items.Add(new NotePinItem(window));

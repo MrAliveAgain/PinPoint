@@ -50,9 +50,10 @@ public sealed partial class ImagePinWindow : Window, IPinSurface
     private readonly WindowDragger _drag;
     private string? _savedPath;
 
-    public ImagePinWindow(CapturedFrame frame, SnipStorage storage, OcrService ocr, SettingsService settings)
+    public ImagePinWindow(CapturedFrame frame, SnipStorage storage, OcrService ocr, SettingsService settings, string? id = null)
     {
         InitializeComponent();
+        Id = id ?? $"snip-{Guid.NewGuid():N}";
         Frame = frame;
         _storage = storage;
         _ocr = ocr;
@@ -108,6 +109,12 @@ public sealed partial class ImagePinWindow : Window, IPinSurface
 
     public nint Handle => _hwnd;
 
+    /// <summary>Stable id (a board stores this snip's image as {Id}.png).</summary>
+    public string Id { get; }
+
+    /// <summary>Zoom in scroll notches from actual size (0 = 100%).</summary>
+    public int CurrentZoomStep => _zoomStep;
+
     /// <summary>True while the right-click menu is open (PinManager must not re-order windows then).</summary>
     public bool IsShowingMenu { get; private set; }
 
@@ -156,6 +163,14 @@ public sealed partial class ImagePinWindow : Window, IPinSurface
         WindowStyler.RaiseTopmost(_hwnd);
 
         _ = DetectTextAsync(); // background; the "T" button appears if any text is found
+    }
+
+    /// <summary>Restores a snip opened from a board (call after <see cref="ShowAt"/> with its saved bounds).</summary>
+    public void RestoreBoardState(int zoomStep, double opacity, IEnumerable<double[]> strokes)
+    {
+        _zoomStep = zoomStep;
+        if (opacity < 0.999) PinOpacity = opacity;
+        SetStrokePoints(strokes);
     }
 
     public void SetHidden(bool hidden)

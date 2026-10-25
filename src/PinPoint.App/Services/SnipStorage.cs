@@ -76,7 +76,7 @@ public sealed class SnipStorage(SettingsService settings)
         Process.Start(new ProcessStartInfo(folder) { UseShellExecute = true });
     }
 
-    private static async Task<byte[]> EncodePngAsync(CapturedFrame frame)
+    public static async Task<byte[]> EncodePngAsync(CapturedFrame frame)
     {
         using var buffer = new MemoryStream();
         var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, buffer.AsRandomAccessStream());
@@ -84,6 +84,20 @@ public sealed class SnipStorage(SettingsService settings)
             (uint)frame.Width, (uint)frame.Height, 96, 96, frame.Pixels);
         await encoder.FlushAsync();
         return buffer.ToArray();
+    }
+
+    /// <summary>Loads an image file as an opaque frame (boards, OCR self-test). Position is (0, 0).</summary>
+    public static async Task<CapturedFrame> LoadPngAsync(string path)
+    {
+        var file = await Windows.Storage.StorageFile.GetFileFromPathAsync(Path.GetFullPath(path));
+        using var stream = await file.OpenAsync(Windows.Storage.FileAccessMode.Read);
+        var decoder = await BitmapDecoder.CreateAsync(stream);
+        using var bitmap = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Ignore);
+
+        var pixels = new byte[bitmap.PixelWidth * bitmap.PixelHeight * 4];
+        bitmap.CopyToBuffer(System.Runtime.InteropServices.WindowsRuntime.WindowsRuntimeBufferExtensions.AsBuffer(pixels));
+        for (int i = 3; i < pixels.Length; i += 4) pixels[i] = 255; // XAML treats BGRA as premultiplied
+        return new CapturedFrame(new Core.Geometry.PixelRect(0, 0, bitmap.PixelWidth, bitmap.PixelHeight), pixels);
     }
 
     private static string UniquePath(string path)
