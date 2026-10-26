@@ -29,6 +29,12 @@ public sealed class BoardPreviewWindow : Window
     /// <summary>Space around the pins, in screen pixels.</summary>
     private const int StageMargin = 32;
 
+    /// <summary>Pins show at half their real size; hovering one shows it full size.</summary>
+    private const double PreviewScale = 0.5;
+
+    /// <summary>Wide enough for the header's title and buttons (DIPs).</summary>
+    private const double MinWindowWidth = 760;
+
     private readonly AppHost _host = AppHost.Current;
     private readonly string _boardId;
     private readonly Func<Task> _open;
@@ -50,6 +56,8 @@ public sealed class BoardPreviewWindow : Window
 
     private List<(PreviewPin Pin, BitmapImage Image)> _pins = [];
     private FrameworkElement? _hovered;
+    private Grid? _header;
+    private Core.Geometry.PixelRect _work;
 
     public BoardPreviewWindow(string boardId, string name, Func<Task> open)
     {
@@ -105,7 +113,7 @@ public sealed class BoardPreviewWindow : Window
         var export = new Button { Content = "Export image…" };
         export.Click += async (_, _) => await ExportAsync();
 
-        var header = new Grid { ColumnSpacing = 12, Padding = new Thickness(20, 12, 20, 4) };
+        var header = _header = new Grid { ColumnSpacing = 12, Padding = new Thickness(20, 12, 20, 4) };
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         for (int i = 0; i < 4; i++) header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
@@ -161,14 +169,26 @@ public sealed class BoardPreviewWindow : Window
         }
     }
 
-    /// <summary>80% of the monitor the mouse is on, centred.</summary>
+    /// <summary>A modest window on the mouse's monitor while loading; <see cref="FitToContent"/> sizes it after.</summary>
     private void SizeToCursorMonitor()
     {
         Win32.GetCursorPos(out var cursor);
-        var (_, work) = WindowEnumerator.GetMonitorAt(cursor.X, cursor.Y);
-        AppWindow.Move(new PointInt32(work.X + 40, work.Y + 40)); // pick up that monitor's DPI first
-        int w = work.Width * 4 / 5, h = work.Height * 4 / 5;
-        AppWindow.MoveAndResize(new RectInt32(work.X + (work.Width - w) / 2, work.Y + (work.Height - h) / 2, w, h));
+        (_, _work) = WindowEnumerator.GetMonitorAt(cursor.X, cursor.Y);
+        AppWindow.Move(new PointInt32(_work.X + 40, _work.Y + 40)); // pick up that monitor's DPI first
+        FitToContent(MinWindowWidth, 400);
+    }
+
+    /// <summary>Just big enough for a canvas of this size (DIPs) plus the header, up to 90% of the monitor, centred.</summary>
+    private void FitToContent(double canvasWidth, double canvasHeight)
+    {
+        double scale = WindowHelpers.GetScale(_hwnd);
+        double headerHeight = _header is { ActualHeight: > 0 } h ? h.ActualHeight : 84;
+        int width = (int)Math.Min(_work.Width * 0.9, Math.Max(MinWindowWidth, canvasWidth + 16) * scale);
+        int height = (int)Math.Min(_work.Height * 0.9, (canvasHeight + 16 + headerHeight) * scale);
+
+        AppWindow.ResizeClient(new SizeInt32(width, height));
+        var size = AppWindow.Size;
+        AppWindow.Move(new PointInt32(_work.X + (_work.Width - size.Width) / 2, _work.Y + (_work.Height - size.Height) / 2));
     }
 
     private async Task LoadAsync()
@@ -198,7 +218,7 @@ public sealed class BoardPreviewWindow : Window
         LayOut();
     }
 
-    /// <summary>Places every pin on the canvas, in DIPs, so it shows at most at its real size.</summary>
+    /// <summary>Places every pin on the canvas at half size (in DIPs) and fits the window around them.</summary>
     private void LayOut()
     {
         HideEnlarged();
@@ -211,9 +231,10 @@ public sealed class BoardPreviewWindow : Window
             return;
         }
 
-        double scale = WindowHelpers.GetScale(_hwnd);
+        double scale = WindowHelpers.GetScale(_hwnd) / PreviewScale; // screen pixels per DIP on the canvas
         _canvas.Width = layout.Width / scale;
         _canvas.Height = layout.Height / scale;
+        FitToContent(_canvas.Width, _canvas.Height);
 
         var stroke = new SolidColorBrush(_dark ? Color.FromArgb(51, 255, 255, 255) : Color.FromArgb(31, 0, 0, 0));
         for (int i = 0; i < items.Count; i++)
