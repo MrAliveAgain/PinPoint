@@ -95,7 +95,7 @@ You can snip from a pinned window or from another snip too. It works the same as
 
 ## Boards
 
-A board saves your pinned snips and notes exactly as you left them, so you can open them again later. I keep one board per game, plus a few for projects.
+A board saves your pinned snips and notes exactly as you left them, so you can open them again later.
 
 - **Save and switch.** On the **Boards** page, *Save as board…* keeps what's on screen, and the open board saves itself as you work. Opening another board swaps your pins over; if what's up isn't in a board yet, PinPoint asks first. The tray menu has your boards too, so you can switch without leaving a game.
 - **Picks up where you left off.** The board you had open comes back when you start PinPoint. Snips that aren't in any board come back as well.
