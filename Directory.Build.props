@@ -8,7 +8,7 @@
     <Product>PinPoint</Product>
     <Authors>MrAlive</Authors>
     <Copyright>© MrAlive</Copyright>
-    <Version>0.4.1</Version>
+    <Version>0.5.0</Version>
     <Deterministic>true</Deterministic>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>

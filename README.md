@@ -5,7 +5,7 @@
 <h1 align="center">PinPoint</h1>
 
 <p align="center">
-  Pin windows, or just the part of the screen you need, on top of everything. Including your game. Copy text off of pinned screenshots, draw on them, pin notes, and more coming soon.
+  Pin windows, or just the part of the screen you need, on top of everything. Including your game. Copy text off of pinned screenshots, draw on them, pin notes, save it all as boards, and more coming soon.
 </p>
 
 <p align="center">
@@ -39,10 +39,7 @@ It sits in the tray and doesn't do anything until you press a shortcut.
   <img src="docs/drawing.png" alt="A pinned guide table with finished entries crossed out in red, and the drawing buttons (undo, redo, erase all, pen) along the top" width="424">
 
 - **Scratch-pad notes.** <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd> opens a little note that floats on top, for jotting down a quest step, a code, or text you copied from a snip. Drag it by its header and resize it from the edges. It saves as you type and comes back where you left it after a restart. Want it as a proper file? Hit the save button or <kbd>Ctrl</kbd>+<kbd>S</kbd> to save it as a `.txt` wherever you like, just like Notepad (after the first save, <kbd>Ctrl</kbd>+<kbd>S</kbd> saves straight back to that file; <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> picks a new one).
-- **Boards.** Save the snips and notes you've got up as a board and come back to it later, like a document. A board keeps where everything was, zoom, opacity, your drawings and note text, and saves itself as you work. Switch between boards from the **Boards** page in PinPoint; if what's on screen isn't saved yet, it asks first. Whatever board you had open comes back the next time you start PinPoint, and so do loose snips that aren't in a board. Click a board's thumbnail for a quick look without opening it: hover a snip to see it full size, or right-click it to copy or save just that one. You can also export a board as one image, laid out like it was on screen or packed together, to save or paste anywhere: click pins to pick just the ones you want, choose a background (a colour, a dot grid, transparent, or any picture of your own, stretched or tiled), and see the finished picture before you save it. If you've got windows pinned too, tick a box and a snapshot of them goes in the picture (only the picture; the board itself never includes pinned windows). Boards are in the tray menu too, so you can switch without leaving your game, and deleted boards go to the Recycle Bin.
-
-  <img src="docs/boards.png" alt="The Boards page: a card saying no board is open with a Save as board button, and a saved board listed with its snip and note count and an Open button" width="640">
-
+- **Boards.** Save the snips and notes you've got up as a board and pick up where you left off later, like a document. Export or copy a board as one picture, too. [More below](#boards).
 - **Pin any image.** Copied a picture from a website, or have a screenshot on the clipboard? <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>I</kbd> pins it like a snip. You can also drop image files onto the PinPoint window.
 - **Stays over games.** Anything in borderless or windowed mode. If a game puts itself back on top, PinPoint puts your pins back over it.
 - **Easy to get out of the way.** Hide every pin at once, fade them, or make them click-through so your clicks go straight to the game.
@@ -95,6 +92,21 @@ These mouse controls are for snips (the screenshots you pin). Pinned windows lik
 | Lock it in place (no accidental moving or resizing) | Right-click → **Lock in place** |
 
 You can snip from a pinned window or from another snip too. It works the same as snipping anything else.
+
+## Boards
+
+A board is a saved set of snips and notes: where each one was, its zoom and opacity, your drawings and the note text. I use them for things I come back to, like one board per game or per project.
+
+- **Save and switch.** On the **Boards** page, *Save as board…* keeps what's on screen, and the open board saves itself as you work. Opening another board swaps your pins over; if what's up isn't in a board yet, PinPoint asks first. The tray menu has your boards too, so you can switch without leaving a game.
+- **Picks up where you left off.** The board you had open comes back when you start PinPoint. Snips that aren't in any board come back as well.
+- **Quick look.** Click a board's thumbnail to see what's on it without opening it. Hover a pin to see it full size, or right-click it to copy or save just that one.
+- **Export or copy as one picture.** Pick which pins go in (click to tick them), keep the on-screen layout or pack them together, and choose a background: a solid colour, a dot grid, transparent, or any picture of your own, stretched or tiled. You see the finished picture before saving it. Copy skips the questions and puts it straight on your clipboard.
+- **Pinned windows in the picture.** If you've got windows pinned, a snapshot of them can go in the picture too. Only the picture, though; a board never includes pinned windows.
+- **Deleting** a board sends it to the Recycle Bin, so a slip isn't the end of it.
+
+<p align="center">
+  <img src="docs/boards.png" alt="The Boards page: a card saying no board is open with a Save as board button, and a saved board listed with its snip and note count and an Open button" width="640">
+</p>
 
 ## Good to know
 
