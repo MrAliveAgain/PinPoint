@@ -1,5 +1,6 @@
 using System.Numerics;
 using Microsoft.Graphics.Canvas;
+using Microsoft.Graphics.Canvas.Brushes;
 using Microsoft.Graphics.Canvas.Effects;
 using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.Graphics.Canvas.Text;
@@ -7,6 +8,7 @@ using PinPoint.Core.Boards;
 using PinPoint.Core.Capture;
 using PinPoint.Core.Geometry;
 using PinPoint.Core.Interop;
+using PinPoint.Core.Settings;
 using PinPoint.Views;
 using Windows.Foundation;
 using Windows.Graphics.DirectX;
@@ -33,7 +35,8 @@ public static class CollageRenderer
     private const float CornerRadius = 8; // Windows 11 window corners, in DIPs
 
     /// <summary>A PNG of the items, listed bottom to top, or null if none of them could be drawn.</summary>
-    public static Task<byte[]?> RenderPngAsync(IReadOnlyList<CollageItem> items, bool dark, int margin, int maxWidth, int maxHeight) =>
+    public static Task<byte[]?> RenderPngAsync(IReadOnlyList<CollageItem> items, bool dark, int margin, int maxWidth, int maxHeight,
+        CollageBackground? background = null) =>
         Task.Run(async () =>
         {
             var device = CanvasDevice.GetSharedDevice();
@@ -50,10 +53,12 @@ public static class CollageRenderer
                 if (CollageLayout.Fit(drawable.Select(i => i.Bounds), margin, Math.Min(maxWidth, limit), Math.Min(maxHeight, limit)) is not { } layout)
                     return null;
 
+                background ??= CollageBackground.Default;
+                using var texture = await LoadTextureAsync(device, background);
                 using var target = new CanvasRenderTarget(device, layout.Width, layout.Height, 96);
                 using (var ds = target.CreateDrawingSession())
                 {
-                    ds.Clear(dark ? Color.FromArgb(255, 43, 43, 43) : Color.FromArgb(255, 228, 228, 228));
+                    DrawBackground(ds, layout.Width, layout.Height, (float)layout.Scale, background, texture, dark);
                     double systemScale = Win32.GetDpiForSystem() / 96.0;
 
                     foreach (var item in drawable)
@@ -151,6 +156,83 @@ public static class CollageRenderer
             return null;
         }
     }
+
+    // ---- Backgrounds -------------------------------------------------------------------------
+
+    /// <summary>The background picture, if it uses one (a missing or broken file falls back to the default).</summary>
+    private static async Task<CanvasBitmap?> LoadTextureAsync(CanvasDevice device, CollageBackground background)
+    {
+        if (background.Style != BackgroundStyle.Image || background.ImagePath is not { } path || !File.Exists(path)) return null;
+        try
+        {
+            using var file = File.OpenRead(path);
+            return await CanvasBitmap.LoadAsync(device, file.AsRandomAccessStream(), 96);
+        }
+        catch (Exception ex)
+        {
+            Core.Diagnostics.Log.Error($"Could not load background image {path}", ex);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Fills the picture behind the pins. A background image either covers it (cropped to keep its shape) or,
+    /// as a tile, repeats at one image pixel per screen pixel, scaled with the picture so thumbnails match.
+    /// </summary>
+    private static void DrawBackground(CanvasDrawingSession ds, int width, int height, float scale, CollageBackground background,
+        CanvasBitmap? texture, bool dark)
+    {
+        switch (background.Style)
+        {
+            case BackgroundStyle.Transparent:
+                ds.Clear(Color.FromArgb(0, 0, 0, 0));
+                break;
+
+            case BackgroundStyle.Solid:
+                ds.Clear(HexColor.TryParse(background.Color, out byte r, out byte g, out byte b) ? Color.FromArgb(255, r, g, b) : DefaultColor(dark));
+                break;
+
+            case BackgroundStyle.Image when texture is not null && background.Tile:
+                using (var tiles = new CanvasImageBrush(ds, texture)
+                {
+                    ExtendX = CanvasEdgeBehavior.Wrap,
+                    ExtendY = CanvasEdgeBehavior.Wrap,
+                    Transform = Matrix3x2.CreateScale(scale),
+                    Interpolation = CanvasImageInterpolation.HighQualityCubic,
+                })
+                {
+                    ds.FillRectangle(0, 0, width, height, tiles);
+                }
+
+                break;
+
+            case BackgroundStyle.Image when texture is not null:
+                var size = texture.Size;
+                double cover = Math.Max(width / size.Width, height / size.Height);
+                double w = size.Width * cover, h = size.Height * cover;
+                ds.DrawImage(texture, new Rect((width - w) / 2, (height - h) / 2, w, h), texture.Bounds, 1, CanvasImageInterpolation.HighQualityCubic);
+                break;
+
+            case BackgroundStyle.DotGrid:
+                ds.Clear(DefaultColor(dark));
+                float spacing = Math.Max(6, 24 * scale), dot = Math.Max(0.6f, 1.4f * scale);
+                var dotColor = dark ? Color.FromArgb(70, 255, 255, 255) : Color.FromArgb(60, 0, 0, 0);
+                for (float y = spacing / 2; y < height; y += spacing)
+                {
+                    for (float x = spacing / 2; x < width; x += spacing) ds.FillCircle(x, y, dot, dotColor);
+                }
+
+                break;
+
+            default:
+                ds.Clear(DefaultColor(dark));
+                break;
+        }
+    }
+
+    private static Color DefaultColor(bool dark) => dark ? Color.FromArgb(255, 43, 43, 43) : Color.FromArgb(255, 228, 228, 228);
+
+    // ---- Pins --------------------------------------------------------------------------------
 
     private static void DrawShadow(CanvasDrawingSession ds, Rect rect, float radius, float scale, bool dark)
     {

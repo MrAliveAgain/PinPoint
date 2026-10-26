@@ -191,7 +191,7 @@ public sealed class BoardPreviewFlyout
         try
         {
             var items = _picker.Selected.Select(i => _picker.Pins[i].Pin.Item).ToList();
-            if (await BoardService.RenderAsync(items, _picker.Compact) is not { } png) return;
+            if (await BoardService.RenderAsync(items, _picker.Compact, _host.Settings.Current.ExportBackgroundChoice) is not { } png) return;
             await SnipStorage.CopyPngToClipboardAsync(png);
             _copyButton.Content = "Copied ✓";
             _report(items.Count == _picker.Pins.Count ? "The board image is on your clipboard." : $"{items.Count} pins are on your clipboard as one image.");

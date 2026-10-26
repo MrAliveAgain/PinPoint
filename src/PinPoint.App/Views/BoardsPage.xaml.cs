@@ -272,7 +272,7 @@ public sealed partial class BoardsPage : Page
                 : await boards.GetPreviewAsync(savedId!);
             var items = preview?.Pins.Select(p => p.Item).ToList() ?? [];
 
-            if (await BoardService.RenderAsync(items, settings.ExportPacked) is not { } png)
+            if (await BoardService.RenderAsync(items, settings.ExportPacked, settings.ExportBackgroundChoice) is not { } png)
             {
                 ShowExportResult(new(InfoBarSeverity.Warning, "Nothing to copy", "There are no snips or notes on it.", null));
                 return;

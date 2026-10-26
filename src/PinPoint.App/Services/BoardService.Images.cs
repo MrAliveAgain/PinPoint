@@ -91,8 +91,9 @@ public sealed partial class BoardService
     /// The exported picture of <paramref name="items"/> (listed bottom to top), packed together or as on screen,
     /// scaled down to fit the given size (int.MaxValue for full size). Null if there's nothing to draw.
     /// </summary>
-    public static Task<byte[]?> RenderAsync(IReadOnlyList<CollageItem> items, bool packed, int maxWidth = int.MaxValue, int maxHeight = int.MaxValue) =>
-        CollageRenderer.RenderPngAsync(Arrange(items, packed), IsDarkTheme, ExportMargin, maxWidth, maxHeight);
+    public static Task<byte[]?> RenderAsync(IReadOnlyList<CollageItem> items, bool packed, CollageBackground background,
+        int maxWidth = int.MaxValue, int maxHeight = int.MaxValue) =>
+        CollageRenderer.RenderPngAsync(Arrange(items, packed), IsDarkTheme, ExportMargin, maxWidth, maxHeight, background);
 
     /// <summary>The full-size exported picture's size in pixels, or null if there's nothing to draw.</summary>
     public static (int Width, int Height)? ExportSize(IReadOnlyList<CollageItem> items, bool packed) =>
@@ -164,9 +165,9 @@ public sealed partial class BoardService
     private static bool IsDarkTheme => Application.Current.RequestedTheme == ApplicationTheme.Dark;
 
     /// <summary>
-    /// Developer check without UI: <c>PinPoint.exe --board-selftest board-id out.png [thumbnail|packed|pin]</c>
-    /// draws a saved board (dark theme); <c>pin</c> draws just its first pin, as the preview does.
-    /// Exit code 0 = drawn, 2 = nothing to draw, 1 = error.
+    /// Developer check without UI: <c>PinPoint.exe --board-selftest board-id out.png [thumbnail|packed|pin|dotgrid|transparent|#RRGGBB|image=path|tile=path]</c>
+    /// draws a saved board (dark theme); <c>pin</c> draws just its first pin, as the preview does; the others
+    /// draw it packed on that background. Exit code 0 = drawn, 2 = nothing to draw, 1 = error.
     /// </summary>
     public static int RunSelfTest(string id, string output, string? mode)
     {
@@ -181,6 +182,13 @@ public sealed partial class BoardService
                 "thumbnail" => CollageRenderer.RenderPngAsync(Arrange(items, true), true, ThumbnailMargin, ThumbnailWidth, ThumbnailHeight),
                 "packed" => CollageRenderer.RenderPngAsync(Arrange(items, true), true, ExportMargin, int.MaxValue, int.MaxValue),
                 "pin" when items.Count > 0 => CollageRenderer.RenderItemPngAsync(items[0], true),
+                "dotgrid" or "transparent" => CollageRenderer.RenderPngAsync(Arrange(items, true), true, ExportMargin,
+                    int.MaxValue, int.MaxValue, new CollageBackground(Enum.Parse<BackgroundStyle>(mode, ignoreCase: true))),
+                ['i', 'm', 'a', 'g', 'e', '=', ..] or ['t', 'i', 'l', 'e', '=', ..] => CollageRenderer.RenderPngAsync(Arrange(items, true), true,
+                    ExportMargin, int.MaxValue, int.MaxValue,
+                    new CollageBackground(BackgroundStyle.Image, ImagePath: mode[(mode.IndexOf('=') + 1)..], Tile: mode.StartsWith("tile="))),
+                ['#', ..] => CollageRenderer.RenderPngAsync(Arrange(items, true), true, ExportMargin, int.MaxValue, int.MaxValue,
+                    new CollageBackground(BackgroundStyle.Solid, mode)),
                 _ => CollageRenderer.RenderPngAsync(items, true, ExportMargin, int.MaxValue, int.MaxValue),
             }).GetAwaiter().GetResult();
             if (png is null) return 2;

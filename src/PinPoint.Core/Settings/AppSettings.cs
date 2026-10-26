@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using PinPoint.Core.Boards;
 
 namespace PinPoint.Core.Settings;
 
@@ -42,6 +43,23 @@ public sealed class AppSettings
 
     /// <summary>Last choice for "pack together" when exporting a board as an image.</summary>
     public bool ExportPacked { get; set; }
+
+    /// <summary>What's behind the pins in exported and copied board images.</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter<BackgroundStyle>))]
+    public BackgroundStyle ExportBackground { get; set; } = BackgroundStyle.Default;
+
+    /// <summary>#RRGGBB for the solid-colour background.</summary>
+    public string ExportBackgroundColor { get; set; } = "#2B2B2B";
+
+    /// <summary>The picture for the image background.</summary>
+    public string? ExportBackgroundImage { get; set; }
+
+    /// <summary>Repeat the background picture as a tile instead of filling with it.</summary>
+    public bool ExportBackgroundTile { get; set; }
+
+    [JsonIgnore]
+    public CollageBackground ExportBackgroundChoice =>
+        new(ExportBackground, ExportBackgroundColor, ExportBackgroundImage, ExportBackgroundTile);
 
     /// <summary>Whether the board preview shows pins packed together (true) or where they were on screen.</summary>
     public bool PreviewPacked { get; set; } = true;
