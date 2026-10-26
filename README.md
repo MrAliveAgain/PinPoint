@@ -39,10 +39,11 @@ It sits in the tray and doesn't do anything until you press a shortcut.
   <img src="docs/drawing.png" alt="A pinned guide table with finished entries crossed out in red, and the drawing buttons (undo, redo, erase all, pen) along the top" width="424">
 
 - **Scratch-pad notes.** <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd> opens a little note that floats on top, for jotting down a quest step, a code, or text you copied from a snip. Drag it by its header and resize it from the edges. It saves as you type and comes back where you left it after a restart. Want it as a proper file? Hit the save button or <kbd>Ctrl</kbd>+<kbd>S</kbd> to save it as a `.txt` wherever you like, just like Notepad (after the first save, <kbd>Ctrl</kbd>+<kbd>S</kbd> saves straight back to that file; <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> picks a new one).
-- **Boards.** Save the snips and notes you've got up as a board and come back to it later, like a document. A board keeps where everything was, zoom, opacity, your drawings and note text, and saves itself as you work. Switch between boards from the **Boards** page in PinPoint; if what's on screen isn't saved yet, it asks first. Whatever board you had open comes back the next time you start PinPoint. You can also export a board as one image, laid out just like it was on screen, to save or paste anywhere. If you've got windows pinned too, tick a box and a snapshot of them goes in the picture (only the picture; the board itself never includes pinned windows).
+- **Boards.** Save the snips and notes you've got up as a board and come back to it later, like a document. A board keeps where everything was, zoom, opacity, your drawings and note text, and saves itself as you work. Switch between boards from the **Boards** page in PinPoint; if what's on screen isn't saved yet, it asks first. Whatever board you had open comes back the next time you start PinPoint, and so do loose snips that aren't in a board. Click a board's preview for a big look at it without opening it: hover a snip to see it full size, or right-click it to copy or save just that one. You can also export a whole board as one image, laid out like it was on screen or packed together, to save or paste anywhere. If you've got windows pinned too, tick a box and a snapshot of them goes in the picture (only the picture; the board itself never includes pinned windows). Boards are in the tray menu too, so you can switch without leaving your game, and deleted boards go to the Recycle Bin.
 
   <img src="docs/boards.png" alt="The Boards page: a card saying no board is open with a Save as board button, and a saved board listed with its snip and note count and an Open button" width="640">
 
+- **Pin any image.** Copied a picture from a website, or have a screenshot on the clipboard? <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>I</kbd> pins it like a snip. You can also drop image files onto the PinPoint window.
 - **Stays over games.** Anything in borderless or windowed mode. If a game puts itself back on top, PinPoint puts your pins back over it.
 - **Easy to get out of the way.** Hide every pin at once, fade them, or make them click-through so your clicks go straight to the game.
 - **Small and quick.** No installer, no account, no internet connection. Just an exe in a folder.
@@ -72,6 +73,7 @@ All of these can be changed in Settings.
 | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>S</kbd> | Snip a part of the screen and pin it |
 | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>P</kbd> | Pin / unpin the window you're in |
 | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd> | New note |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>I</kbd> | Pin the image you copied |
 | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>H</kbd> | Hide / show all pins |
 | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>G</kbd> | Click-through on / off |
 | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>↓</kbd> / <kbd>↑</kbd> | Fade / unfade the pin under your mouse |
@@ -90,6 +92,7 @@ These mouse controls are for snips (the screenshots you pin). Pinned windows lik
 | Copy text | Click the **T** button (shows on hover), then drag over the words. Click **T** again to go back to moving the snip. |
 | Draw / erase | Click the **pen** button (shows on hover), then drag to draw. Right-drag over a line to erase it. Undo, redo and erase-all appear next to the pen. Click the pen again to go back to moving the snip. |
 | Copy image or all text, save as, opacity, click-through | Right-click |
+| Lock it in place (no accidental moving or resizing) | Right-click → **Lock in place** |
 
 You can snip from a pinned window or from another snip too. It works the same as snipping anything else.
 
@@ -102,7 +105,7 @@ You can snip from a pinned window or from another snip too. It works the same as
 
 - Settings and logs: `%LocalAppData%\PinPoint`
 - Saved snips: `Pictures\PinPoint` (you can change this)
-- Boards: `%LocalAppData%\PinPoint\boards`, one folder per board (a `board.json`, each snip's image and a small preview).
+- Boards: `%LocalAppData%\PinPoint\boards`, one folder per board (a `board.json`, each snip's image and a small preview). Snips that aren't in a board are kept the same way in `%LocalAppData%\PinPoint\session` until you close them.
 - Notes: `%LocalAppData%\PinPoint\notes`, one plain `.txt` file per note. When you close a note that has text in it, it's moved to `notes\closed` rather than deleted, in case you closed it by accident.
 - Start with Windows, only if you turn it on: one entry under `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`
 

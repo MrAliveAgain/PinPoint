@@ -200,7 +200,7 @@ public sealed class PinManager : IDisposable
         Items.Add(new SnipPinItem(window));
         var b = saved.Bounds;
         window.ShowAt(new Core.Geometry.PixelRect(b.X, b.Y, b.Width, b.Height));
-        window.RestoreBoardState(saved.ZoomStep, saved.Opacity, saved.Strokes);
+        window.RestoreBoardState(saved.ZoomStep, saved.Opacity, saved.Strokes, saved.Locked);
         OnStateChanged();
     }
 

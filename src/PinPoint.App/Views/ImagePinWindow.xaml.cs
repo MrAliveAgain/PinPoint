@@ -45,6 +45,7 @@ public sealed partial class ImagePinWindow : Window, IPinSurface
     private int _zoomStep;
     private double _opacity = 1.0;
     private bool _clickThrough;
+    private bool _locked;
     private bool _rightHeld;
     private bool _scrolledWhileRightHeld;
     private readonly WindowDragger _drag;
@@ -115,6 +116,17 @@ public sealed partial class ImagePinWindow : Window, IPinSurface
     /// <summary>Zoom in scroll notches from actual size (0 = 100%).</summary>
     public int CurrentZoomStep => _zoomStep;
 
+    /// <summary>Locked snips can't be dragged or resized (so a stray click in a game can't move them).</summary>
+    public bool IsLocked
+    {
+        get => _locked;
+        set
+        {
+            _locked = value;
+            if (value) _drag.Cancel();
+        }
+    }
+
     /// <summary>True while the right-click menu is open (PinManager must not re-order windows then).</summary>
     public bool IsShowingMenu { get; private set; }
 
@@ -166,11 +178,12 @@ public sealed partial class ImagePinWindow : Window, IPinSurface
     }
 
     /// <summary>Restores a snip opened from a board (call after <see cref="ShowAt"/> with its saved bounds).</summary>
-    public void RestoreBoardState(int zoomStep, double opacity, IEnumerable<double[]> strokes)
+    public void RestoreBoardState(int zoomStep, double opacity, IEnumerable<double[]> strokes, bool locked)
     {
         _zoomStep = zoomStep;
         if (opacity < 0.999) PinOpacity = opacity;
         SetStrokePoints(strokes);
+        IsLocked = locked;
     }
 
     public void SetHidden(bool hidden)
@@ -220,7 +233,8 @@ public sealed partial class ImagePinWindow : Window, IPinSurface
 
         if (!properties.IsLeftButtonPressed) return;
 
-        _drag.Begin(Root, e.Pointer);
+        if (_locked) ShowLockedBadge();
+        else _drag.Begin(Root, e.Pointer);
         e.Handled = true;
     }
 
@@ -256,6 +270,10 @@ public sealed partial class ImagePinWindow : Window, IPinSurface
             _scrolledWhileRightHeld = true;
             NudgeOpacity(delta > 0 ? 1 : -1);
         }
+        else if (_locked)
+        {
+            ShowLockedBadge();
+        }
         else
         {
             Win32.GetCursorPos(out var cursor);
@@ -266,7 +284,12 @@ public sealed partial class ImagePinWindow : Window, IPinSurface
         e.Handled = true;
     }
 
-    private void Root_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e) => ResetZoom();
+    private void Root_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
+    {
+        if (!_locked) ResetZoom();
+    }
+
+    private void ShowLockedBadge() => ShowBadge("Locked · right-click to unlock", 1.4);
 
     private void Root_PointerEntered(object sender, PointerRoutedEventArgs e)
     {
@@ -364,6 +387,8 @@ public sealed partial class ImagePinWindow : Window, IPinSurface
         DrawItem.IsChecked = _drawMode;
         ClearDrawingItem.Visibility = _ink.Strokes.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         ClickThroughItem.IsChecked = _clickThrough;
+        LockItem.IsChecked = _locked;
+        ActualSizeItem.IsEnabled = !_locked;
         Opacity100.IsChecked = _opacity > 0.9;
         Opacity80.IsChecked = _opacity is > 0.7 and <= 0.9;
         Opacity60.IsChecked = _opacity is > 0.5 and <= 0.7;
@@ -418,6 +443,12 @@ public sealed partial class ImagePinWindow : Window, IPinSurface
     }
 
     private void ClickThrough_Click(object sender, RoutedEventArgs e) => IsClickThrough = ClickThroughItem.IsChecked;
+
+    private void Lock_Click(object sender, RoutedEventArgs e)
+    {
+        IsLocked = LockItem.IsChecked;
+        ShowBadge(IsLocked ? "Locked in place" : "Unlocked");
+    }
 
     private void ResetZoom_Click(object sender, RoutedEventArgs e) => ResetZoom();
 

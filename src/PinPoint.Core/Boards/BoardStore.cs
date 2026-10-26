@@ -9,10 +9,12 @@ namespace PinPoint.Core.Boards;
 /// holding <c>board.json</c> and one PNG per snip. Writes are atomic; a broken board.json is skipped
 /// in listings rather than taking the others down.
 /// </summary>
-public sealed class BoardStore(string root)
+/// <param name="useRecycleBin">Deleted boards go to the Recycle Bin (the real store) rather than being removed outright.</param>
+public sealed class BoardStore(string root, bool useRecycleBin = false)
 {
     private const string BoardFile = "board.json";
-    private const string ThumbnailFile = "thumbnail.png";
+    /// <summary>Bump the name when thumbnails change look, so old ones are redrawn (Save removes the old file).</summary>
+    private const string ThumbnailFile = "thumbnail-v2.png";
 
     public string Root { get; } = root;
 
@@ -114,7 +116,17 @@ public sealed class BoardStore(string root)
     public void Delete(string id)
     {
         string folder = FolderOf(id);
-        if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
+        if (!Directory.Exists(folder)) return;
+
+        if (useRecycleBin)
+        {
+            Microsoft.VisualBasic.FileIO.FileSystem.DeleteDirectory(folder,
+                Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
+        }
+        else
+        {
+            Directory.Delete(folder, recursive: true);
+        }
     }
 
     private static void WriteAtomic(string path, string contents)

@@ -25,7 +25,11 @@ public sealed record Board
 /// <summary>A snip on a board. The image is <c>{Id}.png</c> in the board's folder.</summary>
 /// <param name="Bounds">Where its image sits on screen (client area, current zoom applied).</param>
 /// <param name="Strokes">Drawing, each stroke as flat x,y pairs in the snip's own pixels.</param>
-public sealed record BoardSnip(string Id, BoardRect Bounds, int ZoomStep, double Opacity, List<double[]> Strokes);
+public sealed record BoardSnip(string Id, BoardRect Bounds, int ZoomStep, double Opacity, List<double[]> Strokes)
+{
+    /// <summary>Locked in place: can't be dragged or resized until unlocked.</summary>
+    public bool Locked { get; init; }
+}
 
 /// <summary>A note on a board. <paramref name="Bounds"/> is the whole note window.</summary>
 public sealed record BoardNote(string Id, string Text, BoardRect Bounds, double Opacity)

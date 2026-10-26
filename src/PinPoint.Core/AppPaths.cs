@@ -20,4 +20,7 @@ public static class AppPaths
 
     /// <summary>%LocalAppData%\PinPoint\boards — one folder per saved board.</summary>
     public static string BoardsDirectory { get; } = Path.Combine(DataDirectory, "boards");
+
+    /// <summary>%LocalAppData%\PinPoint\session — snips pinned outside any board, so they survive a restart.</summary>
+    public static string SessionDirectory { get; } = Path.Combine(DataDirectory, "session");
 }

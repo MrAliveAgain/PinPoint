@@ -105,6 +105,39 @@ public sealed class SnipStorage(SettingsService settings)
         return new CapturedFrame(new Core.Geometry.PixelRect(0, 0, bitmap.PixelWidth, bitmap.PixelHeight), pixels);
     }
 
+    /// <summary>
+    /// Loads any image Windows can decode (PNG, JPEG, GIF, BMP, WebP…) as an opaque frame at (0, 0), scaled
+    /// down to fit <paramref name="maxWidth"/>×<paramref name="maxHeight"/>. Transparent parts become white.
+    /// </summary>
+    public static async Task<CapturedFrame> LoadImageAsync(IRandomAccessStream stream, int maxWidth, int maxHeight)
+    {
+        var decoder = await BitmapDecoder.CreateAsync(stream);
+        double scale = Math.Min(1, Math.Min(maxWidth / (double)decoder.PixelWidth, maxHeight / (double)decoder.PixelHeight));
+        var transform = new BitmapTransform
+        {
+            ScaledWidth = (uint)Math.Max(1, Math.Round(decoder.PixelWidth * scale)),
+            ScaledHeight = (uint)Math.Max(1, Math.Round(decoder.PixelHeight * scale)),
+            InterpolationMode = BitmapInterpolationMode.Fant,
+        };
+
+        var data = await decoder.GetPixelDataAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied, transform,
+            ExifOrientationMode.IgnoreExifOrientation, ColorManagementMode.ColorManageToSRgb);
+        byte[] pixels = data.DetachPixelData();
+
+        // Premultiplied, so "over white" is just adding the missing coverage to each channel.
+        for (int i = 0; i < pixels.Length; i += 4)
+        {
+            int missing = 255 - pixels[i + 3];
+            if (missing == 0) continue;
+            pixels[i] = (byte)(pixels[i] + missing);
+            pixels[i + 1] = (byte)(pixels[i + 1] + missing);
+            pixels[i + 2] = (byte)(pixels[i + 2] + missing);
+            pixels[i + 3] = 255;
+        }
+
+        return new CapturedFrame(new Core.Geometry.PixelRect(0, 0, (int)transform.ScaledWidth, (int)transform.ScaledHeight), pixels);
+    }
+
     private static string UniquePath(string path)
     {
         if (!File.Exists(path)) return path;

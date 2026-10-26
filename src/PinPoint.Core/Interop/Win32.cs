@@ -79,7 +79,7 @@ public static unsafe partial class Win32
     public const uint NIN_SELECT = WM_USER + 0;
     public const uint NIN_KEYSELECT = WM_USER + 1;
 
-    public const uint MF_STRING = 0x0, MF_GRAYED = 0x1, MF_CHECKED = 0x8, MF_SEPARATOR = 0x800;
+    public const uint MF_STRING = 0x0, MF_GRAYED = 0x1, MF_CHECKED = 0x8, MF_POPUP = 0x10, MF_SEPARATOR = 0x800;
     public const uint TPM_RIGHTBUTTON = 0x2, TPM_BOTTOMALIGN = 0x20, TPM_NONOTIFY = 0x80, TPM_RETURNCMD = 0x100;
 
     public const uint IMAGE_ICON = 1;

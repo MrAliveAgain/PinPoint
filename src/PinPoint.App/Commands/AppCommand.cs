@@ -33,6 +33,7 @@ public static class CommandIds
     public const string PinActiveWindow = "pinActiveWindow";
     public const string SnipAndPin = "snipAndPin";
     public const string NewNote = "newNote";
+    public const string PinCopiedImage = "pinCopiedImage";
     public const string ToggleHideAll = "toggleHideAll";
     public const string ToggleClickThrough = "toggleClickThrough";
     public const string CloseAllSnips = "closeAllSnips";

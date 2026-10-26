@@ -1,13 +1,8 @@
 using Microsoft.UI.Dispatching;
-using Microsoft.UI.Xaml;
 using PinPoint.Core;
 using PinPoint.Core.Boards;
 using PinPoint.Core.Capture;
 using PinPoint.Core.Diagnostics;
-using PinPoint.Core.Geometry;
-using PinPoint.Core.Interop;
-using PinPoint.Core.Windows;
-using PinPoint.Helpers;
 
 namespace PinPoint.Services;
 
@@ -15,27 +10,25 @@ namespace PinPoint.Services;
 /// Boards behave like documents: you open one, it saves itself as you work (moves, zoom, drawing, typing,
 /// added or closed pins), and switching to another replaces what's pinned. Snips and notes take part;
 /// pinned windows never do. The board that was open at exit is reopened on the next start.
+/// With no board open, loose snips are saved the same way to a hidden session, so they come back after a
+/// restart like loose notes do (notes keep their own store). Pictures of boards are in BoardService.Images.cs.
 /// </summary>
-public sealed class BoardService
+public sealed partial class BoardService
 {
     private static readonly TimeSpan AutosaveInterval = TimeSpan.FromSeconds(2);
+    private const string SessionId = "loose-snips";
 
-    /// <summary>Space around everything in an exported image, in screen pixels.</summary>
-    private const int ExportMargin = 48;
-    private const int ThumbnailMargin = 64;
-    private const int ThumbnailWidth = 320;
-    private const int ThumbnailHeight = 180;
-    private const int PreviewWidth = 1600;
-    private const int PreviewHeight = 900;
-
-    private readonly Dictionary<string, Task<string?>> _thumbnails = [];
-
-    private readonly BoardStore _store = new(AppPaths.BoardsDirectory);
+    private readonly BoardStore _store = new(AppPaths.BoardsDirectory, useRecycleBin: true);
+    private readonly BoardStore _session = new(AppPaths.SessionDirectory);
     private readonly PinManager _pins;
     private readonly SettingsService _settings;
     private readonly DispatcherQueueTimer _autosave;
     private string? _lastSavedJson;
     private Task _writing = Task.CompletedTask;
+
+    /// <summary>Above zero while pins are being swapped (opening, restoring): saving then would catch them half-done.</summary>
+    private int _busy;
+    private bool _stopped;
 
     public BoardService(DispatcherQueue dispatcher, PinManager pins, SettingsService settings)
     {
@@ -44,6 +37,7 @@ public sealed class BoardService
         _autosave = dispatcher.CreateTimer();
         _autosave.Interval = AutosaveInterval;
         _autosave.Tick += (_, _) => SaveIfChanged();
+        // Started by RestoreLastAsync, once the last session is back on screen.
     }
 
     /// <summary>Raised when the open board or the list of boards changes.</summary>
@@ -55,7 +49,7 @@ public sealed class BoardService
 
     public bool IsBoardOpen => CurrentId is not null;
 
-    /// <summary>Pins exist that aren't saved anywhere (no board is open). Switching boards should offer to save them.</summary>
+    /// <summary>Pins exist that aren't saved in a board (no board is open). Switching boards should offer to save them.</summary>
     public bool HasUnsavedPins => !IsBoardOpen && (_pins.HasSnips || _pins.HasNotes);
 
     public bool HasPinsToSave => _pins.HasSnips || _pins.HasNotes;
@@ -66,137 +60,27 @@ public sealed class BoardService
 
     public IReadOnlyList<BoardInfo> List() => _store.List();
 
-    // ---- Images (export and thumbnails) -------------------------------------------------------
-
-    /// <summary>
-    /// What's pinned right now as one PNG, laid out and stacked like on screen. With
-    /// <paramref name="includeWindows"/>, pinned windows are captured as they look now; that's only in the
-    /// image, they never become part of a board. Null if there's nothing to draw. Call on the UI thread.
-    /// </summary>
-    public async Task<byte[]?> RenderCurrentAsync(bool includeWindows)
+    /// <summary>A name for a board saved without asking (from the tray): "Board 26 Oct", made unique.</summary>
+    public string SuggestName()
     {
-        var layers = new List<(nint Handle, CollageItem Item)>();
-        foreach (var snip in _pins.Snips)
-            layers.Add((snip.Handle, new CollageImage(snip.ScreenBounds, snip.Frame, null, snip.GetStrokePoints())));
-        foreach (var note in _pins.Notes)
-            layers.Add((note.Handle, NoteItem(note.ToBoardNote(), WindowHelpers.GetScale(note.Handle))));
-
-        if (includeWindows)
+        string name = $"Board {DateTime.Now:d MMM}";
+        var taken = List().Select(b => b.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (!taken.Contains(name)) return name;
+        for (int i = 2; ; i++)
         {
-            var handles = _pins.PinnedWindows.Select(p => p.Handle).ToList();
-            var frames = await Task.Run(() => handles.Select(h => (Handle: h, Frame: WindowCapture.Capture(h))).ToList());
-            foreach (var (handle, frame) in frames)
-            {
-                if (frame is null) Log.Warn($"Could not capture pinned window {handle} for a board image");
-                else layers.Add((handle, new CollageImage(frame.Bounds, frame, null, [])));
-            }
-        }
-
-        // EnumWindows lists topmost first, so the highest index is drawn first.
-        var zOrder = WindowEnumerator.TopLevelInZOrder().Select((handle, i) => (handle, i)).ToDictionary(p => p.handle, p => p.i);
-        var items = layers.OrderByDescending(l => zOrder.GetValueOrDefault(l.Handle, int.MaxValue)).Select(l => l.Item).ToList();
-        return await CollageRenderer.RenderPngAsync(items, IsDarkTheme, ExportMargin, int.MaxValue, int.MaxValue);
-    }
-
-    /// <summary>A saved board as one PNG, from its files. Null if it's empty or gone.</summary>
-    public Task<byte[]?> RenderSavedAsync(string id) => RenderFromDiskAsync(id, ExportMargin, int.MaxValue, int.MaxValue);
-
-    /// <summary>A screen-sized look at a saved board (clicking its thumbnail). Null if it's empty or gone.</summary>
-    public async Task<byte[]?> RenderPreviewAsync(string id)
-    {
-        if (id == CurrentId) await FlushAsync(); // show the open board as it is now
-        return await RenderFromDiskAsync(id, ThumbnailMargin, PreviewWidth, PreviewHeight);
-    }
-
-    /// <summary>Path of an up-to-date preview of a saved board (drawn when missing or stale), or null if it's empty.</summary>
-    public Task<string?> GetThumbnailAsync(string id)
-    {
-        if (_store.IsThumbnailCurrent(id)) return Task.FromResult<string?>(_store.ThumbnailPath(id));
-        if (_thumbnails.TryGetValue(id, out var pending)) return pending;
-
-        var drawing = DrawThumbnailAsync(id);
-        if (!drawing.IsCompleted) _thumbnails[id] = drawing;
-        return drawing;
-    }
-
-    private async Task<string?> DrawThumbnailAsync(string id)
-    {
-        try
-        {
-            if (await RenderFromDiskAsync(id, ThumbnailMargin, ThumbnailWidth, ThumbnailHeight) is not { } png) return null;
-            _store.SaveThumbnail(id, png);
-            return _store.ThumbnailPath(id);
-        }
-        catch (Exception ex)
-        {
-            Log.Error($"Could not draw thumbnail for board {id}", ex);
-            return null;
-        }
-        finally
-        {
-            _thumbnails.Remove(id);
+            if (!taken.Contains($"{name} ({i})")) return $"{name} ({i})";
         }
     }
-
-    private Task<byte[]?> RenderFromDiskAsync(string id, int margin, int maxWidth, int maxHeight) =>
-        _store.Load(id) is { } board
-            ? CollageRenderer.RenderPngAsync(ItemsFromDisk(_store, id, board), IsDarkTheme, margin, maxWidth, maxHeight)
-            : Task.FromResult<byte[]?>(null);
-
-    /// <summary>A saved board's snips (images from its folder) then notes, as drawn on screen.</summary>
-    private static List<CollageItem> ItemsFromDisk(BoardStore store, string id, Board board)
-    {
-        double noteScale = Win32.GetDpiForSystem() / 96.0;
-        return
-        [
-            .. board.Snips.Select(s => new CollageImage(ToPixelRect(s.Bounds), null, store.ImagePath(id, s.Id), s.Strokes)),
-            .. board.Notes.Select(n => NoteItem(n, noteScale)),
-        ];
-    }
-
-    /// <summary>
-    /// Developer check without UI: <c>PinPoint.exe --board-selftest board-id out.png [thumbnail]</c> draws a saved
-    /// board (dark theme). Exit code 0 = drawn, 2 = nothing to draw, 1 = error.
-    /// </summary>
-    public static int RunSelfTest(string id, string output, bool thumbnail)
-    {
-        try
-        {
-            var store = new BoardStore(AppPaths.BoardsDirectory);
-            if (store.Load(id) is not { } board) return 2;
-
-            var items = ItemsFromDisk(store, id, board);
-            byte[]? png = (thumbnail
-                ? CollageRenderer.RenderPngAsync(items, true, ThumbnailMargin, ThumbnailWidth, ThumbnailHeight)
-                : CollageRenderer.RenderPngAsync(items, true, ExportMargin, int.MaxValue, int.MaxValue)).GetAwaiter().GetResult();
-            if (png is null) return 2;
-
-            File.WriteAllBytes(output, png);
-            return 0;
-        }
-        catch (Exception ex)
-        {
-            Log.Error("Board self-test failed", ex);
-            File.WriteAllText(output + ".error.txt", ex.ToString());
-            return 1;
-        }
-    }
-
-    private static CollageNote NoteItem(BoardNote note, double dpiScale) =>
-        new(ToPixelRect(note.Bounds), note.ExportPath is { } path ? Path.GetFileName(path) : "Note", note.Text, dpiScale);
-
-    private static PixelRect ToPixelRect(BoardRect r) => new(r.X, r.Y, r.Width, r.Height);
-
-    /// <summary>Pin windows follow the app theme, so their pictures do too.</summary>
-    private static bool IsDarkTheme => Application.Current.RequestedTheme == ApplicationTheme.Dark;
 
     /// <summary>Saves what's pinned now as a new board and keeps working in it. False if it couldn't be written.</summary>
     public async Task<bool> SaveAsNewAsync(string name)
     {
+        await _writing; // a session save may be running; let it finish before the board takes over
         string id = BoardStore.CreateId();
         if (!await WriteAsync(id, name)) return false; // leave the notes where they are
 
         foreach (var note in _pins.Notes) note.MoveToBoard(); // the board owns them now
+        DeleteSession();
         SetCurrent(id, name);
         Log.Info($"Saved new board {id}");
         return true;
@@ -207,40 +91,25 @@ public sealed class BoardService
     {
         if (_store.Load(id) is not { } board) return;
 
-        await FlushAsync();
-        _pins.CloseSnipsAndNotes();
-        SetCurrent(null, null);
-
-        // Decode images off the UI thread, then pin on it.
-        var images = await Task.Run(async () =>
+        _busy++;
+        try
         {
-            var loaded = new Dictionary<string, CapturedFrame>();
-            foreach (var snip in board.Snips)
-            {
-                string path = _store.ImagePath(id, snip.Id);
-                try
-                {
-                    if (File.Exists(path)) loaded[snip.Id] = await SnipStorage.LoadPngAsync(path);
-                }
-                catch (Exception ex)
-                {
-                    Log.Error($"Could not load board image {path}", ex);
-                }
-            }
+            await FlushAsync();
+            _pins.CloseSnipsAndNotes();
+            DeleteSession(); // whatever was loose was saved into a board or let go when the user was asked
+            SetCurrent(null, null);
 
-            return loaded;
-        });
+            int snips = await RestoreSnipsAsync(_store, id, board);
+            foreach (var note in board.Notes) _pins.RestoreBoardNote(note);
 
-        foreach (var snip in board.Snips)
-        {
-            if (images.TryGetValue(snip.Id, out var frame)) _pins.RestoreSnip(frame, snip);
+            SetCurrent(id, board.Name);
+            _lastSavedJson = BoardStore.ToJson(Snapshot(board.Name));
+            Log.Info($"Opened board {id} ({snips} snips, {board.Notes.Count} notes)");
         }
-
-        foreach (var note in board.Notes) _pins.RestoreBoardNote(note);
-
-        SetCurrent(id, board.Name);
-        _lastSavedJson = BoardStore.ToJson(Snapshot(board.Name));
-        Log.Info($"Opened board {id} ({images.Count} snips, {board.Notes.Count} notes)");
+        finally
+        {
+            _busy--;
+        }
     }
 
     /// <summary>Saves and closes the open board, leaving nothing pinned (pinned windows stay).</summary>
@@ -267,7 +136,7 @@ public sealed class BoardService
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>Deletes a saved board. Deleting the open one also closes its pins.</summary>
+    /// <summary>Moves a saved board to the Recycle Bin. Deleting the open one also closes its pins.</summary>
     public void Delete(string id)
     {
         if (id == CurrentId)
@@ -277,13 +146,29 @@ public sealed class BoardService
         }
 
         _store.Delete(id);
+        Log.Info($"Deleted board {id} (to the Recycle Bin)");
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>Reopens the board that was open when PinPoint last exited.</summary>
+    /// <summary>
+    /// Brings back what was pinned when PinPoint last exited: the open board, or else the loose snips.
+    /// Starts autosaving afterwards.
+    /// </summary>
     public async Task RestoreLastAsync()
     {
-        if (_settings.Current.OpenBoardId is { } id && _store.Exists(id)) await OpenAsync(id);
+        try
+        {
+            if (_settings.Current.OpenBoardId is { } id && _store.Exists(id)) await OpenAsync(id);
+            else await RestoreLooseSnipsAsync();
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Could not restore the last session", ex);
+        }
+        finally
+        {
+            _autosave.Start();
+        }
     }
 
     /// <summary>Writes any pending changes now (switching boards, exiting).</summary>
@@ -297,6 +182,8 @@ public sealed class BoardService
     public void FlushForExit()
     {
         SaveIfChanged();
+        _stopped = true; // pins are about to close; that must not be saved as "nothing pinned"
+        _autosave.Stop();
         try
         {
             _writing.Wait(TimeSpan.FromSeconds(10));
@@ -307,47 +194,110 @@ public sealed class BoardService
         }
     }
 
+    private async Task RestoreLooseSnipsAsync()
+    {
+        if (_session.Load(SessionId) is not { Snips.Count: > 0 } saved) return;
+
+        _busy++;
+        try
+        {
+            int restored = await RestoreSnipsAsync(_session, SessionId, saved);
+            _lastSavedJson = BoardStore.ToJson(CurrentTarget().Board);
+            Log.Info($"Brought back {restored} loose snips");
+        }
+        finally
+        {
+            _busy--;
+        }
+    }
+
+    /// <summary>Decodes a board's snip images off the UI thread, then pins them. Returns how many came back.</summary>
+    private async Task<int> RestoreSnipsAsync(BoardStore store, string id, Board board)
+    {
+        var images = await Task.Run(async () =>
+        {
+            var loaded = new Dictionary<string, CapturedFrame>();
+            foreach (var snip in board.Snips)
+            {
+                string path = store.ImagePath(id, snip.Id);
+                try
+                {
+                    if (File.Exists(path)) loaded[snip.Id] = await SnipStorage.LoadPngAsync(path);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"Could not load board image {path}", ex);
+                }
+            }
+
+            return loaded;
+        });
+
+        foreach (var snip in board.Snips)
+        {
+            if (images.TryGetValue(snip.Id, out var frame)) _pins.RestoreSnip(frame, snip);
+        }
+
+        return images.Count;
+    }
+
+    private void DeleteSession()
+    {
+        try
+        {
+            _session.Delete(SessionId);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Log.Warn($"Could not clear the loose-snips session: {ex.Message}");
+        }
+    }
+
     private void SetCurrent(string? id, string? name)
     {
         CurrentId = id;
         CurrentName = name;
         _pins.BoardMode = id is not null;
-        if (id is null) _autosave.Stop();
-        else _autosave.Start();
-
         _settings.Update(s => s.OpenBoardId = id);
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
     private void SaveIfChanged()
     {
-        if (CurrentId is not { } id || CurrentName is not { } name) return;
-        if (!_writing.IsCompleted) return; // next tick will catch up
+        if (_busy > 0 || _stopped || !_writing.IsCompleted) return; // next tick will catch up
 
-        var board = Snapshot(name);
+        var (store, id, board) = CurrentTarget();
         string json = BoardStore.ToJson(board);
         if (json == _lastSavedJson) return;
 
         _lastSavedJson = json;
-        _writing = WriteSnapshotAsync(id, board, NewImages(id));
+        if (store == _session && board.Snips.Count == 0 && !_session.Exists(SessionId)) return; // nothing to keep
+
+        _writing = WriteSnapshotAsync(store, id, board, NewImages(store, id));
     }
+
+    /// <summary>Where what's pinned is saved: the open board, or else the loose-snips session (snips only).</summary>
+    private (BoardStore Store, string Id, Board Board) CurrentTarget() =>
+        CurrentId is { } id
+            ? (_store, id, Snapshot(CurrentName ?? "Board"))
+            : (_session, SessionId, Snapshot("Loose snips") with { Notes = [] });
 
     private Task<bool> WriteAsync(string id, string name)
     {
         var board = Snapshot(name);
         _lastSavedJson = BoardStore.ToJson(board);
-        return WriteSnapshotAsync(id, board, NewImages(id));
+        return WriteSnapshotAsync(_store, id, board, NewImages(_store, id));
     }
 
     /// <summary>Encodes new snip images and writes everything, off the UI thread. False if it failed.</summary>
-    private Task<bool> WriteSnapshotAsync(string id, Board board, List<(string SnipId, CapturedFrame Frame)> images) =>
+    private Task<bool> WriteSnapshotAsync(BoardStore store, string id, Board board, List<(string SnipId, CapturedFrame Frame)> images) =>
         Task.Run(async () =>
         {
             try
             {
                 foreach (var (snipId, frame) in images)
-                    _store.SaveImage(id, snipId, await SnipStorage.EncodePngAsync(frame));
-                _store.Save(id, board);
+                    store.SaveImage(id, snipId, await SnipStorage.EncodePngAsync(frame));
+                store.Save(id, board);
                 return true;
             }
             catch (Exception ex)
@@ -358,9 +308,9 @@ public sealed class BoardService
             }
         });
 
-    /// <summary>Snips whose image isn't in the board folder yet (images never change once written).</summary>
-    private List<(string, CapturedFrame)> NewImages(string id) =>
-        [.. _pins.Snips.Where(s => !File.Exists(_store.ImagePath(id, s.Id))).Select(s => (s.Id, s.Frame))];
+    /// <summary>Snips whose image isn't in the folder yet (images never change once written).</summary>
+    private List<(string, CapturedFrame)> NewImages(BoardStore store, string id) =>
+        [.. _pins.Snips.Where(s => !File.Exists(store.ImagePath(id, s.Id))).Select(s => (s.Id, s.Frame))];
 
     /// <summary>The pinned snips and notes as board data (must run on the UI thread).</summary>
     private Board Snapshot(string name) => new()
@@ -371,7 +321,10 @@ public sealed class BoardService
             .. _pins.Snips.Select(s =>
             {
                 var r = s.ScreenBounds;
-                return new BoardSnip(s.Id, new BoardRect(r.X, r.Y, r.Width, r.Height), s.CurrentZoomStep, s.PinOpacity, s.GetStrokePoints());
+                return new BoardSnip(s.Id, new BoardRect(r.X, r.Y, r.Width, r.Height), s.CurrentZoomStep, s.PinOpacity, s.GetStrokePoints())
+                {
+                    Locked = s.IsLocked,
+                };
             }),
         ],
         Notes = [.. _pins.Notes.Select(n => n.ToBoardNote())],

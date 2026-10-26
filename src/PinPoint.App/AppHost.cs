@@ -182,6 +182,16 @@ public sealed class AppHost : IDisposable
 
         Commands.Add(new AppCommand
         {
+            Id = CommandIds.PinCopiedImage,
+            Title = "Pin copied image",
+            Description = "Pin a picture you've copied (from a browser, an image viewer, a screenshot, or image files in Explorer) on top, like a snip. You can also drag image files onto this window.",
+            Glyph = "",
+            DefaultHotkey = "Ctrl+Alt+I", // not V: Office uses Ctrl+Alt+V for Paste Special
+            Execute = Snips.PinFromClipboard,
+        });
+
+        Commands.Add(new AppCommand
+        {
             Id = CommandIds.ToggleHideAll,
             Title = "Hide all pins",
             Description = "Clear every pin out of the way, then bring them all back.",
@@ -250,7 +260,7 @@ public sealed class AppHost : IDisposable
 
         items.Add(TrayMenuItem.Separator);
         items.Add(new TrayMenuItem("Open snips folder", Deferred(Storage.OpenFolder)));
-        items.Add(new TrayMenuItem(Boards.CurrentName is { } board ? $"Boards  ({board})" : "Boards", Deferred(() => ShowManager(ManagerWindow.BoardsPageTag))));
+        items.Add(new TrayMenuItem("Boards") { Children = BuildBoardsMenu(Deferred) });
         items.Add(new TrayMenuItem("Open PinPoint", Deferred(() => ShowManager())));
         items.Add(new TrayMenuItem("Settings", Deferred(() => ShowManager(ManagerWindow.SettingsPageTag))));
         items.Add(TrayMenuItem.Separator);
@@ -259,6 +269,70 @@ public sealed class AppHost : IDisposable
 
         // Run after the modal menu loop has fully unwound (e.g. snipping needs the menu gone first).
         Action Deferred(Action action) => () => Dispatcher.TryEnqueue(DispatcherQueuePriority.Low, () => action());
+    }
+
+    /// <summary>
+    /// Boards from the tray, so switching mid-game doesn't need the main window: recent boards (the open one
+    /// ticked), a quick save of what's pinned, close, and the Boards page.
+    /// </summary>
+    private List<TrayMenuItem> BuildBoardsMenu(Func<Action, Action> deferred)
+    {
+        const int MaxListed = 10;
+        var items = new List<TrayMenuItem>();
+        foreach (var board in Boards.List().Take(MaxListed))
+        {
+            bool current = board.Id == Boards.CurrentId;
+            items.Add(new TrayMenuItem(board.Name.Replace("&", "&&"), current ? null : deferred(() => OpenBoardFromTray(board.Id, board.Name)), IsChecked: current));
+        }
+
+        if (items.Count > 0) items.Add(TrayMenuItem.Separator);
+        if (!Boards.IsBoardOpen)
+        {
+            items.Add(new TrayMenuItem("Save what's pinned as a board", deferred(QuickSaveBoard), IsEnabled: Boards.HasPinsToSave));
+        }
+        else
+        {
+            items.Add(new TrayMenuItem("Close board", deferred(() => _ = Boards.CloseBoardAsync())));
+        }
+
+        items.Add(new TrayMenuItem("Manage boards…", deferred(() => ShowManager(ManagerWindow.BoardsPageTag))));
+        return items;
+    }
+
+    /// <summary>
+    /// No dialogs from the tray (you may be in a game): pins that aren't in a board yet are saved as a new
+    /// board first, so switching never loses anything.
+    /// </summary>
+    private async void OpenBoardFromTray(string id, string name)
+    {
+        try
+        {
+            string? savedAs = null;
+            if (Boards.HasUnsavedPins)
+            {
+                savedAs = Boards.SuggestName();
+                if (!await Boards.SaveAsNewAsync(savedAs))
+                {
+                    Notifier.Show("", "Couldn't save what's pinned", "Nothing was changed. The log has the details.", force: true);
+                    return;
+                }
+            }
+
+            await Boards.OpenAsync(id);
+            Notifier.Show("", $"Opened “{name}”", savedAs is null ? null : $"What was pinned before is saved as “{savedAs}”.");
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"Could not open board {id} from the tray", ex);
+            Notifier.Show("", "Couldn't open that board", ex.Message, force: true);
+        }
+    }
+
+    private async void QuickSaveBoard()
+    {
+        string name = Boards.SuggestName();
+        if (await Boards.SaveAsNewAsync(name)) Notifier.Show("", $"Saved as “{name}”", "Rename it on the Boards page if you like.");
+        else Notifier.Show("", "Couldn't save the board", "Nothing was changed. The log has the details.", force: true);
     }
 
     private void OnManagerClosed(object sender, WindowEventArgs args)

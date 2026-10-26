@@ -2,14 +2,12 @@ using System.Diagnostics;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using PinPoint.Core.Boards;
 using PinPoint.Core.Diagnostics;
 using PinPoint.Services;
 using PinPoint.ViewModels;
-using Windows.Storage.Pickers;
 
 namespace PinPoint.Views;
 
@@ -61,6 +59,7 @@ public sealed partial class BoardsPage : Page
     private readonly Dictionary<string, (DateTime Stamp, ImageSource Image)> _thumbnails = [];
 
     private string? _lastExportPath;
+    private BoardPreviewWindow? _preview;
 
     public BoardsPage()
     {
@@ -153,16 +152,19 @@ public sealed partial class BoardsPage : Page
 
     private async void Open_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is not FrameworkElement { DataContext: BoardRow row }) return;
+        if (sender is FrameworkElement { DataContext: BoardRow row }) await OpenBoardAsync(row.Id, row.Name);
+    }
 
-        // Like any document app: offer to save what's on screen if it isn't saved anywhere.
+    /// <summary>Opens a board; like any document app, first offers to save what's on screen if it isn't in a board.</summary>
+    private async Task OpenBoardAsync(string id, string name)
+    {
         if (_host.Boards.HasUnsavedPins)
         {
             var choice = await new ContentDialog
             {
                 XamlRoot = XamlRoot,
                 Title = "Save your current pins first?",
-                Content = $"Your snips and notes aren't in a board yet. Save them as a board before opening “{row.Name}”?\n\n"
+                Content = $"Your snips and notes aren't in a board yet. Save them as a board before opening “{name}”?\n\n"
                     + "If you don't, the snips close (they're still in your Pictures folder if saving is on) and notes are kept in the notes\\closed folder.",
                 PrimaryButtonText = "Save as board…",
                 SecondaryButtonText = "Don't save",
@@ -174,7 +176,7 @@ public sealed partial class BoardsPage : Page
             if (choice == ContentDialogResult.Primary && !await SaveCurrentAsBoardAsync()) return;
         }
 
-        await _host.Boards.OpenAsync(row.Id);
+        await _host.Boards.OpenAsync(id);
     }
 
     private async void Rename_Click(object sender, RoutedEventArgs e)
@@ -194,58 +196,42 @@ public sealed partial class BoardsPage : Page
             XamlRoot = XamlRoot,
             Title = $"Delete “{name}”?",
             Content = id == _host.Boards.CurrentId
-                ? "It's open right now: its snips and notes will close. This can't be undone."
-                : "Its snips, notes and drawings will be gone. This can't be undone.",
+                ? "It's open right now: its snips and notes will close. The board goes to the Recycle Bin, so you can still get it back from there."
+                : "The board goes to the Recycle Bin, so you can still get it back from there.",
             PrimaryButtonText = "Delete",
             CloseButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Close,
         }.ShowAsync();
 
-        if (choice == ContentDialogResult.Primary) _host.Boards.Delete(id);
-    }
-
-    /// <summary>Shows the board bigger in a flyout (it can be wider than this window).</summary>
-    private async void Preview_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Button { Tag: string id } button) return;
-
-        var image = new Image { Stretch = Stretch.Uniform, MaxWidth = 960, MaxHeight = 540 };
-        var loading = new ProgressRing { IsActive = true, Width = 32, Height = 32, Margin = new Thickness(48) };
-        var content = new Grid();
-        content.Children.Add(loading);
-        content.Children.Add(image);
-
-        var presenter = new Style(typeof(FlyoutPresenter));
-        presenter.Setters.Add(new Setter(MaxWidthProperty, 1000.0));
-        presenter.Setters.Add(new Setter(MaxHeightProperty, 600.0));
-        presenter.Setters.Add(new Setter(Control.PaddingProperty, new Thickness(8)));
-
-        new Flyout
-        {
-            Content = content,
-            FlyoutPresenterStyle = presenter,
-            Placement = FlyoutPlacementMode.BottomEdgeAlignedLeft,
-            ShouldConstrainToRootBounds = false,
-        }.ShowAt(button);
-
+        if (choice != ContentDialogResult.Primary) return;
         try
         {
-            if (await _host.Boards.RenderPreviewAsync(id) is { } png)
-            {
-                var bitmap = new BitmapImage();
-                using (var stream = new MemoryStream(png)) await bitmap.SetSourceAsync(stream.AsRandomAccessStream());
-                image.Source = bitmap;
-            }
+            _host.Boards.Delete(id);
         }
         catch (Exception ex)
         {
-            Log.Error($"Could not preview board {id}", ex);
+            Log.Error($"Could not delete board {id}", ex);
+            ShowExportResult(new(InfoBarSeverity.Error, "Couldn't delete the board", ex.Message, null));
         }
-        finally
+    }
+
+    /// <summary>Opens the big preview of a board (one at a time).</summary>
+    private void Preview_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { Tag: string id }) return;
+        string name = _host.Boards.List().FirstOrDefault(b => b.Id == id)?.Name ?? "Board";
+
+        _preview?.Close();
+        _preview = new BoardPreviewWindow(id, name, open: async () =>
         {
-            loading.IsActive = false;
-            loading.Visibility = Visibility.Collapsed;
-        }
+            _host.ShowManager(ManagerWindow.BoardsPageTag); // its dialogs show here
+            await OpenBoardAsync(id, name);
+        });
+        _preview.Closed += (s, _) =>
+        {
+            if (ReferenceEquals(_preview, s)) _preview = null;
+        };
+        _preview.Activate();
     }
 
     // ---- Export as an image ------------------------------------------------------------------
@@ -257,112 +243,19 @@ public sealed partial class BoardsPage : Page
         if (sender is FrameworkElement { Tag: string id }) await ExportAsync(id);
     }
 
-    /// <summary>
-    /// Saves or copies a board as one PNG: the open board / current pins (<paramref name="savedId"/> null or
-    /// the open board) live from the screen, optionally with a snapshot of pinned windows; others from disk.
-    /// </summary>
     private async Task ExportAsync(string? savedId)
     {
-        var boards = _host.Boards;
-        bool live = savedId is null || savedId == boards.CurrentId;
-        string? name = live ? boards.CurrentName : boards.List().FirstOrDefault(b => b.Id == savedId)?.Name;
-
-        var content = new StackPanel { Spacing = 8 };
-        content.Children.Add(new TextBlock
-        {
-            Text = "Everything is laid out the way it is on screen, in one PNG image.",
-            TextWrapping = TextWrapping.Wrap,
-        });
-
-        CheckBox? includeWindows = null;
-        if (live && boards.HasPinnedWindows)
-        {
-            includeWindows = new CheckBox
-            {
-                Content = "Include pinned windows",
-                IsChecked = _host.Settings.Current.ExportIncludesPinnedWindows,
-            };
-            content.Children.Add(includeWindows);
-            content.Children.Add(new TextBlock
-            {
-                Text = "Adds a snapshot of how they look right now. It's only in the image: pinned windows never become part of a board.",
-                TextWrapping = TextWrapping.Wrap,
-                Style = (Style)Application.Current.Resources["CaptionTextBlockStyle"],
-                Opacity = 0.75,
-                Margin = new Thickness(28, -8, 0, 0),
-            });
-        }
-
-        var choice = await new ContentDialog
-        {
-            XamlRoot = XamlRoot,
-            Title = name is null ? "Export what's pinned as an image" : $"Export “{name}” as an image",
-            Content = content,
-            PrimaryButtonText = "Save as…",
-            SecondaryButtonText = "Copy",
-            CloseButtonText = "Cancel",
-            DefaultButton = ContentDialogButton.Primary,
-        }.ShowAsync();
-        if (choice == ContentDialogResult.None) return;
-
-        bool withWindows = includeWindows?.IsChecked == true;
-        if (includeWindows is not null) _host.Settings.Update(s => s.ExportIncludesPinnedWindows = withWindows);
-
-        string? path = null;
-        if (choice == ContentDialogResult.Primary && (path = await PickImagePathAsync(name)) is null) return;
-
-        try
-        {
-            byte[]? png = live ? await boards.RenderCurrentAsync(withWindows) : await boards.RenderSavedAsync(savedId!);
-            if (png is null)
-            {
-                ShowExportResult(InfoBarSeverity.Warning, "Nothing to export", "There were no snips, notes or windows to put in the image.", null);
-            }
-            else if (path is null)
-            {
-                SnipStorage.CopyPngToClipboard(png);
-                ShowExportResult(InfoBarSeverity.Success, "Copied", "The board image is on your clipboard.", null);
-            }
-            else
-            {
-                await File.WriteAllBytesAsync(path, png);
-                ShowExportResult(InfoBarSeverity.Success, "Exported", $"Saved as {Path.GetFileName(path)}.", path);
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Error("Board export failed", ex);
-            ShowExportResult(InfoBarSeverity.Error, "Couldn't export the image", "The log in %LocalAppData%\\PinPoint\\logs has the details.", null);
-        }
+        if (XamlRoot?.ContentIslandEnvironment?.AppWindowId is not { } window) return;
+        if (await BoardExport.RunAsync(XamlRoot, Win32Interop.GetWindowFromWindowId(window), savedId) is { } outcome) ShowExportResult(outcome);
     }
 
-    private async Task<string?> PickImagePathAsync(string? name)
+    private void ShowExportResult(ExportOutcome outcome)
     {
-        var picker = new FileSavePicker
-        {
-            SuggestedStartLocation = PickerLocationId.PicturesLibrary,
-            SuggestedFileName = SafeFileName(name ?? $"PinPoint {DateTime.Now:yyyy-MM-dd HH-mm}"),
-        };
-        picker.FileTypeChoices.Add("PNG image", [".png"]);
-        if (XamlRoot?.ContentIslandEnvironment?.AppWindowId is { } id)
-            WinRT.Interop.InitializeWithWindow.Initialize(picker, Win32Interop.GetWindowFromWindowId(id));
-
-        return (await picker.PickSaveFileAsync())?.Path;
-    }
-
-    private static string SafeFileName(string name)
-    {
-        string safe = string.Concat(name.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? ' ' : c)).Trim();
-        return safe.Length == 0 ? "Board" : safe;
-    }
-
-    private void ShowExportResult(InfoBarSeverity severity, string title, string message, string? path)
-    {
-        _lastExportPath = path;
-        ShowExportButton.Visibility = path is null ? Visibility.Collapsed : Visibility.Visible;
-        ExportInfo.Severity = severity;
-        ExportInfo.Title = title;
-        ExportInfo.Message = message;
+        _lastExportPath = outcome.SavedPath;
+        ShowExportButton.Visibility = outcome.SavedPath is null ? Visibility.Collapsed : Visibility.Visible;
+        ExportInfo.Severity = outcome.Severity;
+        ExportInfo.Title = outcome.Title;
+        ExportInfo.Message = outcome.Message;
         ExportInfo.IsOpen = true;
     }
 

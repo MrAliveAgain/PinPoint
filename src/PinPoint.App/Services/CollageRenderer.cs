@@ -66,8 +66,7 @@ public static class CollageRenderer
                         DrawShadow(ds, rect, radius, k, dark);
                         using (ds.CreateLayer(1, CanvasGeometry.CreateRoundedRectangle(ds, rect, radius, radius)))
                         {
-                            if (item is CollageImage image) DrawImage(ds, bitmaps[image], image.Strokes, rect);
-                            else DrawNote(ds, (CollageNote)item, rect, layout.Scale, dark);
+                            DrawContent(ds, item, bitmaps, rect, layout.Scale, dark);
                         }
 
                         ds.DrawRoundedRectangle(rect, radius, radius,
@@ -75,15 +74,62 @@ public static class CollageRenderer
                     }
                 }
 
-                using var png = new MemoryStream();
-                await target.SaveAsync(png.AsRandomAccessStream(), CanvasBitmapFileFormat.Png);
-                return png.ToArray();
+                return await ToPngAsync(target);
             }
             finally
             {
                 foreach (var bitmap in bitmaps.Values) bitmap.Dispose();
             }
         });
+
+    /// <summary>
+    /// Just one pin at its on-screen size, as a plain rectangle (a snip with its drawing, or a note as its
+    /// window looks). Used by the board preview and for saving or copying a single snip from it.
+    /// </summary>
+    public static Task<byte[]?> RenderItemPngAsync(CollageItem item, bool dark) =>
+        Task.Run(async () =>
+        {
+            var device = CanvasDevice.GetSharedDevice();
+            var bitmaps = new Dictionary<CollageImage, CanvasBitmap>(ReferenceEqualityComparer.Instance);
+            try
+            {
+                if (item is CollageImage image)
+                {
+                    if (await LoadAsync(device, image) is not { } bitmap) return null;
+                    bitmaps[image] = bitmap;
+                }
+
+                int limit = device.MaximumBitmapSizeInPixels;
+                if (CollageLayout.Fit([item.Bounds], 0, limit, limit) is not { } layout) return null;
+
+                using var target = new CanvasRenderTarget(device, layout.Width, layout.Height, 96);
+                using (var ds = target.CreateDrawingSession())
+                {
+                    ds.Clear(Color.FromArgb(0, 0, 0, 0));
+                    var (x, y, width, height) = layout.Map(item.Bounds);
+                    DrawContent(ds, item, bitmaps, new Rect(x, y, width, height), layout.Scale, dark);
+                }
+
+                return await ToPngAsync(target);
+            }
+            finally
+            {
+                foreach (var bitmap in bitmaps.Values) bitmap.Dispose();
+            }
+        });
+
+    private static void DrawContent(CanvasDrawingSession ds, CollageItem item, Dictionary<CollageImage, CanvasBitmap> bitmaps, Rect rect, double scale, bool dark)
+    {
+        if (item is CollageImage image) DrawImage(ds, bitmaps[image], image.Strokes, rect);
+        else DrawNote(ds, (CollageNote)item, rect, scale, dark);
+    }
+
+    private static async Task<byte[]> ToPngAsync(CanvasRenderTarget target)
+    {
+        using var png = new MemoryStream();
+        await target.SaveAsync(png.AsRandomAccessStream(), CanvasBitmapFileFormat.Png);
+        return png.ToArray();
+    }
 
     private static async Task<CanvasBitmap?> LoadAsync(CanvasDevice device, CollageImage image)
     {

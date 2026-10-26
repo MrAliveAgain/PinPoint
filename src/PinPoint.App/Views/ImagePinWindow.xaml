@@ -57,7 +57,10 @@
                 <ToggleMenuFlyoutItem x:Name="ClickThroughItem" Text="Click-through" Click="ClickThrough_Click">
                     <ToggleMenuFlyoutItem.Icon><FontIcon Glyph="&#xE8B0;" /></ToggleMenuFlyoutItem.Icon>
                 </ToggleMenuFlyoutItem>
-                <MenuFlyoutItem Text="Actual size" Click="ResetZoom_Click">
+                <ToggleMenuFlyoutItem x:Name="LockItem" Text="Lock in place" Click="Lock_Click">
+                    <ToggleMenuFlyoutItem.Icon><FontIcon Glyph="&#xE72E;" /></ToggleMenuFlyoutItem.Icon>
+                </ToggleMenuFlyoutItem>
+                <MenuFlyoutItem x:Name="ActualSizeItem" Text="Actual size" Click="ResetZoom_Click">
                     <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE71E;" /></MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
                 <MenuFlyoutSeparator />

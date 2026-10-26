@@ -5,7 +5,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:vm="using:PinPoint.ViewModels">
 
-    <ScrollViewer>
+    <!-- Background so the whole page (not just its text) accepts dropped image files. -->
+    <ScrollViewer AllowDrop="True" Background="Transparent" DragOver="Page_DragOver" Drop="Page_Drop">
         <StackPanel MaxWidth="1000" Padding="36,8,36,36" HorizontalAlignment="Stretch">
             <TextBlock Text="Pins" Style="{StaticResource TitleTextBlockStyle}" Margin="0,0,0,20" />
 

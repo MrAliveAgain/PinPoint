@@ -8,6 +8,9 @@ public sealed record TrayMenuItem(string Text, Action? Execute = null, bool IsCh
     public static TrayMenuItem Separator { get; } = new("-");
 
     public bool IsSeparator => ReferenceEquals(this, Separator);
+
+    /// <summary>When set, this item opens a submenu of these instead of running <see cref="Execute"/>.</summary>
+    public IReadOnlyList<TrayMenuItem>? Children { get; init; }
 }
 
 /// <summary>
@@ -121,24 +124,10 @@ public sealed unsafe class TrayIcon : IDisposable
         var items = MenuFactory?.Invoke();
         if (items is null || items.Count == 0) return;
 
-        nint menu = Win32.CreatePopupMenu();
+        var commands = new List<TrayMenuItem>();
+        nint menu = BuildMenu(items, commands);
         try
         {
-            for (int i = 0; i < items.Count; i++)
-            {
-                var item = items[i];
-                if (item.IsSeparator)
-                {
-                    Win32.AppendMenuW(menu, Win32.MF_SEPARATOR, 0, null);
-                    continue;
-                }
-
-                uint flags = Win32.MF_STRING
-                    | (item.IsChecked ? Win32.MF_CHECKED : 0)
-                    | (item.IsEnabled ? 0 : Win32.MF_GRAYED);
-                Win32.AppendMenuW(menu, flags, (nuint)(i + 1), item.Text);
-            }
-
             // Required so the menu closes when the user clicks elsewhere.
             Win32.SetForegroundWindow(_window.Handle);
             int command = Win32.TrackPopupMenuEx(menu,
@@ -146,12 +135,42 @@ public sealed unsafe class TrayIcon : IDisposable
                 x, y, _window.Handle, 0);
             Win32.PostMessageW(_window.Handle, Win32.WM_NULL, 0, 0);
 
-            if (command > 0) items[command - 1].Execute?.Invoke();
+            if (command > 0) commands[command - 1].Execute?.Invoke();
         }
         finally
         {
-            Win32.DestroyMenu(menu);
+            Win32.DestroyMenu(menu); // destroys its submenus too
         }
+    }
+
+    /// <summary>Builds a (sub)menu; clickable items get ids 1..n in <paramref name="commands"/>.</summary>
+    private static nint BuildMenu(IReadOnlyList<TrayMenuItem> items, List<TrayMenuItem> commands)
+    {
+        nint menu = Win32.CreatePopupMenu();
+        foreach (var item in items)
+        {
+            if (item.IsSeparator)
+            {
+                Win32.AppendMenuW(menu, Win32.MF_SEPARATOR, 0, null);
+                continue;
+            }
+
+            uint flags = Win32.MF_STRING
+                | (item.IsChecked ? Win32.MF_CHECKED : 0)
+                | (item.IsEnabled ? 0 : Win32.MF_GRAYED);
+
+            if (item.Children is { Count: > 0 } children)
+            {
+                Win32.AppendMenuW(menu, flags | Win32.MF_POPUP, (nuint)BuildMenu(children, commands), item.Text);
+            }
+            else
+            {
+                commands.Add(item);
+                Win32.AppendMenuW(menu, flags, (nuint)commands.Count, item.Text);
+            }
+        }
+
+        return menu;
     }
 
     private static void CopyString(string value, char* destination, int capacity)

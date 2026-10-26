@@ -40,6 +40,12 @@ public sealed class AppSettings
     /// <summary>Last choice for "include pinned windows" when exporting a board as an image.</summary>
     public bool ExportIncludesPinnedWindows { get; set; }
 
+    /// <summary>Last choice for "pack together" when exporting a board as an image.</summary>
+    public bool ExportPacked { get; set; }
+
+    /// <summary>Whether the board preview shows pins packed together (true) or where they were on screen.</summary>
+    public bool PreviewPacked { get; set; } = true;
+
     /// <summary>How many times a snip has pointed out "text found, click T". Stops after a few.</summary>
     public int TextHintsShown { get; set; }
 }

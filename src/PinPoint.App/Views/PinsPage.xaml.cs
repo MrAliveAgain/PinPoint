@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Controls;
 using PinPoint.Commands;
 using PinPoint.Core.Windows;
 using PinPoint.ViewModels;
+using Windows.ApplicationModel.DataTransfer;
 
 namespace PinPoint.Views;
 
@@ -62,8 +63,36 @@ public sealed partial class PinsPage : Page
         (["Middle-click"], "Close it"),
         (["Click T", "Drag over text"], "Copy text (the T button appears on hover when a snip has text)"),
         (["Click pen", "Drag"], "Draw in red to mark it up; right-drag erases (undo, redo and erase all sit by the pen)"),
-        (["Right-click"], "Copy image or text, save as, opacity and more"),
+        (["Right-click"], "Copy image or text, save as, opacity, lock in place and more"),
+        (["Drop image files here"], "Pin them on top like snips (or copy an image and use Pin copied image)"),
     ];
+
+    // ---- Drop image files (or a picture from a browser) onto the window to pin them -------------
+
+    private void Page_DragOver(object sender, DragEventArgs e)
+    {
+        if (!e.DataView.Contains(StandardDataFormats.StorageItems) && !e.DataView.Contains(StandardDataFormats.Bitmap)) return;
+        e.AcceptedOperation = DataPackageOperation.Copy;
+        e.DragUIOverride.Caption = "Pin on top";
+    }
+
+    private async void Page_Drop(object sender, DragEventArgs e)
+    {
+        var deferral = e.GetDeferral();
+        try
+        {
+            if (await _host.Snips.PinFromDataAsync(e.DataView) == 0)
+                _host.Notifier.Show("", "Nothing to pin", "Only images can be pinned (PNG, JPEG, GIF, WebP…).", force: true);
+        }
+        catch (Exception ex)
+        {
+            Core.Diagnostics.Log.Error("Pinning dropped images failed", ex);
+        }
+        finally
+        {
+            deferral.Complete();
+        }
+    }
 
     private void BuildMouseHints()
     {

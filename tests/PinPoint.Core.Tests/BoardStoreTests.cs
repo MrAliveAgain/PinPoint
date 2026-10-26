@@ -15,7 +15,7 @@ public sealed class BoardStoreTests : IDisposable
     private static Board Sample(string name = "Raid") => new()
     {
         Name = name,
-        Snips = [new BoardSnip("s1", new BoardRect(-100, 50, 400, 300), 2, 0.8, [[1, 2, 3, 4], [5, 6]])],
+        Snips = [new BoardSnip("s1", new BoardRect(-100, 50, 400, 300), 2, 0.8, [[1, 2, 3, 4], [5, 6]]) { Locked = true }],
         Notes = [new BoardNote("n1", "line 1\nline 2", new BoardRect(10, 20, 320, 260), 1.0)],
     };
 
@@ -30,7 +30,7 @@ public sealed class BoardStoreTests : IDisposable
         Assert.Equal("Raid", loaded.Name);
         var snip = Assert.Single(loaded.Snips);
         Assert.Equal(new BoardRect(-100, 50, 400, 300), snip.Bounds);
-        Assert.Equal((2, 0.8), (snip.ZoomStep, snip.Opacity));
+        Assert.Equal((2, 0.8, true), (snip.ZoomStep, snip.Opacity, snip.Locked));
         Assert.Equal([1.0, 2, 3, 4], snip.Strokes[0]);
         Assert.Equal("line 1\nline 2", Assert.Single(loaded.Notes).Text);
     }
