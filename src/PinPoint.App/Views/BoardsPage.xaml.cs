@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using PinPoint.Core.Boards;
@@ -212,6 +213,17 @@ public sealed partial class BoardsPage : Page
             Log.Error($"Could not delete board {id}", ex);
             ShowExportResult(new(InfoBarSeverity.Error, "Couldn't delete the board", ex.Message, null));
         }
+    }
+
+    private void Preview_PointerEntered(object sender, PointerRoutedEventArgs e) => SetPreviewHint(sender, visible: true);
+
+    private void Preview_PointerExited(object sender, PointerRoutedEventArgs e) => SetPreviewHint(sender, visible: false);
+
+    /// <summary>Fades the thumbnail's "Click to preview" strip in or out (the accent edge is the button's own hover state).</summary>
+    private static void SetPreviewHint(object sender, bool visible)
+    {
+        if (sender is Button { Content: Grid grid } && grid.Children.OfType<Border>().FirstOrDefault(b => "hint".Equals(b.Tag)) is { } hint)
+            hint.Opacity = visible ? 1 : 0;
     }
 
     /// <summary>Pops a quick look at the board out of its thumbnail.</summary>

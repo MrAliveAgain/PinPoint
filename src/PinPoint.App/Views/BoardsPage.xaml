@@ -71,14 +71,30 @@
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <!-- Preview (click for a bigger one): a placeholder icon until the thumbnail is drawn, or if the board is empty. -->
-                                <Button Padding="0" BorderThickness="0" CornerRadius="4" VerticalAlignment="Center"
+                                <!--
+                                  Preview (click for a quick look): a placeholder icon until the thumbnail is drawn, or if the board
+                                  is empty. On hover its edge lights up in the accent colour and a "Click to preview" strip fades in.
+                                -->
+                                <Button Padding="0" BorderThickness="2" CornerRadius="6" VerticalAlignment="Center"
                                         Background="{ThemeResource ControlFillColorSecondaryBrush}"
-                                        Tag="{x:Bind Id}" Click="Preview_Click" ToolTipService.ToolTip="Preview">
+                                        Tag="{x:Bind Id}" Click="Preview_Click"
+                                        PointerEntered="Preview_PointerEntered" PointerExited="Preview_PointerExited">
+                                    <Button.Resources>
+                                        <SolidColorBrush x:Key="ButtonBorderBrush" Color="Transparent" />
+                                        <StaticResource x:Key="ButtonBorderBrushPointerOver" ResourceKey="AccentFillColorDefaultBrush" />
+                                        <StaticResource x:Key="ButtonBorderBrushPressed" ResourceKey="AccentFillColorSecondaryBrush" />
+                                    </Button.Resources>
                                     <Grid Width="96" Height="54">
                                         <FontIcon Glyph="&#xECA5;" FontSize="16" Visibility="{x:Bind PlaceholderVisibility, Mode=OneWay}"
                                                   Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
                                         <Image Source="{x:Bind Thumbnail, Mode=OneWay}" Stretch="Uniform" />
+                                        <Border Tag="hint" VerticalAlignment="Bottom" Background="#B0000000" Opacity="0" IsHitTestVisible="False">
+                                            <Border.OpacityTransition>
+                                                <ScalarTransition Duration="0:0:0.12" />
+                                            </Border.OpacityTransition>
+                                            <TextBlock Text="Click to preview" FontSize="10" Foreground="White"
+                                                       HorizontalAlignment="Center" Margin="0,1,0,2" />
+                                        </Border>
                                     </Grid>
                                 </Button>
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">

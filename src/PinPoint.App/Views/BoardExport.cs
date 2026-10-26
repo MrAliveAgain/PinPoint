@@ -76,7 +76,7 @@ public static class BoardExport
 
             if (path is null)
             {
-                SnipStorage.CopyPngToClipboard(png);
+                await SnipStorage.CopyPngToClipboardAsync(png);
                 return new(InfoBarSeverity.Success, "Copied", "The board image is on your clipboard.", null);
             }
 

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices.WindowsRuntime;
 using PinPoint.Core.Capture;
 using PinPoint.Core.Diagnostics;
 using Windows.ApplicationModel.DataTransfer;
@@ -43,7 +44,7 @@ public sealed class SnipStorage(SettingsService settings)
     {
         try
         {
-            CopyPngToClipboard(await Task.Run(() => EncodePngAsync(frame)));
+            await CopyPngToClipboardAsync(await Task.Run(() => EncodePngAsync(frame)));
         }
         catch (Exception ex)
         {
@@ -51,12 +52,22 @@ public sealed class SnipStorage(SettingsService settings)
         }
     }
 
-    /// <summary>Must be called from the UI thread (the clipboard is STA-bound).</summary>
-    public static void CopyPngToClipboard(byte[] png)
+    /// <summary>
+    /// Puts a PNG on the clipboard as a picture other apps can paste. It must be a native WinRT stream: a
+    /// .NET MemoryStream wrapper can't be read back by the clipboard, which silently leaves it empty.
+    /// Flushed, so the picture is really on the clipboard (and survives PinPoint closing).
+    /// Must be called from the UI thread (the clipboard is STA-bound).
+    /// </summary>
+    public static async Task CopyPngToClipboardAsync(byte[] png)
     {
+        var stream = new InMemoryRandomAccessStream();
+        await stream.WriteAsync(png.AsBuffer());
+        stream.Seek(0);
+
         var package = new DataPackage { RequestedOperation = DataPackageOperation.Copy };
-        package.SetBitmap(RandomAccessStreamReference.CreateFromStream(new MemoryStream(png).AsRandomAccessStream()));
+        package.SetBitmap(RandomAccessStreamReference.CreateFromStream(stream));
         Clipboard.SetContent(package);
+        Clipboard.Flush();
     }
 
     /// <summary>Must be called from the UI thread (the clipboard is STA-bound).</summary>
@@ -67,6 +78,7 @@ public sealed class SnipStorage(SettingsService settings)
             var package = new DataPackage { RequestedOperation = DataPackageOperation.Copy };
             package.SetText(text);
             Clipboard.SetContent(package);
+            Clipboard.Flush(); // keep it after PinPoint closes
         }
         catch (Exception ex)
         {

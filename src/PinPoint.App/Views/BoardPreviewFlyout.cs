@@ -340,11 +340,10 @@ public sealed class BoardPreviewFlyout
             }));
         }
 
-        menu.Items.Add(MenuItem("Copy image", "", () =>
+        menu.Items.Add(MenuItem("Copy image", "", async () =>
         {
-            SnipStorage.CopyPngToClipboard(pin.Png);
+            await SnipStorage.CopyPngToClipboardAsync(pin.Png);
             _report("The image is on your clipboard.");
-            return Task.CompletedTask;
         }));
         menu.Items.Add(MenuItem("Save image as…", "", async () =>
         {
