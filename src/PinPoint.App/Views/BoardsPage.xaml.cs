@@ -59,7 +59,6 @@ public sealed partial class BoardsPage : Page
     private readonly Dictionary<string, (DateTime Stamp, ImageSource Image)> _thumbnails = [];
 
     private string? _lastExportPath;
-    private BoardPreviewWindow? _preview;
 
     public BoardsPage()
     {
@@ -215,23 +214,17 @@ public sealed partial class BoardsPage : Page
         }
     }
 
-    /// <summary>Opens the big preview of a board (one at a time).</summary>
+    /// <summary>Pops a quick look at the board out of its thumbnail.</summary>
     private void Preview_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is not FrameworkElement { Tag: string id }) return;
+        if (sender is not FrameworkElement { Tag: string id } anchor) return;
+        if (XamlRoot?.ContentIslandEnvironment?.AppWindowId is not { } window) return;
         string name = _host.Boards.List().FirstOrDefault(b => b.Id == id)?.Name ?? "Board";
 
-        _preview?.Close();
-        _preview = new BoardPreviewWindow(id, name, open: async () =>
-        {
-            _host.ShowManager(ManagerWindow.BoardsPageTag); // its dialogs show here
-            await OpenBoardAsync(id, name);
-        });
-        _preview.Closed += (s, _) =>
-        {
-            if (ReferenceEquals(_preview, s)) _preview = null;
-        };
-        _preview.Activate();
+        BoardPreviewFlyout.Show(anchor, Win32Interop.GetWindowFromWindowId(window), id, name,
+            open: () => OpenBoardAsync(id, name),
+            export: () => ExportAsync(id),
+            report: message => ShowExportResult(new(InfoBarSeverity.Success, "Done", message, null)));
     }
 
     // ---- Export as an image ------------------------------------------------------------------
