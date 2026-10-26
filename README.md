@@ -105,7 +105,7 @@ A board is a saved set of snips and notes: where each one was, its zoom and opac
 - **Deleting** a board sends it to the Recycle Bin, so a slip isn't the end of it.
 
 <p align="center">
-  <img src="docs/boards.png" alt="The Boards page: a card saying no board is open with a Save as board button, and a saved board listed with its snip and note count and an Open button" width="640">
+  <img src="docs/boards-page.png" alt="The Boards page: the open board's card with Export image, Copy image, Rename and Close board buttons, and a saved board listed with its thumbnail, snip and note count" width="640">
 </p>
 
 ## Good to know
