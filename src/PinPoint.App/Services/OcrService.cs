@@ -21,6 +21,9 @@ public sealed class OcrService
 
     private readonly OcrEngine? _engine = OcrEngine.TryCreateFromUserProfileLanguages();
 
+    /// <summary>The engine reads one image at a time (opening a board starts several snips at once).</summary>
+    private readonly SemaphoreSlim _oneAtATime = new(1, 1);
+
     public OcrService()
     {
         if (_engine is null) Log.Warn("No OCR language available; text selection in snips is off.");
@@ -32,6 +35,7 @@ public sealed class OcrService
     {
         if (_engine is null) return RecognizedText.Empty;
 
+        await _oneAtATime.WaitAsync();
         try
         {
             var (bitmap, scaleX, scaleY) = await CreateBitmapAsync(frame);
@@ -50,6 +54,10 @@ public sealed class OcrService
         {
             Log.Error("Text recognition failed", ex);
             return RecognizedText.Empty;
+        }
+        finally
+        {
+            _oneAtATime.Release();
         }
     }
 
