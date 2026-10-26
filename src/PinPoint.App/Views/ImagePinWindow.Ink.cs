@@ -19,7 +19,7 @@ namespace PinPoint.Views;
 public sealed partial class ImagePinWindow
 {
     /// <summary>Stroke width in snip pixels (so it scales with zoom).</summary>
-    private const double InkThickness = 3;
+    internal const double InkThickness = 3;
 
     /// <summary>How close (snip pixels) a right-drag must pass to a stroke to erase it.</summary>
     private const double EraserRadius = 6;
@@ -27,7 +27,7 @@ public sealed partial class ImagePinWindow
     /// <summary>Screen pixels a right-press may move before it counts as an erase drag, not a click.</summary>
     private const double RightDragThreshold = 4;
 
-    private static readonly Color InkColor = Color.FromArgb(255, 232, 17, 35);
+    internal static readonly Color InkColor = Color.FromArgb(255, 232, 17, 35);
 
     private readonly StrokeHistory<Polyline> _ink = new();
     private readonly List<Polyline> _erasing = [];

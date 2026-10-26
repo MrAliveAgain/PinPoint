@@ -28,6 +28,16 @@ public sealed unsafe class GdiScreenCapture : IScreenCapture
     {
         if (area.IsEmpty) throw new ArgumentException("Capture area must not be empty.", nameof(area));
 
+        return CaptureInto(area, (memoryDc, screenDc) =>
+        {
+            if (!Win32.BitBlt(memoryDc, 0, 0, area.Width, area.Height, screenDc, area.X, area.Y, Win32.SRCCOPY | Win32.CAPTUREBLT))
+                throw new InvalidOperationException($"BitBlt failed (error {Marshal.GetLastPInvokeError()}).");
+        });
+    }
+
+    /// <summary>Lets <paramref name="draw"/> fill a memory DC of the area's size, then copies out opaque pixels.</summary>
+    internal static CapturedFrame CaptureInto(PixelRect area, Action<nint, nint> draw)
+    {
         nint screenDc = Win32.GetDC(0);
         nint memoryDc = 0, bitmap = 0, previous = 0;
         try
@@ -46,8 +56,7 @@ public sealed unsafe class GdiScreenCapture : IScreenCapture
             if (bitmap == 0 || bits == 0) throw new InvalidOperationException("CreateDIBSection failed.");
 
             previous = Win32.SelectObject(memoryDc, bitmap);
-            if (!Win32.BitBlt(memoryDc, 0, 0, area.Width, area.Height, screenDc, area.X, area.Y, Win32.SRCCOPY | Win32.CAPTUREBLT))
-                throw new InvalidOperationException($"BitBlt failed (error {Marshal.GetLastPInvokeError()}).");
+            draw(memoryDc, screenDc);
             Win32.GdiFlush();
 
             int length = area.Width * area.Height * 4;

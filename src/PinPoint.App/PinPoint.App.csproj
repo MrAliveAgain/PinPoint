@@ -48,6 +48,7 @@
     <PackageReference Include="Microsoft.WindowsAppSDK.Foundation" />
     <PackageReference Include="Microsoft.WindowsAppSDK.InteractiveExperiences" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
+    <PackageReference Include="Microsoft.Graphics.Win2D" />
   </ItemGroup>
 
   <ItemGroup>

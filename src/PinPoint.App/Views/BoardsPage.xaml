@@ -12,6 +12,12 @@
                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                        Text="A board is a saved set of snips and notes you can come back to, like a document. The open board saves itself as you work, and opens again next time you start PinPoint." />
 
+            <InfoBar x:Name="ExportInfo" IsOpen="False" Margin="0,0,0,12">
+                <InfoBar.ActionButton>
+                    <HyperlinkButton x:Name="ShowExportButton" Content="Show in folder" Click="ShowExport_Click" />
+                </InfoBar.ActionButton>
+            </InfoBar>
+
             <!-- The board that's open right now (or a prompt to save the current pins as one). -->
             <Border Style="{StaticResource CardStyle}" Padding="20,16">
                 <Grid ColumnSpacing="16">
@@ -31,6 +37,13 @@
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <FontIcon Glyph="&#xE74E;" FontSize="14" />
                                 <TextBlock Text="Save as board…" />
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="ExportCurrentButton" Click="ExportCurrent_Click"
+                                ToolTipService.ToolTip="Save or copy what's pinned as one image, laid out like on screen">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE91B;" FontSize="14" />
+                                <TextBlock Text="Export image" />
                             </StackPanel>
                         </Button>
                         <Button x:Name="RenameCurrentButton" Content="Rename" Click="RenameCurrent_Click" />
@@ -53,20 +66,33 @@
                         <Border Style="{StaticResource CardStyle}" Padding="16,10">
                             <Grid ColumnSpacing="14">
                                 <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <StackPanel VerticalAlignment="Center">
+                                <!-- Preview: a placeholder icon until the thumbnail is drawn (or if the board is empty). -->
+                                <Border Width="96" Height="54" CornerRadius="4" VerticalAlignment="Center"
+                                        Background="{ThemeResource ControlFillColorSecondaryBrush}">
+                                    <Grid>
+                                        <FontIcon Glyph="&#xECA5;" FontSize="16" Visibility="{x:Bind PlaceholderVisibility, Mode=OneWay}"
+                                                  Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                                        <Image Source="{x:Bind Thumbnail, Mode=OneWay}" Stretch="Uniform" />
+                                    </Grid>
+                                </Border>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                     <TextBlock Text="{x:Bind Name}" Style="{StaticResource CardTitleStyle}" />
                                     <TextBlock Text="{x:Bind Detail}" Style="{StaticResource CardDescriptionStyle}" />
                                 </StackPanel>
-                                <Button Grid.Column="1" Content="{x:Bind OpenLabel}" IsEnabled="{x:Bind CanOpen}"
+                                <Button Grid.Column="2" Content="{x:Bind OpenLabel}" IsEnabled="{x:Bind CanOpen}"
                                         Click="Open_Click" MinWidth="88" />
-                                <Button Grid.Column="2" Width="36" Padding="0" ToolTipService.ToolTip="More">
+                                <Button Grid.Column="3" Width="36" Padding="0" ToolTipService.ToolTip="More">
                                     <FontIcon Glyph="&#xE712;" FontSize="14" />
                                     <Button.Flyout>
                                         <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                            <MenuFlyoutItem Text="Export as image" Tag="{x:Bind Id}" Click="ExportSaved_Click">
+                                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE91B;" /></MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
                                             <MenuFlyoutItem Text="Rename" Tag="{x:Bind Id}" Click="Rename_Click">
                                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8AC;" /></MenuFlyoutItem.Icon>
                                             </MenuFlyoutItem>

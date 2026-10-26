@@ -65,6 +65,23 @@ public sealed class BoardStoreTests : IDisposable
     }
 
     [Fact]
+    public void Thumbnail_survives_saves_and_goes_stale_when_the_board_changes()
+    {
+        var store = new BoardStore(_dir);
+        store.Save("b", Sample());
+        Assert.False(store.IsThumbnailCurrent("b"));
+
+        store.SaveThumbnail("b", [1, 2, 3]);
+        Assert.True(store.IsThumbnailCurrent("b"));
+
+        store.Save("b", Sample("Changed"));
+        File.SetLastWriteTimeUtc(Path.Combine(store.FolderOf("b"), "board.json"), DateTime.UtcNow.AddMinutes(1));
+
+        Assert.True(File.Exists(store.ThumbnailPath("b"))); // not mistaken for a removed snip's image
+        Assert.False(store.IsThumbnailCurrent("b"));
+    }
+
+    [Fact]
     public void Rename_and_delete()
     {
         var store = new BoardStore(_dir);

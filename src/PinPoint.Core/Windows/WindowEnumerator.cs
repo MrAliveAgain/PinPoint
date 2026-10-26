@@ -121,6 +121,9 @@ public static unsafe class WindowEnumerator
     private static bool IsVisibleOnScreen(nint hwnd) =>
         Win32.IsWindowVisible(hwnd) && !Win32.IsIconic(hwnd) && !WindowStyler.IsCloaked(hwnd);
 
+    /// <summary>Every top-level window, topmost first (EnumWindows goes in z-order).</summary>
+    public static IReadOnlyList<nint> TopLevelInZOrder() => EnumerateTopLevel();
+
     private static List<nint> EnumerateTopLevel()
     {
         var handles = new List<nint>(256);

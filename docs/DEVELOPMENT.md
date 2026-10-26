@@ -39,6 +39,7 @@ tools/make-icon.ps1   regenerates the app icon
 * **`IPinSurface`** is what a PinPoint-owned pin window implements (today `ImagePinWindow` for snips and `NotePinWindow` for notes). PinManager drives all surfaces the same way (re-raising, hide all, click-through, fading), so a new pin kind is one window class plus a `PinItem` for the Pins list. `WindowDragger` handles drag-to-move for borderless windows.
 * **Drawing** on snips lives in `ImagePinWindow.Ink.cs`; the undo/redo history (`StrokeHistory`) and stroke hit-testing (`StrokeGeometry`) are in Core and unit-tested. Strokes are in snip pixels on a Viewbox-scaled canvas, so they follow zoom for free. Drawings are an overlay: saved and copied snips are the original image.
 * **Boards** (`BoardService`) behave like documents. The open board autosaves every 2 s if its snapshot changed (snips' bounds, zoom, opacity and strokes; notes' text and bounds), writing each snip's PNG once off the UI thread. `BoardStore` (Core, tested) keeps one folder per board id with `board.json` plus `{snipId}.png`. While a board is open, `PinManager.BoardMode` makes new notes belong to the board instead of the notes folder. Pinned windows are never part of a board.
+* **Board images** (export and the Boards page thumbnails) are drawn by `CollageRenderer` with Win2D, off the UI thread: the on-screen layout cropped by `CollageLayout` (Core, tested), with snips, their strokes and notes drawn the way their windows look. Exporting what's on screen can add a snapshot of pinned windows (`WindowCapture`, PrintWindow), into the image only. Thumbnails are a cache (`thumbnail.png` in the board folder), redrawn when older than `board.json`.
 * **Notes** are stored by `NoteStore` (Core, unit-tested): one `.txt` per note plus `layout.json` for position, size and opacity. Closing a note with text moves it to `notes\closed`.
 * **`SnipService`** runs the snip flow: capture → `SnipOverlayWindow` → `ImagePinWindow` → save/copy. Capture sits behind `IScreenCapture`, so a Windows.Graphics.Capture backend can be swapped in.
 * **Settings** are plain JSON (`AppSettings`) in `%LocalAppData%\PinPoint`. A new setting is just a property with a default. Unknown or missing fields are tolerated, and a corrupt file is backed up rather than lost.
@@ -55,6 +56,14 @@ PinPoint.exe --ocr-selftest some-image.png out.txt
 ```
 
 It writes the recognised text to `out.txt` and exits with 0 (text found), 2 (no text) or 1 (error). It runs without UI, so it works even while another PinPoint is open.
+
+Board images have the same kind of check (add `thumbnail` for the small preview size):
+
+```bash
+PinPoint.exe --board-selftest board-20261025-040115-888 out.png
+```
+
+It exits with 0 (drawn), 2 (no such board, or nothing on it) or 1 (error, details in `out.png.error.txt`).
 
 ## Ideas
 

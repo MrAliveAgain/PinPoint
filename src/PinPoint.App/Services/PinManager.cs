@@ -188,6 +188,9 @@ public sealed class PinManager : IDisposable
 
     public bool HasNotes => _notes.Count > 0;
 
+    /// <summary>Other apps' pinned windows (never part of a board; a board image can show a snapshot of them).</summary>
+    public IReadOnlyList<PinnedWindow> PinnedWindows => _windows.Pins;
+
     /// <summary>Re-pins a snip from a board where it was, with its zoom, opacity and drawing.</summary>
     public void RestoreSnip(CapturedFrame frame, Core.Boards.BoardSnip saved)
     {

@@ -12,6 +12,7 @@ namespace PinPoint.Core.Boards;
 public sealed class BoardStore(string root)
 {
     private const string BoardFile = "board.json";
+    private const string ThumbnailFile = "thumbnail.png";
 
     public string Root { get; } = root;
 
@@ -20,6 +21,20 @@ public sealed class BoardStore(string root)
     public string FolderOf(string id) => Path.Combine(Root, id);
 
     public string ImagePath(string id, string snipId) => Path.Combine(FolderOf(id), snipId + ".png");
+
+    /// <summary>Small preview for the Boards page; a cache, redrawn whenever it's older than board.json.</summary>
+    public string ThumbnailPath(string id) => Path.Combine(FolderOf(id), ThumbnailFile);
+
+    /// <summary>True if the thumbnail exists and was drawn after the board last changed.</summary>
+    public bool IsThumbnailCurrent(string id) =>
+        File.Exists(ThumbnailPath(id)) && File.GetLastWriteTimeUtc(ThumbnailPath(id)) >= File.GetLastWriteTimeUtc(Path.Combine(FolderOf(id), BoardFile));
+
+    public void SaveThumbnail(string id, byte[] png)
+    {
+        string temp = ThumbnailPath(id) + ".tmp";
+        File.WriteAllBytes(temp, png);
+        File.Move(temp, ThumbnailPath(id), overwrite: true);
+    }
 
     /// <summary>Saved boards, most recently changed first.</summary>
     public IReadOnlyList<BoardInfo> List()
@@ -66,7 +81,7 @@ public sealed class BoardStore(string root)
         Directory.CreateDirectory(folder);
         WriteAtomic(Path.Combine(folder, BoardFile), JsonSerializer.Serialize(board, BoardJsonContext.Default.Board));
 
-        var keep = board.Snips.Select(s => s.Id + ".png").ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var keep = board.Snips.Select(s => s.Id + ".png").Append(ThumbnailFile).ToHashSet(StringComparer.OrdinalIgnoreCase);
         foreach (string image in Directory.EnumerateFiles(folder, "*.png"))
         {
             if (keep.Contains(Path.GetFileName(image))) continue;

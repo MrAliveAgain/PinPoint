@@ -9,6 +9,8 @@
     <PackageVersion Include="Microsoft.WindowsAppSDK.Foundation" Version="2.3.12" />
     <PackageVersion Include="Microsoft.WindowsAppSDK.InteractiveExperiences" Version="2.1.9" />
     <PackageVersion Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2705" />
+    <!-- Draws board collages and thumbnails (depends only on the WinUI component, not the metapackage). -->
+    <PackageVersion Include="Microsoft.Graphics.Win2D" Version="1.4.0" />
 
     <PackageVersion Include="xunit.v3" Version="4.0.2" />
   </ItemGroup>

@@ -43,15 +43,20 @@ public sealed class SnipStorage(SettingsService settings)
     {
         try
         {
-            byte[] png = await Task.Run(() => EncodePngAsync(frame));
-            var package = new DataPackage { RequestedOperation = DataPackageOperation.Copy };
-            package.SetBitmap(RandomAccessStreamReference.CreateFromStream(new MemoryStream(png).AsRandomAccessStream()));
-            Clipboard.SetContent(package);
+            CopyPngToClipboard(await Task.Run(() => EncodePngAsync(frame)));
         }
         catch (Exception ex)
         {
             Log.Error("Could not copy snip to clipboard", ex);
         }
+    }
+
+    /// <summary>Must be called from the UI thread (the clipboard is STA-bound).</summary>
+    public static void CopyPngToClipboard(byte[] png)
+    {
+        var package = new DataPackage { RequestedOperation = DataPackageOperation.Copy };
+        package.SetBitmap(RandomAccessStreamReference.CreateFromStream(new MemoryStream(png).AsRandomAccessStream()));
+        Clipboard.SetContent(package);
     }
 
     /// <summary>Must be called from the UI thread (the clipboard is STA-bound).</summary>

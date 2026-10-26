@@ -70,6 +70,7 @@ public static unsafe partial class Win32
     // ---- GDI ----------------------------------------------------------------------------------
     public const uint SRCCOPY = 0x00CC0020;
     public const uint CAPTUREBLT = 0x40000000;
+    public const uint PW_RENDERFULLCONTENT = 2;
 
     // ---- Tray / menus -------------------------------------------------------------------------
     public const uint NIM_ADD = 0, NIM_MODIFY = 1, NIM_DELETE = 2, NIM_SETVERSION = 4;
@@ -363,6 +364,11 @@ public static unsafe partial class Win32
     [LibraryImport("gdi32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool GdiFlush();
+
+    /// <summary>Asks a window to draw itself into a DC, even where it's covered by other windows.</summary>
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool PrintWindow(nint hwnd, nint hdcBlt, uint nFlags);
 
     [LibraryImport("gdi32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
