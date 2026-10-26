@@ -98,7 +98,8 @@ public sealed partial class BoardsPage : Page
         SaveAsButton.Visibility = boards.IsBoardOpen ? Visibility.Collapsed : Visibility.Visible;
         SaveAsButton.IsEnabled = boards.HasPinsToSave;
         RenameCurrentButton.Visibility = CloseBoardButton.Visibility = boards.IsBoardOpen ? Visibility.Visible : Visibility.Collapsed;
-        ExportCurrentButton.Visibility = boards.HasPinsToSave || boards.HasPinnedWindows ? Visibility.Visible : Visibility.Collapsed;
+        ExportCurrentButton.Visibility = CopyCurrentButton.Visibility =
+            boards.HasPinsToSave || boards.HasPinnedWindows ? Visibility.Visible : Visibility.Collapsed;
 
         var rows = boards.List().Select(b => new BoardRow(b, b.Id == boards.CurrentId)).ToList();
         foreach (var row in rows)
@@ -246,6 +247,45 @@ public sealed partial class BoardsPage : Page
     private async void ExportSaved_Click(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { Tag: string id }) await ExportAsync(id);
+    }
+
+    private async void CopyCurrent_Click(object sender, RoutedEventArgs e) => await CopyAsync(null);
+
+    private async void CopySaved_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: string id }) await CopyAsync(id);
+    }
+
+    /// <summary>
+    /// Straight to the clipboard, no dialog: the whole board as the export dialog would make it with the last
+    /// choices there (compact or not; pinned-window snapshots when copying what's on screen).
+    /// </summary>
+    private async Task CopyAsync(string? savedId)
+    {
+        var boards = _host.Boards;
+        var settings = _host.Settings.Current;
+        try
+        {
+            bool live = savedId is null || savedId == boards.CurrentId;
+            var preview = live
+                ? await boards.GetLivePreviewAsync(captureWindows: boards.HasPinnedWindows && settings.ExportIncludesPinnedWindows)
+                : await boards.GetPreviewAsync(savedId!);
+            var items = preview?.Pins.Select(p => p.Item).ToList() ?? [];
+
+            if (await BoardService.RenderAsync(items, settings.ExportPacked) is not { } png)
+            {
+                ShowExportResult(new(InfoBarSeverity.Warning, "Nothing to copy", "There are no snips or notes on it.", null));
+                return;
+            }
+
+            await SnipStorage.CopyPngToClipboardAsync(png);
+            ShowExportResult(new(InfoBarSeverity.Success, "Copied", $"“{preview!.Name}” is on your clipboard as an image.", null));
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Could not copy the board image", ex);
+            ShowExportResult(new(InfoBarSeverity.Error, "Couldn't copy the image", "The log in %LocalAppData%\\PinPoint\\logs has the details.", null));
+        }
     }
 
     /// <summary>

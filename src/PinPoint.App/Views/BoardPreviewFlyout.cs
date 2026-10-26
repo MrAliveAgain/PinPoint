@@ -26,6 +26,7 @@ public sealed class BoardPreviewFlyout
     private readonly Grid _stage = new() { HorizontalAlignment = HorizontalAlignment.Center };
     private readonly ToggleSwitch _compact;
     private readonly Button _exportButton = new() { Content = "Export image…", IsEnabled = false };
+    private readonly Button _copyButton = new() { Content = "Copy", IsEnabled = false };
     private readonly double _maxWidth, _maxHeight;
     private BoardPreview? _preview;
     private PinPicker? _picker;
@@ -105,9 +106,12 @@ public sealed class BoardPreviewFlyout
             await _export(preview, pins, selected);
         };
 
+        _copyButton.Click += async (_, _) => await CopyAsync();
+        ToolTipService.SetToolTip(_copyButton, "Copy the ticked pins as one image, ready to paste");
+
         var header = new Grid { ColumnSpacing = 12 };
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        for (int i = 0; i < 3; i++) header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        for (int i = 0; i < 4; i++) header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
         var title = new StackPanel { VerticalAlignment = VerticalAlignment.Center, MinWidth = 160 };
         title.Children.Add(new TextBlock
@@ -126,8 +130,9 @@ public sealed class BoardPreviewFlyout
         });
         header.Children.Add(title);
         Place(header, _compact, 1);
-        Place(header, _exportButton, 2);
-        Place(header, open, 3);
+        Place(header, _copyButton, 2);
+        Place(header, _exportButton, 3);
+        Place(header, open, 4);
 
         var root = new StackPanel { Spacing = 12 };
         root.Children.Add(header);
@@ -174,7 +179,26 @@ public sealed class BoardPreviewFlyout
     {
         if (_picker is null) return;
         int ticked = _picker.Selected.Count, total = _picker.Pins.Count;
-        _exportButton.IsEnabled = ticked > 0;
+        _exportButton.IsEnabled = _copyButton.IsEnabled = ticked > 0;
         _exportButton.Content = ticked == total || ticked == 0 ? "Export image…" : $"Export {ticked} of {total}…";
+        _copyButton.Content = ticked == total || ticked == 0 ? "Copy" : $"Copy {ticked}";
+    }
+
+    /// <summary>The ticked pins as one image (compact or not, as shown here) straight onto the clipboard.</summary>
+    private async Task CopyAsync()
+    {
+        if (_picker is null) return;
+        try
+        {
+            var items = _picker.Selected.Select(i => _picker.Pins[i].Pin.Item).ToList();
+            if (await BoardService.RenderAsync(items, _picker.Compact) is not { } png) return;
+            await SnipStorage.CopyPngToClipboardAsync(png);
+            _copyButton.Content = "Copied ✓";
+            _report(items.Count == _picker.Pins.Count ? "The board image is on your clipboard." : $"{items.Count} pins are on your clipboard as one image.");
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Could not copy from the board preview", ex);
+        }
     }
 }

@@ -46,6 +46,13 @@
                                 <TextBlock Text="Export image" />
                             </StackPanel>
                         </Button>
+                        <Button x:Name="CopyCurrentButton" Click="CopyCurrent_Click"
+                                ToolTipService.ToolTip="Copy what's pinned as one image, ready to paste">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE8C8;" FontSize="14" />
+                                <TextBlock Text="Copy image" />
+                            </StackPanel>
+                        </Button>
                         <Button x:Name="RenameCurrentButton" Content="Rename" Click="RenameCurrent_Click" />
                         <Button x:Name="CloseBoardButton" Content="Close board" Click="CloseBoard_Click"
                                 ToolTipService.ToolTip="Saves the board and clears its snips and notes off the screen" />
@@ -84,6 +91,16 @@
                                         <StaticResource x:Key="ButtonBorderBrushPointerOver" ResourceKey="AccentFillColorDefaultBrush" />
                                         <StaticResource x:Key="ButtonBorderBrushPressed" ResourceKey="AccentFillColorSecondaryBrush" />
                                     </Button.Resources>
+                                    <Button.ContextFlyout>
+                                        <MenuFlyout>
+                                            <MenuFlyoutItem Text="Copy image" Tag="{x:Bind Id}" Click="CopySaved_Click">
+                                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8C8;" /></MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
+                                            <MenuFlyoutItem Text="Export as image" Tag="{x:Bind Id}" Click="ExportSaved_Click">
+                                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE91B;" /></MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
+                                        </MenuFlyout>
+                                    </Button.ContextFlyout>
                                     <Grid Width="96" Height="54">
                                         <FontIcon Glyph="&#xECA5;" FontSize="16" Visibility="{x:Bind PlaceholderVisibility, Mode=OneWay}"
                                                   Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
@@ -107,6 +124,9 @@
                                     <FontIcon Glyph="&#xE712;" FontSize="14" />
                                     <Button.Flyout>
                                         <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                            <MenuFlyoutItem Text="Copy image" Tag="{x:Bind Id}" Click="CopySaved_Click">
+                                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8C8;" /></MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
                                             <MenuFlyoutItem Text="Export as image" Tag="{x:Bind Id}" Click="ExportSaved_Click">
                                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE91B;" /></MenuFlyoutItem.Icon>
                                             </MenuFlyoutItem>
