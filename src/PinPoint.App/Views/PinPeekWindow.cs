@@ -16,8 +16,6 @@ namespace PinPoint.Views;
 /// </summary>
 public sealed class PinPeekWindow : Window
 {
-    /// <summary>~94% opaque: enough depth to read as floating, still easy to read.</summary>
-    private const byte PeekAlpha = 240;
 
     /// <summary>DWMWCP_ROUND: the standard Windows 11 rounded corners (with the system shadow).</summary>
     private const int RoundCorners = 2;
@@ -32,7 +30,7 @@ public sealed class PinPeekWindow : Window
         WindowStyler.SetExStyleFlag(_hwnd, Win32.WS_EX_TOOLWINDOW, true);
         WindowStyler.SetExStyleFlag(_hwnd, Win32.WS_EX_NOACTIVATE, true);
         WindowStyler.SetExStyleFlag(_hwnd, Win32.WS_EX_TRANSPARENT, true);
-        WindowStyler.SetAlpha(_hwnd, PeekAlpha); // layered (so WS_EX_TRANSPARENT lets the mouse through), and a touch see-through
+        WindowStyler.SetAlpha(_hwnd, 255); // layered, so WS_EX_TRANSPARENT really lets the mouse through; fully solid to read details
         Win32.SetDwmInt(_hwnd, Win32.DWMWA_WINDOW_CORNER_PREFERENCE, RoundCorners);
 
         Content = new Border
