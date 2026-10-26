@@ -56,15 +56,15 @@ public sealed partial class PinsPage : Page
     /// <summary>Mouse gestures handled by ImagePinWindow. Keep in sync with its pointer handlers.</summary>
     private static readonly (string[] Inputs, string Action)[] s_mouseControls =
     [
-        (["Drag"], "Move it"),
-        (["Scroll"], "Resize it"),
-        (["Hold right-click", "Scroll"], "Fade it"),
-        (["Double-click"], "Back to original size"),
-        (["Middle-click"], "Close it"),
-        (["Click T", "Drag over text"], "Copy text (the T button appears on hover when a snip has text)"),
-        (["Click pen", "Drag"], "Draw in red to mark it up; right-drag erases (undo, redo and erase all sit by the pen)"),
-        (["Right-click"], "Copy image or text, save as, opacity, lock in place and more"),
-        (["Drop image files here"], "Pin them on top like snips (or copy an image and use Pin copied image)"),
+        (["Drag"], "Move"),
+        (["Scroll"], "Resize"),
+        (["Hold right-click", "Scroll"], "Fade"),
+        (["Double-click"], "Original size"),
+        (["Middle-click"], "Close"),
+        (["Click T", "Drag over text"], "Copy text (T shows on hover)"),
+        (["Click pen", "Drag"], "Draw · right-drag erases"),
+        (["Right-click"], "Copy, save, opacity, lock and more"),
+        (["Drop image files here"], "Pin them like snips"),
     ];
 
     // ---- Drop image files (or a picture from a browser) onto the window to pin them -------------
@@ -111,15 +111,18 @@ public sealed partial class PinsPage : Page
         }
     }
 
-    /// <summary>A row of key caps followed by what they do. Mouse combos get a "+" between caps.</summary>
-    private static StackPanel CreateHintRow(IReadOnlyList<string> caps, string action, bool joinWithPlus)
+    /// <summary>
+    /// A row of key caps followed by what they do (wrapping, never cut off, if the window is narrow).
+    /// Mouse combos get a "+" between caps.
+    /// </summary>
+    private static Grid CreateHintRow(IReadOnlyList<string> caps, string action, bool joinWithPlus)
     {
-        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
+        var keys = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, VerticalAlignment = VerticalAlignment.Top };
         for (int i = 0; i < caps.Count; i++)
         {
             if (joinWithPlus && i > 0)
             {
-                row.Children.Add(new TextBlock
+                keys.Children.Add(new TextBlock
                 {
                     Text = "+",
                     Margin = new Thickness(2, 0, 2, 0),
@@ -128,7 +131,7 @@ public sealed partial class PinsPage : Page
                 });
             }
 
-            row.Children.Add(new Border
+            keys.Children.Add(new Border
             {
                 Style = (Style)Application.Current.Resources["KeyCapStyle"],
                 Child = new TextBlock
@@ -141,12 +144,20 @@ public sealed partial class PinsPage : Page
             });
         }
 
-        row.Children.Add(new TextBlock
+        var text = new TextBlock
         {
             Text = action,
-            Margin = new Thickness(8, 0, 0, 0),
+            Margin = new Thickness(12, 0, 0, 0),
             VerticalAlignment = VerticalAlignment.Center,
-        });
+            TextWrapping = TextWrapping.Wrap,
+        };
+        Grid.SetColumn(text, 1);
+
+        var row = new Grid();
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        row.Children.Add(keys);
+        row.Children.Add(text);
         return row;
     }
 
