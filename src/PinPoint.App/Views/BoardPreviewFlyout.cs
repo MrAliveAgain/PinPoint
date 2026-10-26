@@ -65,6 +65,8 @@ public sealed class BoardPreviewFlyout
         presenter.Setters.Add(new Setter(FrameworkElement.MaxWidthProperty, double.PositiveInfinity));
         presenter.Setters.Add(new Setter(FrameworkElement.MaxHeightProperty, double.PositiveInfinity));
         presenter.Setters.Add(new Setter(Control.PaddingProperty, new Thickness(12)));
+        presenter.Setters.Add(new Setter(Control.CornerRadiusProperty, new CornerRadius(8)));
+        presenter.Setters.Add(new Setter(Control.BackgroundProperty, new SolidColorBrush(Microsoft.UI.Colors.Transparent))); // let the acrylic through
 
         _flyout = new Flyout
         {
@@ -72,6 +74,7 @@ public sealed class BoardPreviewFlyout
             FlyoutPresenterStyle = presenter,
             Placement = FlyoutPlacementMode.RightEdgeAlignedTop,
             ShouldConstrainToRootBounds = false,
+            SystemBackdrop = new DesktopAcrylicBackdrop(), // frosted, see-through background like Windows' own flyouts
         };
         _flyout.Closed += (_, _) => _picker?.Close();
     }

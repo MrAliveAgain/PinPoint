@@ -6,7 +6,6 @@ using PinPoint.Core.Interop;
 using PinPoint.Core.Windows;
 using PinPoint.Helpers;
 using Windows.Graphics;
-using Windows.UI;
 
 namespace PinPoint.Views;
 
@@ -17,6 +16,12 @@ namespace PinPoint.Views;
 /// </summary>
 public sealed class PinPeekWindow : Window
 {
+    /// <summary>~94% opaque: enough depth to read as floating, still easy to read.</summary>
+    private const byte PeekAlpha = 240;
+
+    /// <summary>DWMWCP_ROUND: the standard Windows 11 rounded corners (with the system shadow).</summary>
+    private const int RoundCorners = 2;
+
     private readonly nint _hwnd;
     private readonly Image _image = new() { Stretch = Stretch.Fill };
 
@@ -27,15 +32,14 @@ public sealed class PinPeekWindow : Window
         WindowStyler.SetExStyleFlag(_hwnd, Win32.WS_EX_TOOLWINDOW, true);
         WindowStyler.SetExStyleFlag(_hwnd, Win32.WS_EX_NOACTIVATE, true);
         WindowStyler.SetExStyleFlag(_hwnd, Win32.WS_EX_TRANSPARENT, true);
-        WindowStyler.SetAlpha(_hwnd, 255); // layered, so WS_EX_TRANSPARENT really lets the mouse through
+        WindowStyler.SetAlpha(_hwnd, PeekAlpha); // layered (so WS_EX_TRANSPARENT lets the mouse through), and a touch see-through
+        Win32.SetDwmInt(_hwnd, Win32.DWMWA_WINDOW_CORNER_PREFERENCE, RoundCorners);
 
-        var accent = Application.Current.Resources.TryGetValue("SystemAccentColor", out var value) && value is Color c
-            ? c
-            : Color.FromArgb(255, 76, 194, 255);
         Content = new Border
         {
             BorderThickness = new Thickness(2),
-            BorderBrush = new SolidColorBrush(accent),
+            BorderBrush = new SolidColorBrush(PinPicker.AccentColor),
+            CornerRadius = new CornerRadius(8), // matches the rounded window corners
             Child = _image,
         };
     }
