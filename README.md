@@ -40,6 +40,9 @@ It sits in the tray and doesn't do anything until you press a shortcut.
 
 - **Scratch-pad notes.** <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd> opens a little note that floats on top, for jotting down a quest step, a code, or text you copied from a snip. Drag it by its header and resize it from the edges. It saves as you type and comes back where you left it after a restart. Want it as a proper file? Hit the save button or <kbd>Ctrl</kbd>+<kbd>S</kbd> to save it as a `.txt` wherever you like, just like Notepad (after the first save, <kbd>Ctrl</kbd>+<kbd>S</kbd> saves straight back to that file; <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> picks a new one).
 - **Boards.** Save the snips and notes you've got up as a board and come back to it later, like a document. A board keeps where everything was, zoom, opacity, your drawings and note text, and saves itself as you work. Switch between boards from the **Boards** page in PinPoint; if what's on screen isn't saved yet, it asks first. Whatever board you had open comes back the next time you start PinPoint.
+
+  <img src="docs/boards.png" alt="The Boards page: a card saying no board is open with a Save as board button, and a saved board listed with its snip and note count and an Open button" width="640">
+
 - **Stays over games.** Anything in borderless or windowed mode. If a game puts itself back on top, PinPoint puts your pins back over it.
 - **Easy to get out of the way.** Hide every pin at once, fade them, or make them click-through so your clicks go straight to the game.
 - **Small and quick.** No installer, no account, no internet connection. Just an exe in a folder.
