@@ -71,15 +71,16 @@
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <!-- Preview: a placeholder icon until the thumbnail is drawn (or if the board is empty). -->
-                                <Border Width="96" Height="54" CornerRadius="4" VerticalAlignment="Center"
-                                        Background="{ThemeResource ControlFillColorSecondaryBrush}">
-                                    <Grid>
+                                <!-- Preview (click for a bigger one): a placeholder icon until the thumbnail is drawn, or if the board is empty. -->
+                                <Button Padding="0" BorderThickness="0" CornerRadius="4" VerticalAlignment="Center"
+                                        Background="{ThemeResource ControlFillColorSecondaryBrush}"
+                                        Tag="{x:Bind Id}" Click="Preview_Click" ToolTipService.ToolTip="Preview">
+                                    <Grid Width="96" Height="54">
                                         <FontIcon Glyph="&#xECA5;" FontSize="16" Visibility="{x:Bind PlaceholderVisibility, Mode=OneWay}"
                                                   Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
                                         <Image Source="{x:Bind Thumbnail, Mode=OneWay}" Stretch="Uniform" />
                                     </Grid>
-                                </Border>
+                                </Button>
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                     <TextBlock Text="{x:Bind Name}" Style="{StaticResource CardTitleStyle}" />
                                     <TextBlock Text="{x:Bind Detail}" Style="{StaticResource CardDescriptionStyle}" />

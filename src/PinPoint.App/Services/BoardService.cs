@@ -25,6 +25,8 @@ public sealed class BoardService
     private const int ThumbnailMargin = 64;
     private const int ThumbnailWidth = 320;
     private const int ThumbnailHeight = 180;
+    private const int PreviewWidth = 1600;
+    private const int PreviewHeight = 900;
 
     private readonly Dictionary<string, Task<string?>> _thumbnails = [];
 
@@ -98,6 +100,13 @@ public sealed class BoardService
 
     /// <summary>A saved board as one PNG, from its files. Null if it's empty or gone.</summary>
     public Task<byte[]?> RenderSavedAsync(string id) => RenderFromDiskAsync(id, ExportMargin, int.MaxValue, int.MaxValue);
+
+    /// <summary>A screen-sized look at a saved board (clicking its thumbnail). Null if it's empty or gone.</summary>
+    public async Task<byte[]?> RenderPreviewAsync(string id)
+    {
+        if (id == CurrentId) await FlushAsync(); // show the open board as it is now
+        return await RenderFromDiskAsync(id, ThumbnailMargin, PreviewWidth, PreviewHeight);
+    }
 
     /// <summary>Path of an up-to-date preview of a saved board (drawn when missing or stale), or null if it's empty.</summary>
     public Task<string?> GetThumbnailAsync(string id)

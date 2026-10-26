@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using PinPoint.Core.Boards;
@@ -201,6 +202,50 @@ public sealed partial class BoardsPage : Page
         }.ShowAsync();
 
         if (choice == ContentDialogResult.Primary) _host.Boards.Delete(id);
+    }
+
+    /// <summary>Shows the board bigger in a flyout (it can be wider than this window).</summary>
+    private async void Preview_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string id } button) return;
+
+        var image = new Image { Stretch = Stretch.Uniform, MaxWidth = 960, MaxHeight = 540 };
+        var loading = new ProgressRing { IsActive = true, Width = 32, Height = 32, Margin = new Thickness(48) };
+        var content = new Grid();
+        content.Children.Add(loading);
+        content.Children.Add(image);
+
+        var presenter = new Style(typeof(FlyoutPresenter));
+        presenter.Setters.Add(new Setter(MaxWidthProperty, 1000.0));
+        presenter.Setters.Add(new Setter(MaxHeightProperty, 600.0));
+        presenter.Setters.Add(new Setter(Control.PaddingProperty, new Thickness(8)));
+
+        new Flyout
+        {
+            Content = content,
+            FlyoutPresenterStyle = presenter,
+            Placement = FlyoutPlacementMode.BottomEdgeAlignedLeft,
+            ShouldConstrainToRootBounds = false,
+        }.ShowAt(button);
+
+        try
+        {
+            if (await _host.Boards.RenderPreviewAsync(id) is { } png)
+            {
+                var bitmap = new BitmapImage();
+                using (var stream = new MemoryStream(png)) await bitmap.SetSourceAsync(stream.AsRandomAccessStream());
+                image.Source = bitmap;
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"Could not preview board {id}", ex);
+        }
+        finally
+        {
+            loading.IsActive = false;
+            loading.Visibility = Visibility.Collapsed;
+        }
     }
 
     // ---- Export as an image ------------------------------------------------------------------
