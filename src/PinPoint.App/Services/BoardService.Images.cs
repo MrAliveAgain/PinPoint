@@ -11,7 +11,11 @@ using PinPoint.Helpers;
 namespace PinPoint.Services;
 
 /// <summary>One pin in a board preview, with a picture of just that pin at its on-screen size.</summary>
-public sealed record PreviewPin(CollageItem Item, byte[] Png);
+public sealed record PreviewPin(CollageItem Item, byte[] Png)
+{
+    /// <summary>A snapshot of a pinned window (export only; never part of a board).</summary>
+    public bool IsWindow { get; init; }
+}
 
 public sealed record BoardPreview(string Name, IReadOnlyList<PreviewPin> Pins);
 
@@ -31,37 +35,41 @@ public sealed partial class BoardService
     private readonly Dictionary<string, Task<string?>> _thumbnails = [];
 
     /// <summary>
-    /// What's pinned right now as one PNG, stacked like on screen (or packed together). With
-    /// <paramref name="includeWindows"/>, pinned windows are captured as they look now; that's only in the
-    /// image, they never become part of a board. Null if there's nothing to draw. Call on the UI thread.
+    /// What's pinned right now, each pin drawn on its own, stacked bottom to top like on screen (for exporting).
+    /// With <paramref name="captureWindows"/>, pinned windows are captured as they look now and come along as
+    /// extra pins (<see cref="PreviewPin.IsWindow"/>): only for the image, they never become part of a board.
+    /// Call on the UI thread.
     /// </summary>
-    public async Task<byte[]?> RenderCurrentAsync(bool includeWindows, bool packed)
+    public async Task<BoardPreview> GetLivePreviewAsync(bool captureWindows)
     {
-        var layers = new List<(nint Handle, CollageItem Item)>();
+        var layers = new List<(nint Handle, CollageItem Item, bool IsWindow)>();
         foreach (var snip in _pins.Snips)
-            layers.Add((snip.Handle, new CollageImage(snip.ScreenBounds, snip.Frame, null, snip.GetStrokePoints())));
+            layers.Add((snip.Handle, new CollageImage(snip.ScreenBounds, snip.Frame, null, snip.GetStrokePoints()), false));
         foreach (var note in _pins.Notes)
-            layers.Add((note.Handle, NoteItem(note.ToBoardNote(), WindowHelpers.GetScale(note.Handle))));
+            layers.Add((note.Handle, NoteItem(note.ToBoardNote(), WindowHelpers.GetScale(note.Handle)), false));
 
-        if (includeWindows)
+        if (captureWindows)
         {
             var handles = _pins.PinnedWindows.Select(p => p.Handle).ToList();
             var frames = await Task.Run(() => handles.Select(h => (Handle: h, Frame: WindowCapture.Capture(h))).ToList());
             foreach (var (handle, frame) in frames)
             {
                 if (frame is null) Log.Warn($"Could not capture pinned window {handle} for a board image");
-                else layers.Add((handle, new CollageImage(frame.Bounds, frame, null, [])));
+                else layers.Add((handle, new CollageImage(frame.Bounds, frame, null, []), true));
             }
         }
 
         // EnumWindows lists topmost first, so the highest index is drawn first.
         var zOrder = WindowEnumerator.TopLevelInZOrder().Select((handle, i) => (handle, i)).ToDictionary(p => p.handle, p => p.i);
-        var items = layers.OrderByDescending(l => zOrder.GetValueOrDefault(l.Handle, int.MaxValue)).Select(l => l.Item).ToList();
-        return await CollageRenderer.RenderPngAsync(Arrange(items, packed), IsDarkTheme, ExportMargin, int.MaxValue, int.MaxValue);
-    }
+        bool dark = IsDarkTheme;
+        var pins = new List<PreviewPin>();
+        foreach (var layer in layers.OrderByDescending(l => zOrder.GetValueOrDefault(l.Handle, int.MaxValue)))
+        {
+            if (await CollageRenderer.RenderItemPngAsync(layer.Item, dark) is { } png) pins.Add(new PreviewPin(layer.Item, png) { IsWindow = layer.IsWindow });
+        }
 
-    /// <summary>A saved board as one PNG, from its files. Null if it's empty or gone.</summary>
-    public Task<byte[]?> RenderSavedAsync(string id, bool packed) => RenderFromDiskAsync(id, packed, ExportMargin, int.MaxValue, int.MaxValue);
+        return new BoardPreview(CurrentName ?? "What's pinned", pins);
+    }
 
     /// <summary>A saved board's pins, each drawn on its own at its on-screen size (the Boards page preview).</summary>
     public async Task<BoardPreview?> GetPreviewAsync(string id)
@@ -78,6 +86,19 @@ public sealed partial class BoardService
 
         return new BoardPreview(board.Name, pins);
     }
+
+    /// <summary>
+    /// The exported picture of <paramref name="items"/> (listed bottom to top), packed together or as on screen,
+    /// scaled down to fit the given size (int.MaxValue for full size). Null if there's nothing to draw.
+    /// </summary>
+    public static Task<byte[]?> RenderAsync(IReadOnlyList<CollageItem> items, bool packed, int maxWidth = int.MaxValue, int maxHeight = int.MaxValue) =>
+        CollageRenderer.RenderPngAsync(Arrange(items, packed), IsDarkTheme, ExportMargin, maxWidth, maxHeight);
+
+    /// <summary>The full-size exported picture's size in pixels, or null if there's nothing to draw.</summary>
+    public static (int Width, int Height)? ExportSize(IReadOnlyList<CollageItem> items, bool packed) =>
+        CollageLayout.Fit(Arrange(items, packed).Select(i => i.Bounds), ExportMargin, int.MaxValue, int.MaxValue) is { } layout
+            ? (layout.Width, layout.Height)
+            : null;
 
     /// <summary>Path of an up-to-date preview of a saved board (drawn when missing or stale), or null if it's empty.</summary>
     public Task<string?> GetThumbnailAsync(string id)

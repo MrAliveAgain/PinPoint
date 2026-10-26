@@ -235,7 +235,7 @@ public sealed partial class BoardsPage : Page
 
         BoardPreviewFlyout.Show(anchor, Win32Interop.GetWindowFromWindowId(window), id, name,
             open: () => OpenBoardAsync(id, name),
-            export: () => ExportAsync(id),
+            export: (preview, pins, selected) => ShowExportDialogAsync(preview, pins, selected),
             report: message => ShowExportResult(new(InfoBarSeverity.Success, "Done", message, null)));
     }
 
@@ -248,10 +248,32 @@ public sealed partial class BoardsPage : Page
         if (sender is FrameworkElement { Tag: string id }) await ExportAsync(id);
     }
 
+    /// <summary>
+    /// Exports a saved board, or (null, or the open board) what's pinned right now, live from the screen and
+    /// with snapshots of any pinned windows to choose from.
+    /// </summary>
     private async Task ExportAsync(string? savedId)
     {
+        var boards = _host.Boards;
+        try
+        {
+            var preview = savedId is null || savedId == boards.CurrentId
+                ? await boards.GetLivePreviewAsync(captureWindows: boards.HasPinnedWindows)
+                : await boards.GetPreviewAsync(savedId);
+            if (preview is not null) await ShowExportDialogAsync(preview, null, null);
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Could not prepare the export", ex);
+            ShowExportResult(new(InfoBarSeverity.Error, "Couldn't export the image", "The log in %LocalAppData%\\PinPoint\\logs has the details.", null));
+        }
+    }
+
+    private async Task ShowExportDialogAsync(BoardPreview preview, IReadOnlyList<(PreviewPin, ImageSource)>? pins, IReadOnlyList<int>? selected)
+    {
         if (XamlRoot?.ContentIslandEnvironment?.AppWindowId is not { } window) return;
-        if (await BoardExport.RunAsync(XamlRoot, Win32Interop.GetWindowFromWindowId(window), savedId) is { } outcome) ShowExportResult(outcome);
+        if (await BoardExport.RunAsync(XamlRoot, Win32Interop.GetWindowFromWindowId(window), preview, pins, selected) is { } outcome)
+            ShowExportResult(outcome);
     }
 
     private void ShowExportResult(ExportOutcome outcome)
