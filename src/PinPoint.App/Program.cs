@@ -20,6 +20,9 @@ public static class Program
         // Developer check, no UI: PinPoint.exe --ocr-selftest image.png out.txt
         if (args is ["--ocr-selftest", var image, var output]) return Services.OcrService.RunSelfTest(image, output);
 
+        // Developer check, no UI: PinPoint.exe --hdr-selftest report.txt (numbers only, no pictures)
+        if (args is ["--hdr-selftest", var report]) return Services.HdrAwareScreenCapture.RunSelfTest(report);
+
         // Developer check, no UI: PinPoint.exe --board-selftest board-id out.png [thumbnail|packed|pin]
         if (args is ["--board-selftest", var board, var boardImage, .. var rest])
             return Services.BoardService.RunSelfTest(board, boardImage, rest.FirstOrDefault());

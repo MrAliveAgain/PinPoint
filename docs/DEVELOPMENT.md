@@ -62,6 +62,8 @@ tools/make-icon.ps1   regenerates the app icon
 * **Clipboard images** must go in as a native `InMemoryRandomAccessStream`, followed by `Clipboard.Flush()` (see `SnipStorage.CopyPngToClipboardAsync`). A .NET `MemoryStream` wrapper looks fine but leaves the clipboard empty.
 * **OCR** (`OcrEngine`) aborts a `RecognizeAsync` while another is running, so `OcrService` queues them. Opening a board starts several at once.
 * **The hover peek** is a layered window with `WS_EX_TRANSPARENT`, so the mouse stays on the pin underneath. Moving off that pin is what hides it. Don't make it hit-testable or it flickers.
+* **HDR screens.** GDI's BitBlt is HDR-blind: with HDR on, the desktop is composed in linear scRGB and GDI's 8-bit copy comes out blown out. `HdrAwareScreenCapture` keeps GDI for SDR monitors and re-captures HDR ones with Windows.Graphics.Capture as half floats, then `HdrToneMapper` (Core, tested) scales Windows' "SDR content brightness" (`DisplayColor`, from QueryDisplayConfig) to white. `PinPoint.exe --hdr-selftest report.txt` checks it without UI and writes numbers only.
+* **Parallel.For in Core** fails in the trimmed release build (System.Threading.Tasks.Parallel is left out of the deps list); `HdrToneMapper` uses its own Task.Run worker loop instead.
 * **Thumbnail look changed?** Bump `BoardStore.ThumbnailFile`, otherwise users keep the old cached ones.
 
 ## Text recognition (OCR)

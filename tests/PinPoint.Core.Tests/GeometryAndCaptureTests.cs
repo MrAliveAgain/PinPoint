@@ -37,6 +37,20 @@ public class GeometryAndCaptureTests
     }
 
     [Fact]
+    public void Paste_overwrites_only_the_overlap()
+    {
+        // 4×2 frame of zeros at (0,0); paste a 2×2 frame of 7s at (3,1): only pixel (3,1) overlaps.
+        var frame = new CapturedFrame(new PixelRect(0, 0, 4, 2), new byte[4 * 2 * 4]);
+        var other = new CapturedFrame(new PixelRect(3, 1, 2, 2), Enumerable.Repeat((byte)7, 2 * 2 * 4).ToArray());
+
+        frame.Paste(other);
+
+        int changed = Enumerable.Range(0, 8).Count(i => frame.Pixels[i * 4] == 7);
+        Assert.Equal(1, changed);
+        Assert.Equal(7, frame.Pixels[(1 * 4 + 3) * 4]);
+    }
+
+    [Fact]
     public void MakeOpaque_sets_every_alpha_byte()
     {
         var pixels = new byte[4 * 37]; // not a multiple of the vector width

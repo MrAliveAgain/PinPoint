@@ -27,6 +27,21 @@ public sealed class CapturedFrame
     /// <summary>Top-down BGRA32, alpha always 255.</summary>
     public byte[] Pixels { get; }
 
+    /// <summary>Copies the overlapping part of <paramref name="other"/> into this frame, in place (screen coordinates).</summary>
+    public void Paste(CapturedFrame other)
+    {
+        var area = other.Bounds.Intersect(Bounds);
+        if (area.IsEmpty) return;
+
+        int rowBytes = area.Width * 4;
+        for (int row = 0; row < area.Height; row++)
+        {
+            int y = area.Y + row;
+            other.Pixels.AsSpan((y - other.Bounds.Y) * other.Stride + (area.X - other.Bounds.X) * 4, rowBytes)
+                .CopyTo(Pixels.AsSpan((y - Bounds.Y) * Stride + (area.X - Bounds.X) * 4, rowBytes));
+        }
+    }
+
     /// <summary>Copies out the part of this frame covered by <paramref name="screenRect"/>.</summary>
     public CapturedFrame Crop(PixelRect screenRect)
     {

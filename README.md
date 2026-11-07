@@ -112,6 +112,7 @@ A board saves your pinned snips and notes exactly as you left them, so you can o
 
 - **Exclusive fullscreen games** can't be drawn over by anything. Switch them to borderless windowed.
 - **Windows running as administrator** (often games with anti-cheat) can only be pinned if PinPoint runs as admin too.
+- **HDR** works: snips of an HDR screen come out looking the way they did on screen, not washed out or blown out.
 
 ## What it touches on your PC
 

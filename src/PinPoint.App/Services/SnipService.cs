@@ -12,7 +12,7 @@ namespace PinPoint.Services;
 /// <summary>Capture → pick a region → pin it in place → save/copy in the background.</summary>
 public sealed class SnipService(PinManager pins, SnipStorage storage, SettingsService settings, Notifier notifier)
 {
-    private readonly IScreenCapture _capture = new GdiScreenCapture();
+    private readonly IScreenCapture _capture = new HdrAwareScreenCapture();
     private SnipOverlayWindow? _overlay;
 
     public async void Start()
