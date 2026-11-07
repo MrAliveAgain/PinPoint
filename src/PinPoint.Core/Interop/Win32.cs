@@ -45,6 +45,7 @@ public static unsafe partial class Win32
     // ---- Misc ---------------------------------------------------------------------------------
     public const uint LWA_ALPHA = 0x2;
     public const uint GA_ROOT = 2;
+    public const uint GW_HWNDPREV = 3;
     public const uint GW_OWNER = 4;
     public const uint MONITOR_DEFAULTTONEAREST = 2;
     public const uint RDW_INVALIDATE = 0x1, RDW_ERASE = 0x4, RDW_ALLCHILDREN = 0x80, RDW_FRAME = 0x400;

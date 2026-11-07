@@ -387,6 +387,12 @@ public sealed class PinManager : IDisposable
     {
         // Re-ordering windows closes open menus and can cover a note being typed in, so hold off then.
         if (IsHidden || _raiseSuspensions > 0 || Surfaces.Any(s => s.IsInteracting)) return;
+
+        // Only when something from another app actually covers a pin: re-raising pins that are already on top
+        // makes them (and the video or game under them) recompose every time, which shows as flicker.
+        bool covered = _windows.AnyCovered() || Surfaces.Any(s => WindowEnumerator.IsCoveredByAnotherApp(s.Handle));
+        if (!covered) return;
+
         _windows.RaiseAll();
         foreach (var surface in Surfaces) surface.RaiseTopmost();
     }

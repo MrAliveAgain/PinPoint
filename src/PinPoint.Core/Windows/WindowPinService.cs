@@ -139,6 +139,9 @@ public sealed class WindowPinService
     }
 
     /// <summary>Re-asserts z-order; games that are themselves topmost can otherwise cover pins.</summary>
+    /// <summary>True if another app's window covers one of the (shown) pinned windows.</summary>
+    public bool AnyCovered() => _pins.Any(p => !p.IsHidden && WindowEnumerator.IsCoveredByAnotherApp(p.Handle));
+
     public void RaiseAll()
     {
         foreach (var pin in _pins)
