@@ -271,7 +271,7 @@ public sealed class PinManager : IDisposable
         window.NewNoteRequested += (_, _) => CreateNoteBeside(window);
         window.DuplicateRequested += (_, _) => DuplicateNote(window);
         window.ClickThroughChanged += (_, _) => OnStateChanged();
-        window.ClickThroughAllRequested += (_, enable) => SetClickThroughAll(enable);
+        window.ClickThroughAllRequested += (_, enable) => SetClickThroughAll(enable, notify: false); // the badge shows it
         window.IsAllClickThrough = () => IsClickThrough;
         _notes.Add(window);
         Items.Add(new NotePinItem(window));
@@ -315,11 +315,20 @@ public sealed class PinManager : IDisposable
         SetClickThroughAll(!IsClickThrough);
     }
 
-    /// <summary>Click-through on or off for every pin (global toggle, or a note's menu/badge).</summary>
-    public void SetClickThroughAll(bool enable)
+    /// <summary>
+    /// Click-through on or off for every pin (global toggle, or a note's button/menu/badge). Notes ask for no
+    /// toast: the badge on each note already shows it.
+    /// </summary>
+    public void SetClickThroughAll(bool enable, bool notify = true)
     {
         foreach (var surface in Surfaces) surface.IsClickThrough = enable;
         foreach (var pin in _windows.Pins) _windows.SetClickThrough(pin, enable);
+
+        if (!notify)
+        {
+            OnStateChanged();
+            return;
+        }
 
         _notifier.Show("", enable ? "Click-through on" : "Click-through off",
             enable ? "Clicks pass through pins to whatever is underneath." : "Pins can be moved and clicked again.");

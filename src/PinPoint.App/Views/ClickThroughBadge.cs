@@ -11,67 +11,74 @@ using Windows.Graphics;
 namespace PinPoint.Views;
 
 /// <summary>
-/// A small cursor button that floats over a click-through note. The note itself lets every click through
-/// (that's the point), so this separate window is the one spot you can still click: left-click turns
-/// click-through off for every pin, right-click also offers just that note. Never takes focus,
-/// so clicking it doesn't pull you out of a game.
+/// The crossed-out cursor that sits on a click-through note's header. The note itself lets every click
+/// through (that's the point), so this tiny separate window is the one spot you can still click: left-click
+/// turns click-through off for every pin, right-click also offers just that note.
+/// It's made to look like part of the header, not a popup: no border, shadow, rounded corners or hover
+/// effect, the header's own grey, and faded along with its note. Never takes focus, so clicking it doesn't
+/// pull you out of a game.
 /// </summary>
 public sealed class ClickThroughBadge : Window
 {
+    /// <summary>DWMWCP_DONOTROUND: square corners and no system shadow.</summary>
+    private const int SquareCorners = 1;
+
     private readonly nint _hwnd;
 
     public ClickThroughBadge()
     {
         _hwnd = this.GetHandle();
-        WindowHelpers.MakeToolSurface(AppWindow, alwaysOnTop: true);
+        var presenter = WindowHelpers.MakeToolSurface(AppWindow, alwaysOnTop: true);
+        presenter.SetBorderAndTitleBar(hasBorder: false, hasTitleBar: false);
         WindowStyler.SetExStyleFlag(_hwnd, Win32.WS_EX_TOOLWINDOW, true);
         WindowStyler.SetExStyleFlag(_hwnd, Win32.WS_EX_NOACTIVATE, true);
+        Win32.SetDwmInt(_hwnd, Win32.DWMWA_WINDOW_CORNER_PREFERENCE, SquareCorners);
 
         var allPins = new MenuFlyoutItem { Text = "Turn off click-through for all pins" };
         allPins.Click += (_, _) => TurnOffAllRequested?.Invoke(this, EventArgs.Empty);
         var thisNote = new MenuFlyoutItem { Text = "Turn off for this note only" };
         thisNote.Click += (_, _) => TurnOffRequested?.Invoke(this, EventArgs.Empty);
 
-        // Subtle: the note header's own grey with a dimmed, struck-through cursor ("clicks are off here").
         var dim = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"];
-        var icon = new Grid
+        var surface = new Grid
         {
-            Width = 14,
-            Height = 14,
+            Background = (Brush)Application.Current.Resources["SolidBackgroundFillColorSecondaryBrush"],
+            ContextFlyout = new MenuFlyout { Items = { allPins, thisNote } },
             Children =
             {
-                new FontIcon { Glyph = "", FontSize = 11, Foreground = dim },
-                new Line { X1 = 1, Y1 = 1, X2 = 13, Y2 = 13, Stroke = dim, StrokeThickness = 1.25 },
+                new Grid
+                {
+                    Width = 14,
+                    Height = 14,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Children =
+                    {
+                        new FontIcon { Glyph = "", FontSize = 11, Foreground = dim },
+                        new Line { X1 = 1, Y1 = 1, X2 = 13, Y2 = 13, Stroke = dim, StrokeThickness = 1.25 },
+                    },
+                },
             },
         };
-
-        var button = new Button
-        {
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            VerticalAlignment = VerticalAlignment.Stretch,
-            Padding = new Thickness(0),
-            CornerRadius = new CornerRadius(0),
-            BorderThickness = new Thickness(0),
-            Background = (Brush)Application.Current.Resources["SolidBackgroundFillColorSecondaryBrush"],
-            Content = icon,
-            ContextFlyout = new MenuFlyout { Items = { allPins, thisNote } },
-        };
-        ToolTipService.SetToolTip(button, "Click-through is on. Click to turn it off for all pins (right-click: just this note).");
-        button.Click += (_, _) => TurnOffAllRequested?.Invoke(this, EventArgs.Empty);
-        Content = button;
+        surface.Tapped += (_, _) => TurnOffAllRequested?.Invoke(this, EventArgs.Empty);
+        Content = surface;
     }
 
-    /// <summary>Clicked: turn click-through off for the note this badge belongs to.</summary>
+    /// <summary>Right-click → turn click-through off for just this badge's note.</summary>
     public event EventHandler? TurnOffRequested;
 
-    /// <summary>Right-click → turn click-through off for every pin.</summary>
+    /// <summary>Clicked: turn click-through off for every pin.</summary>
     public event EventHandler? TurnOffAllRequested;
 
     public bool IsShown { get; private set; }
 
-    /// <summary>Shows the badge with its button exactly on <paramref name="screenRect"/>, above everything.</summary>
-    public void ShowAt(PixelRect screenRect)
+    /// <summary>
+    /// Shows the badge exactly on <paramref name="screenRect"/>, above everything, at the note's
+    /// <paramref name="opacity"/> so a faded note doesn't get a solid patch on its header.
+    /// </summary>
+    public void ShowAt(PixelRect screenRect, double opacity)
     {
+        WindowStyler.SetAlpha(_hwnd, (byte)Math.Round(Math.Clamp(opacity, 0.1, 1.0) * 255));
         AppWindow.Move(new PointInt32(screenRect.X, screenRect.Y)); // onto the right monitor before sizing
         WindowHelpers.SetClientScreenRect(_hwnd, AppWindow, screenRect);
         if (!IsShown) AppWindow.Show(activateWindow: false);

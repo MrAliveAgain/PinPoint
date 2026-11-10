@@ -101,6 +101,7 @@ public sealed partial class NotePinWindow : Window, IPinSurface
         {
             _opacity = Math.Clamp(Math.Round(value, 2), 0.1, 1.0);
             ApplyLayering();
+            if (_badge?.IsShown == true) ShowBadge(); // fades with the note
             RestartTimer(_layoutTimer);
             Changed?.Invoke(this, EventArgs.Empty);
         }
@@ -147,7 +148,7 @@ public sealed partial class NotePinWindow : Window, IPinSurface
         var client = ScreenBounds;
         double scale = Scale;
         int width = (int)Math.Round(34 * scale), height = (int)Math.Round(28 * scale);
-        _badge.ShowAt(new PixelRect(client.Right - 3 * width, client.Y, width, height));
+        _badge.ShowAt(new PixelRect(client.Right - 3 * width, client.Y, width, height), _opacity);
     }
 
     private void SetOwnClickThrough(bool enabled)
