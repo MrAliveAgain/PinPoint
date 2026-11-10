@@ -59,14 +59,22 @@
             </Grid>
 
             <TextBlock Text="Pinned now" Style="{StaticResource SectionHeaderStyle}" />
+            <TextBlock x:Name="MultiSelectHint" Style="{StaticResource CardDescriptionStyle}" Margin="2,-4,0,8"
+                       TextWrapping="Wrap" Visibility="Collapsed"
+                       Text="Shift- or Ctrl-click pins to select several (Ctrl+A for all), then drag any selected slider to fade them together." />
 
-            <ItemsControl x:Name="PinList" IsTabStop="False">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Spacing="4" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
+            <!-- Extended selection: click, Shift-click, Ctrl-click, Ctrl+A. A selected row's slider fades every selected pin. -->
+            <ListView x:Name="PinList" SelectionMode="Extended"
+                      ScrollViewer.VerticalScrollMode="Disabled" ScrollViewer.VerticalScrollBarVisibility="Hidden">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="Padding" Value="0" />
+                        <Setter Property="Margin" Value="0,0,0,4" />
+                        <Setter Property="MinHeight" Value="0" />
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.ItemTemplate>
                     <DataTemplate x:DataType="vm:PinItem">
                         <Border Style="{StaticResource CardStyle}" Padding="12,10">
                             <Grid ColumnSpacing="14">
@@ -111,8 +119,8 @@
                             </Grid>
                         </Border>
                     </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                </ListView.ItemTemplate>
+            </ListView>
 
             <!-- Empty state -->
             <Border x:Name="EmptyState" Style="{StaticResource CardStyle}" Padding="24,20">

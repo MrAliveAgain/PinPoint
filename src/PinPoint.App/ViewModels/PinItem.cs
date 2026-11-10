@@ -23,6 +23,14 @@ public abstract class PinItem : ObservableObject
     /// <summary>10–100, bound to the row's slider.</summary>
     public abstract double OpacityPercent { get; set; }
 
+    /// <summary>
+    /// A row's slider changed this pin's opacity (the Pins page then fades the other selected pins to match).
+    /// Only raised by the setter, i.e. the slider; hotkeys and wheel fades go straight to the window.
+    /// </summary>
+    public static event Action<PinItem, double>? OpacityEdited;
+
+    protected void OnOpacityEdited(double percent) => OpacityEdited?.Invoke(this, percent);
+
     public abstract string RemoveLabel { get; }
 
     public abstract void Remove();
@@ -64,6 +72,7 @@ public sealed class WindowPinItem(PinnedWindow pin, PinManager manager) : PinIte
             if (Math.Abs(value - OpacityPercent) < 0.5) return;
             manager.SetOpacity(Pin, value / 100);
             OnPropertyChanged();
+            OnOpacityEdited(value);
         }
     }
 
@@ -100,6 +109,7 @@ public sealed class SnipPinItem : PinItem
             if (Math.Abs(value - OpacityPercent) < 0.5) return;
             Window.PinOpacity = value / 100;
             OnPropertyChanged();
+            OnOpacityEdited(value);
         }
     }
 
@@ -147,6 +157,7 @@ public sealed class NotePinItem : PinItem
             if (Math.Abs(value - OpacityPercent) < 0.5) return;
             Window.PinOpacity = value / 100;
             OnPropertyChanged();
+            OnOpacityEdited(value);
         }
     }
 

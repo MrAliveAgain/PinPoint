@@ -22,6 +22,7 @@ public sealed partial class PinsPage : Page
             _host.Pins.StateChanged += OnPinsChanged;
             _host.Pins.Items.CollectionChanged += OnItemsChanged;
             _host.HotkeysChanged += OnPinsChanged;
+            PinItem.OpacityEdited += OnOpacityEdited;
             Refresh();
         };
         Unloaded += (_, _) =>
@@ -29,7 +30,29 @@ public sealed partial class PinsPage : Page
             _host.Pins.StateChanged -= OnPinsChanged;
             _host.Pins.Items.CollectionChanged -= OnItemsChanged;
             _host.HotkeysChanged -= OnPinsChanged;
+            PinItem.OpacityEdited -= OnOpacityEdited;
         };
+    }
+
+    private bool _syncingOpacity;
+
+    /// <summary>Dragging a selected row's slider fades every other selected pin to the same value.</summary>
+    private void OnOpacityEdited(PinItem source, double percent)
+    {
+        if (_syncingOpacity || PinList.SelectedItems.Count < 2 || !PinList.SelectedItems.Contains(source)) return;
+
+        _syncingOpacity = true;
+        try
+        {
+            foreach (var other in PinList.SelectedItems.OfType<PinItem>().ToList())
+            {
+                if (other != source && other.SupportsOpacity) other.OpacityPercent = percent;
+            }
+        }
+        finally
+        {
+            _syncingOpacity = false;
+        }
     }
 
     private void OnPinsChanged(object? sender, EventArgs e) => Refresh();
@@ -41,6 +64,7 @@ public sealed partial class PinsPage : Page
         var pins = _host.Pins;
         EmptyState.Visibility = pins.HasPins ? Visibility.Collapsed : Visibility.Visible;
         PinList.Visibility = pins.HasPins ? Visibility.Visible : Visibility.Collapsed;
+        MultiSelectHint.Visibility = pins.Items.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
 
         HideAllToggle.IsEnabled = ClickThroughToggle.IsEnabled = pins.HasPins;
         HideAllToggle.IsChecked = pins.IsHidden;
