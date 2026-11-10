@@ -156,7 +156,10 @@ public sealed partial class NotePinWindow : Window, IPinSurface
         ClickThroughChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    private void ClickThroughButton_Click(object sender, RoutedEventArgs e) => SetOwnClickThrough(true);
+    /// <summary>The header's cursor button: click-through for every pin (the menu has "this note" only).</summary>
+    private void ClickThroughButton_Click(object sender, RoutedEventArgs e) => ClickThroughAllRequested?.Invoke(this, true);
+
+    private void ClickThroughThisNote_Click(object sender, RoutedEventArgs e) => SetOwnClickThrough(true);
 
     private void ClickThroughAll_Click(object sender, RoutedEventArgs e) =>
         ClickThroughAllRequested?.Invoke(this, ClickThroughAllItem.IsChecked);

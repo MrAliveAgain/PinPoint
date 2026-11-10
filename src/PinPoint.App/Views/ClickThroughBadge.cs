@@ -11,7 +11,7 @@ namespace PinPoint.Views;
 /// <summary>
 /// A small cursor button that floats over a click-through note. The note itself lets every click through
 /// (that's the point), so this separate window is the one spot you can still click: left-click turns
-/// click-through off for that note, right-click offers turning it off for every pin. Never takes focus,
+/// click-through off for every pin, right-click also offers just that note. Never takes focus,
 /// so clicking it doesn't pull you out of a game.
 /// </summary>
 public sealed class ClickThroughBadge : Window
@@ -25,10 +25,10 @@ public sealed class ClickThroughBadge : Window
         WindowStyler.SetExStyleFlag(_hwnd, Win32.WS_EX_TOOLWINDOW, true);
         WindowStyler.SetExStyleFlag(_hwnd, Win32.WS_EX_NOACTIVATE, true);
 
-        var thisNote = new MenuFlyoutItem { Text = "Turn off click-through for this note" };
-        thisNote.Click += (_, _) => TurnOffRequested?.Invoke(this, EventArgs.Empty);
         var allPins = new MenuFlyoutItem { Text = "Turn off click-through for all pins" };
         allPins.Click += (_, _) => TurnOffAllRequested?.Invoke(this, EventArgs.Empty);
+        var thisNote = new MenuFlyoutItem { Text = "Turn off for this note only" };
+        thisNote.Click += (_, _) => TurnOffRequested?.Invoke(this, EventArgs.Empty);
 
         var button = new Button
         {
@@ -39,10 +39,10 @@ public sealed class ClickThroughBadge : Window
             CornerRadius = new CornerRadius(0),
             BorderThickness = new Thickness(0),
             Content = new FontIcon { Glyph = "", FontSize = 12 },
-            ContextFlyout = new MenuFlyout { Items = { thisNote, allPins } },
+            ContextFlyout = new MenuFlyout { Items = { allPins, thisNote } },
         };
-        ToolTipService.SetToolTip(button, "Click-through is on. Click to turn it off for this note (right-click: all pins).");
-        button.Click += (_, _) => TurnOffRequested?.Invoke(this, EventArgs.Empty);
+        ToolTipService.SetToolTip(button, "Click-through is on. Click to turn it off for all pins (right-click: just this note).");
+        button.Click += (_, _) => TurnOffAllRequested?.Invoke(this, EventArgs.Empty);
         Content = button;
     }
 

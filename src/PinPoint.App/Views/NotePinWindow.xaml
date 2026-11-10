@@ -43,7 +43,7 @@
                         <RadioMenuFlyoutItem x:Name="Opacity40" Text="40%" GroupName="NoteOpacity" Tag="0.4" Click="Opacity_Click" />
                         <RadioMenuFlyoutItem x:Name="Opacity20" Text="20%" GroupName="NoteOpacity" Tag="0.2" Click="Opacity_Click" />
                     </MenuFlyoutSubItem>
-                    <MenuFlyoutItem Text="Click-through for this note" Click="ClickThroughButton_Click">
+                    <MenuFlyoutItem Text="Click-through for this note only" Click="ClickThroughThisNote_Click">
                         <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8B0;" /></MenuFlyoutItem.Icon>
                     </MenuFlyoutItem>
                     <ToggleMenuFlyoutItem x:Name="ClickThroughAllItem" Text="Click-through for all pins" Click="ClickThroughAll_Click" />
@@ -77,7 +77,7 @@
                 <Button x:Name="ClickThroughButton" Click="ClickThroughButton_Click"
                         Width="34" Height="28" Padding="0" CornerRadius="0"
                         Background="Transparent" BorderThickness="0"
-                        ToolTipService.ToolTip="Click-through: clicks pass through this note. Click the badge that appears to turn it off.">
+                        ToolTipService.ToolTip="Click-through: clicks pass through all pins. Click the badge that appears to turn it off. Right-click this bar for just this note.">
                     <FontIcon Glyph="&#xE8B0;" FontSize="11" />
                 </Button>
                 <Button x:Name="SaveButton" Click="SaveButton_Click"
