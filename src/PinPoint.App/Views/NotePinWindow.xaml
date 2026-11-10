@@ -69,25 +69,25 @@
 
             <StackPanel Grid.Column="1" Orientation="Horizontal">
                 <Button x:Name="NewNoteButton" Click="NewNoteButton_Click"
-                        Width="34" Height="28" Padding="0" CornerRadius="0"
+                        Width="34" Height="28" Padding="0" CornerRadius="0" IsTabStop="False" AllowFocusOnInteraction="False"
                         Background="Transparent" BorderThickness="0"
                         ToolTipService.ToolTip="New note next to this one">
                     <FontIcon Glyph="&#xE710;" FontSize="11" />
                 </Button>
                 <Button x:Name="ClickThroughButton" Click="ClickThroughButton_Click"
-                        Width="34" Height="28" Padding="0" CornerRadius="0"
+                        Width="34" Height="28" Padding="0" CornerRadius="0" IsTabStop="False" AllowFocusOnInteraction="False"
                         Background="Transparent" BorderThickness="0"
                         ToolTipService.ToolTip="Click-through: clicks pass through all pins. Click the badge that appears to turn it off. Right-click this bar for just this note.">
                     <FontIcon Glyph="&#xE8B0;" FontSize="11" />
                 </Button>
                 <Button x:Name="SaveButton" Click="SaveButton_Click"
-                        Width="34" Height="28" Padding="0" CornerRadius="0"
+                        Width="34" Height="28" Padding="0" CornerRadius="0" IsTabStop="False" AllowFocusOnInteraction="False"
                         Background="Transparent" BorderThickness="0"
                         ToolTipService.ToolTip="Save as a .txt file (Ctrl+S · Ctrl+Shift+S to save as)">
                     <FontIcon Glyph="&#xE74E;" FontSize="11" />
                 </Button>
                 <Button x:Name="CloseButton" Click="CloseButton_Click"
-                        Width="34" Height="28" Padding="0" CornerRadius="0"
+                        Width="34" Height="28" Padding="0" CornerRadius="0" IsTabStop="False" AllowFocusOnInteraction="False"
                         Background="Transparent" BorderThickness="0"
                         ToolTipService.ToolTip="Close note (its text is kept in the notes\closed folder)">
                     <FontIcon Glyph="&#xE711;" FontSize="10" />
