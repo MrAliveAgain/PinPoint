@@ -70,8 +70,20 @@ public sealed class PinManager : IDisposable
 
     public bool IsHidden { get; private set; }
 
-    public bool IsClickThrough =>
-        Surfaces.Any(s => s.IsClickThrough) || _windows.Pins.Any(p => p.IsClickThrough);
+    /// <summary>
+    /// The global "click-through for everything" state: on only when every pin is click-through, so making one
+    /// note click-through from its own button doesn't light up the app's and tray's all-pins toggle. Windows that
+    /// can't be made click-through don't count.
+    /// </summary>
+    public bool IsClickThrough
+    {
+        get
+        {
+            var windows = _windows.Pins.Where(p => p.SupportsOpacity).ToList();
+            bool any = Surfaces.Any() || windows.Count > 0;
+            return any && Surfaces.All(s => s.IsClickThrough) && windows.All(p => p.IsClickThrough);
+        }
+    }
 
     public bool HasPins => Items.Count > 0;
 
@@ -260,7 +272,7 @@ public sealed class PinManager : IDisposable
         window.DuplicateRequested += (_, _) => DuplicateNote(window);
         window.ClickThroughChanged += (_, _) => OnStateChanged();
         window.ClickThroughAllRequested += (_, enable) => SetClickThroughAll(enable);
-        window.IsAnyClickThrough = () => IsClickThrough;
+        window.IsAllClickThrough = () => IsClickThrough;
         _notes.Add(window);
         Items.Add(new NotePinItem(window));
         window.ShowAt(note.Layout, activate);

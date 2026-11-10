@@ -131,8 +131,8 @@ public sealed partial class NotePinWindow : Window, IPinSurface
     /// <summary>Turn click-through on/off for every pin (header menu or badge).</summary>
     public event EventHandler<bool>? ClickThroughAllRequested;
 
-    /// <summary>Whether any pin is click-through, for the header menu's "all pins" tick. Set by PinManager.</summary>
-    public Func<bool>? IsAnyClickThrough { get; set; }
+    /// <summary>Whether every pin is click-through, for the header menu's "all pins" tick. Set by PinManager.</summary>
+    public Func<bool>? IsAllClickThrough { get; set; }
 
     /// <summary>Puts the badge over the header's cursor button (third from the right), where the user clicked it.</summary>
     private void ShowBadge()
@@ -418,7 +418,7 @@ public sealed partial class NotePinWindow : Window, IPinSurface
     {
         foreach (var item in new[] { Opacity100, Opacity80, Opacity60, Opacity40, Opacity20 })
             item.IsChecked = Math.Abs(double.Parse((string)item.Tag, System.Globalization.CultureInfo.InvariantCulture) - _opacity) < 0.01;
-        ClickThroughAllItem.IsChecked = IsAnyClickThrough?.Invoke() ?? false;
+        ClickThroughAllItem.IsChecked = IsAllClickThrough?.Invoke() ?? false;
     }
 
     private void Opacity_Click(object sender, RoutedEventArgs e)
