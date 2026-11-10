@@ -189,6 +189,18 @@ public sealed class PinManager : IDisposable
         AddNote(new StoredNote(NoteStore.CreateId(), string.Empty, layout), activate: true, BoardMode ? null : _noteStore);
     }
 
+    /// <summary>A note's menu → Duplicate: same text, size and opacity, beside it (not tied to its .txt file).</summary>
+    private void DuplicateNote(NotePinWindow source)
+    {
+        var bounds = source.WindowBounds;
+        var (_, work) = WindowEnumerator.GetMonitorAt(bounds.X + bounds.Width / 2, bounds.Y + bounds.Height / 2);
+        var others = _notes.Where(n => n != source).Select(n => n.WindowBounds).ToList();
+        var spot = NotePlacement.Beside(bounds, bounds.Width, bounds.Height, work, others, gap: (int)Math.Round(8 * source.Scale));
+
+        var layout = new NoteLayout(spot.X, spot.Y, spot.Width, spot.Height, source.PinOpacity);
+        AddNote(new StoredNote(NoteStore.CreateId(), source.Text, layout), activate: true, BoardMode ? null : _noteStore);
+    }
+
     /// <summary>Reopens the notes that were open when PinPoint last exited (without taking focus).</summary>
     public void RestoreNotes()
     {
@@ -245,6 +257,10 @@ public sealed class PinManager : IDisposable
         var window = new NotePinWindow(note, store);
         window.Closed += (_, _) => OnNoteClosed(window);
         window.NewNoteRequested += (_, _) => CreateNoteBeside(window);
+        window.DuplicateRequested += (_, _) => DuplicateNote(window);
+        window.ClickThroughChanged += (_, _) => OnStateChanged();
+        window.ClickThroughAllRequested += (_, enable) => SetClickThroughAll(enable);
+        window.IsAnyClickThrough = () => IsClickThrough;
         _notes.Add(window);
         Items.Add(new NotePinItem(window));
         window.ShowAt(note.Layout, activate);
@@ -284,7 +300,12 @@ public sealed class PinManager : IDisposable
             return;
         }
 
-        bool enable = !IsClickThrough;
+        SetClickThroughAll(!IsClickThrough);
+    }
+
+    /// <summary>Click-through on or off for every pin (global toggle, or a note's menu/badge).</summary>
+    public void SetClickThroughAll(bool enable)
+    {
         foreach (var surface in Surfaces) surface.IsClickThrough = enable;
         foreach (var pin in _windows.Pins) _windows.SetClickThrough(pin, enable);
 

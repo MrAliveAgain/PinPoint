@@ -68,8 +68,11 @@ public sealed partial class NotePinWindow : Window, IPinSurface
 
         AppWindow.Changed += (_, e) =>
         {
-            if (_shown && (e.DidPositionChange || e.DidSizeChange)) RestartTimer(_layoutTimer);
+            if (!_shown || !(e.DidPositionChange || e.DidSizeChange)) return;
+            RestartTimer(_layoutTimer);
+            if (_badge?.IsShown == true) ShowBadge(); // keep it on the header
         };
+        Closed += (_, _) => _badge?.Close();
 
         UpdateHeader();
     }
@@ -112,8 +115,51 @@ public sealed partial class NotePinWindow : Window, IPinSurface
             _clickThrough = value;
             WindowStyler.SetExStyleFlag(_hwnd, Win32.WS_EX_TRANSPARENT, value);
             ApplyLayering();
+            if (value && !_hidden) ShowBadge();
+            else _badge?.HideBadge();
         }
     }
+
+    // ---- Click-through badge -------------------------------------------------------------------
+
+    private ClickThroughBadge? _badge;
+    private bool _hidden;
+
+    /// <summary>The note's own click-through changed from its button, menu or badge (PinManager refreshes the UI).</summary>
+    public event EventHandler? ClickThroughChanged;
+
+    /// <summary>Turn click-through on/off for every pin (header menu or badge).</summary>
+    public event EventHandler<bool>? ClickThroughAllRequested;
+
+    /// <summary>Whether any pin is click-through, for the header menu's "all pins" tick. Set by PinManager.</summary>
+    public Func<bool>? IsAnyClickThrough { get; set; }
+
+    /// <summary>Puts the badge over the header's cursor button (third from the right), where the user clicked it.</summary>
+    private void ShowBadge()
+    {
+        if (_badge is null)
+        {
+            _badge = new ClickThroughBadge();
+            _badge.TurnOffRequested += (_, _) => SetOwnClickThrough(false);
+            _badge.TurnOffAllRequested += (_, _) => ClickThroughAllRequested?.Invoke(this, false);
+        }
+
+        var client = ScreenBounds;
+        double scale = Scale;
+        int width = (int)Math.Round(34 * scale), height = (int)Math.Round(28 * scale);
+        _badge.ShowAt(new PixelRect(client.Right - 3 * width, client.Y, width, height));
+    }
+
+    private void SetOwnClickThrough(bool enabled)
+    {
+        IsClickThrough = enabled;
+        ClickThroughChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void ClickThroughButton_Click(object sender, RoutedEventArgs e) => SetOwnClickThrough(true);
+
+    private void ClickThroughAll_Click(object sender, RoutedEventArgs e) =>
+        ClickThroughAllRequested?.Invoke(this, ClickThroughAllItem.IsChecked);
 
     /// <summary>Shows the note at its saved spot (if still on a monitor) or near the mouse.</summary>
     public void ShowAt(NoteLayout? layout, bool activate)
@@ -143,18 +189,44 @@ public sealed partial class NotePinWindow : Window, IPinSurface
 
     public void SetHidden(bool hidden)
     {
-        if (hidden) AppWindow.Hide();
-        else AppWindow.Show(activateWindow: false);
+        _hidden = hidden;
+        if (hidden)
+        {
+            AppWindow.Hide();
+            _badge?.HideBadge();
+        }
+        else
+        {
+            AppWindow.Show(activateWindow: false);
+            if (_clickThrough) ShowBadge();
+        }
     }
 
-    public void RaiseTopmost() => WindowStyler.RaiseTopmost(_hwnd);
+    public void RaiseTopmost()
+    {
+        WindowStyler.RaiseTopmost(_hwnd);
+        _badge?.RaiseTopmost(); // stays above its note
+    }
 
+    /// <summary>For a screen capture: solid, and without the click-through badge in the shot.</summary>
     public bool SetTemporarilyOpaque(bool opaque)
     {
-        if (_opacity >= 0.999) return false;
-        if (opaque) WindowStyler.SetAlpha(_hwnd, 255);
-        else ApplyLayering();
-        return true;
+        bool changed = false;
+        if (_clickThrough && !_hidden)
+        {
+            if (opaque) _badge?.HideBadge();
+            else ShowBadge();
+            changed = true;
+        }
+
+        if (_opacity < 0.999)
+        {
+            if (opaque) WindowStyler.SetAlpha(_hwnd, 255);
+            else ApplyLayering();
+            changed = true;
+        }
+
+        return changed;
     }
 
     /// <summary>The user closed the note: keep its text in notes\closed (or drop it if empty).</summary>
@@ -336,6 +408,26 @@ public sealed partial class NotePinWindow : Window, IPinSurface
     public event EventHandler? NewNoteRequested;
 
     private void NewNoteButton_Click(object sender, RoutedEventArgs e) => NewNoteRequested?.Invoke(this, EventArgs.Empty);
+
+    /// <summary>Menu → Duplicate: PinManager opens a copy of this note (text, size, opacity) beside it.</summary>
+    public event EventHandler? DuplicateRequested;
+
+    private void Duplicate_Click(object sender, RoutedEventArgs e) => DuplicateRequested?.Invoke(this, EventArgs.Empty);
+
+    private void Menu_Opening(object sender, object e)
+    {
+        foreach (var item in new[] { Opacity100, Opacity80, Opacity60, Opacity40, Opacity20 })
+            item.IsChecked = Math.Abs(double.Parse((string)item.Tag, System.Globalization.CultureInfo.InvariantCulture) - _opacity) < 0.01;
+        ClickThroughAllItem.IsChecked = IsAnyClickThrough?.Invoke() ?? false;
+    }
+
+    private void Opacity_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: string tag })
+            PinOpacity = double.Parse(tag, System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    private async void SaveAsMenu_Click(object sender, RoutedEventArgs e) => await SaveToFileAsync(askForPlace: true);
 
     /// <summary>The whole window in screen pixels (what <see cref="ShowAt"/> takes back).</summary>
     public PixelRect WindowBounds => new(AppWindow.Position.X, AppWindow.Position.Y, AppWindow.Size.Width, AppWindow.Size.Height);

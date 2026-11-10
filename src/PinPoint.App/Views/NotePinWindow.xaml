@@ -25,6 +25,37 @@
               PointerMoved="Header_PointerMoved"
               PointerReleased="Header_PointerReleased"
               PointerCaptureLost="Header_PointerCaptureLost">
+            <!-- Right-click the header: everything a note can do, so you don't need the main window or shortcuts. -->
+            <Grid.ContextFlyout>
+                <MenuFlyout x:Name="Menu" Opening="Menu_Opening">
+                    <MenuFlyoutItem Text="New note beside this one" Click="NewNoteButton_Click">
+                        <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE710;" /></MenuFlyoutItem.Icon>
+                    </MenuFlyoutItem>
+                    <MenuFlyoutItem Text="Duplicate" Click="Duplicate_Click">
+                        <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8C8;" /></MenuFlyoutItem.Icon>
+                    </MenuFlyoutItem>
+                    <MenuFlyoutSeparator />
+                    <MenuFlyoutSubItem Text="Opacity">
+                        <MenuFlyoutSubItem.Icon><FontIcon Glyph="&#xE706;" /></MenuFlyoutSubItem.Icon>
+                        <RadioMenuFlyoutItem x:Name="Opacity100" Text="100%" GroupName="NoteOpacity" Tag="1.0" Click="Opacity_Click" />
+                        <RadioMenuFlyoutItem x:Name="Opacity80" Text="80%" GroupName="NoteOpacity" Tag="0.8" Click="Opacity_Click" />
+                        <RadioMenuFlyoutItem x:Name="Opacity60" Text="60%" GroupName="NoteOpacity" Tag="0.6" Click="Opacity_Click" />
+                        <RadioMenuFlyoutItem x:Name="Opacity40" Text="40%" GroupName="NoteOpacity" Tag="0.4" Click="Opacity_Click" />
+                        <RadioMenuFlyoutItem x:Name="Opacity20" Text="20%" GroupName="NoteOpacity" Tag="0.2" Click="Opacity_Click" />
+                    </MenuFlyoutSubItem>
+                    <MenuFlyoutItem Text="Click-through for this note" Click="ClickThroughButton_Click">
+                        <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8B0;" /></MenuFlyoutItem.Icon>
+                    </MenuFlyoutItem>
+                    <ToggleMenuFlyoutItem x:Name="ClickThroughAllItem" Text="Click-through for all pins" Click="ClickThroughAll_Click" />
+                    <MenuFlyoutSeparator />
+                    <MenuFlyoutItem Text="Save as .txt…" Click="SaveAsMenu_Click">
+                        <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE74E;" /></MenuFlyoutItem.Icon>
+                    </MenuFlyoutItem>
+                    <MenuFlyoutItem Text="Close" Click="CloseButton_Click">
+                        <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE711;" /></MenuFlyoutItem.Icon>
+                    </MenuFlyoutItem>
+                </MenuFlyout>
+            </Grid.ContextFlyout>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
@@ -42,6 +73,12 @@
                         Background="Transparent" BorderThickness="0"
                         ToolTipService.ToolTip="New note next to this one">
                     <FontIcon Glyph="&#xE710;" FontSize="11" />
+                </Button>
+                <Button x:Name="ClickThroughButton" Click="ClickThroughButton_Click"
+                        Width="34" Height="28" Padding="0" CornerRadius="0"
+                        Background="Transparent" BorderThickness="0"
+                        ToolTipService.ToolTip="Click-through: clicks pass through this note. Click the badge that appears to turn it off.">
+                    <FontIcon Glyph="&#xE8B0;" FontSize="11" />
                 </Button>
                 <Button x:Name="SaveButton" Click="SaveButton_Click"
                         Width="34" Height="28" Padding="0" CornerRadius="0"
