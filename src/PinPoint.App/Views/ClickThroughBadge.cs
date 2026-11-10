@@ -1,5 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Shapes;
 using PinPoint.Core.Geometry;
 using PinPoint.Core.Interop;
 using PinPoint.Core.Windows;
@@ -30,15 +32,28 @@ public sealed class ClickThroughBadge : Window
         var thisNote = new MenuFlyoutItem { Text = "Turn off for this note only" };
         thisNote.Click += (_, _) => TurnOffRequested?.Invoke(this, EventArgs.Empty);
 
+        // Subtle: the note header's own grey with a dimmed, struck-through cursor ("clicks are off here").
+        var dim = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"];
+        var icon = new Grid
+        {
+            Width = 14,
+            Height = 14,
+            Children =
+            {
+                new FontIcon { Glyph = "", FontSize = 11, Foreground = dim },
+                new Line { X1 = 1, Y1 = 1, X2 = 13, Y2 = 13, Stroke = dim, StrokeThickness = 1.25 },
+            },
+        };
+
         var button = new Button
         {
-            Style = (Style)Application.Current.Resources["AccentButtonStyle"],
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Stretch,
             Padding = new Thickness(0),
             CornerRadius = new CornerRadius(0),
             BorderThickness = new Thickness(0),
-            Content = new FontIcon { Glyph = "", FontSize = 12 },
+            Background = (Brush)Application.Current.Resources["SolidBackgroundFillColorSecondaryBrush"],
+            Content = icon,
             ContextFlyout = new MenuFlyout { Items = { allPins, thisNote } },
         };
         ToolTipService.SetToolTip(button, "Click-through is on. Click to turn it off for all pins (right-click: just this note).");
