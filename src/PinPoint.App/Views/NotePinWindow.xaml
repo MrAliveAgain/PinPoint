@@ -37,6 +37,12 @@
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button x:Name="NewNoteButton" Click="NewNoteButton_Click"
+                        Width="34" Height="28" Padding="0" CornerRadius="0"
+                        Background="Transparent" BorderThickness="0"
+                        ToolTipService.ToolTip="New note next to this one">
+                    <FontIcon Glyph="&#xE710;" FontSize="11" />
+                </Button>
                 <Button x:Name="SaveButton" Click="SaveButton_Click"
                         Width="34" Height="28" Padding="0" CornerRadius="0"
                         Background="Transparent" BorderThickness="0"

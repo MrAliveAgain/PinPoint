@@ -326,6 +326,16 @@ public sealed partial class NotePinWindow : Window, IPinSurface
 
     private void CloseButton_Click(object sender, RoutedEventArgs e) => CloseNote();
 
+    /// <summary>The + button: PinManager opens an empty note beside this one.</summary>
+    public event EventHandler? NewNoteRequested;
+
+    private void NewNoteButton_Click(object sender, RoutedEventArgs e) => NewNoteRequested?.Invoke(this, EventArgs.Empty);
+
+    /// <summary>The whole window in screen pixels (what <see cref="ShowAt"/> takes back).</summary>
+    public PixelRect WindowBounds => new(AppWindow.Position.X, AppWindow.Position.Y, AppWindow.Size.Width, AppWindow.Size.Height);
+
+    public double Scale => WindowHelpers.GetScale(_hwnd);
+
     // ---- Helpers -----------------------------------------------------------------------------
 
     private void ApplyLayering()
