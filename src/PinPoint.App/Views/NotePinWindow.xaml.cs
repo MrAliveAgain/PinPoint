@@ -119,6 +119,8 @@ public sealed partial class NotePinWindow : Window, IPinSurface
     public void ShowAt(NoteLayout? layout, bool activate)
     {
         AppWindow.MoveAndResize(IsOnScreen(layout) ? new RectInt32(layout!.X, layout.Y, layout.Width, layout.Height) : DefaultBounds());
+        // Fade before showing, so a faded note never appears at full opacity first.
+        ApplyLayering();
         AppWindow.Show(activateWindow: activate);
         WindowStyler.RaiseTopmost(_hwnd);
         ApplyLayering();
@@ -131,6 +133,10 @@ public sealed partial class NotePinWindow : Window, IPinSurface
             Editor.Focus(FocusState.Programmatic);
             Editor.SelectionStart = Editor.Text.Length;
         }
+
+        // Activating/first render can drop the layered alpha again; re-apply once it has settled.
+        DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, ApplyLayering);
+        if (!Root.IsLoaded) Root.Loaded += (_, _) => ApplyLayering();
     }
 
     public void NudgeOpacity(int direction) => PinOpacity += direction * 0.1;
