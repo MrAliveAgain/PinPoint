@@ -18,7 +18,7 @@ namespace PinPoint.Views;
 /// </summary>
 public sealed partial class NotePinWindow : Window, IPinSurface
 {
-    private const int DefaultWidth = 320, DefaultHeight = 260; // DIPs
+    public const int DefaultWidth = 320, DefaultHeight = 260; // DIPs
     private const int MinWidth = 180, MinHeight = 110;
 
     private readonly nint _hwnd;

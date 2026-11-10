@@ -2,17 +2,19 @@ using PinPoint.Core.Geometry;
 
 namespace PinPoint.Core.Notes;
 
-/// <summary>Where a note opened with a note's + button goes: next to that note, same size.</summary>
+/// <summary>Where a note opened with a note's + button goes: next to that note.</summary>
 public static class NotePlacement
 {
     /// <summary>
-    /// Tries right, left, below, then above <paramref name="source"/> (with a small gap), taking the first
+    /// Places a <paramref name="width"/>×<paramref name="height"/> note beside <paramref name="source"/>, trying
+    /// right, left, below, then above (with a small gap, top- or left-aligned with the source). Takes the first
     /// spot that fits in the work area and doesn't cover another note. If none does, it settles for a spot
     /// that fits even if it overlaps, and failing that a small diagonal offset kept inside the work area.
     /// </summary>
-    public static PixelRect Beside(PixelRect source, PixelRect workArea, IReadOnlyCollection<PixelRect> otherNotes, int gap)
+    public static PixelRect Beside(PixelRect source, int width, int height, PixelRect workArea,
+        IReadOnlyCollection<PixelRect> otherNotes, int gap)
     {
-        int w = source.Width, h = source.Height;
+        int w = width, h = height;
         PixelRect[] candidates =
         [
             new(source.Right + gap, source.Y, w, h),

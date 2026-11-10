@@ -171,15 +171,20 @@ public sealed class PinManager : IDisposable
         AddNote(new StoredNote(NoteStore.CreateId(), string.Empty, null), activate: true, BoardMode ? null : _noteStore);
     }
 
-    /// <summary>A note's + button: an empty note the same size, right beside it (or wherever it fits).</summary>
+    /// <summary>
+    /// A note's + button: an empty note right beside it (or wherever it fits), with the same width and
+    /// opacity but the default height.
+    /// </summary>
     private void CreateNoteBeside(NotePinWindow source)
     {
         var bounds = source.WindowBounds;
         var (_, work) = WindowEnumerator.GetMonitorAt(bounds.X + bounds.Width / 2, bounds.Y + bounds.Height / 2);
         var others = _notes.Where(n => n != source).Select(n => n.WindowBounds).ToList();
-        var spot = NotePlacement.Beside(bounds, work, others, gap: (int)Math.Round(8 * source.Scale));
+        double scale = source.Scale;
+        int height = (int)Math.Round(NotePinWindow.DefaultHeight * scale);
+        var spot = NotePlacement.Beside(bounds, bounds.Width, height, work, others, gap: (int)Math.Round(8 * scale));
 
-        var layout = new NoteLayout(spot.X, spot.Y, spot.Width, spot.Height);
+        var layout = new NoteLayout(spot.X, spot.Y, spot.Width, spot.Height, source.PinOpacity);
         // Same rule as CreateNote: with a board open the new note belongs to the board.
         AddNote(new StoredNote(NoteStore.CreateId(), string.Empty, layout), activate: true, BoardMode ? null : _noteStore);
     }
