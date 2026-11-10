@@ -5,7 +5,10 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Title="PinPoint note">
 
-    <Grid x:Name="Root" Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
+    <!-- Placement Hidden: otherwise WinUI pops a "Ctrl+S" tooltip over the whole note on hover, and in a
+         topmost window it can stay stuck until another window is clicked. -->
+    <Grid x:Name="Root" Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+          KeyboardAcceleratorPlacementMode="Hidden">
         <Grid.KeyboardAccelerators>
             <KeyboardAccelerator Key="S" Modifiers="Control" Invoked="Save_Invoked" />
             <KeyboardAccelerator Key="S" Modifiers="Control,Shift" Invoked="SaveAs_Invoked" />

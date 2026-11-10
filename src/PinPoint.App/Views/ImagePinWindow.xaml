@@ -8,6 +8,7 @@
 
     <Grid x:Name="Root"
           Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+          KeyboardAcceleratorPlacementMode="Hidden"
           PointerPressed="Root_PointerPressed"
           PointerMoved="Root_PointerMoved"
           PointerReleased="Root_PointerReleased"
