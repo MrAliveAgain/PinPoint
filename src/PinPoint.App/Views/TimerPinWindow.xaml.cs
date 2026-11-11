@@ -73,6 +73,12 @@ public sealed partial class TimerPinWindow : Window, IPinSurface
         _flash.Interval = TimeSpan.FromMilliseconds(400);
         _flash.Tick += (_, _) => OnFlash();
 
+        // Switching back to the game while typing keeps the typed time.
+        Activated += (_, e) =>
+        {
+            if (e.WindowActivationState == WindowActivationState.Deactivated) EndEdit(commit: true);
+        };
+
         UpdateAll();
     }
 
@@ -92,7 +98,7 @@ public sealed partial class TimerPinWindow : Window, IPinSurface
     public PixelRect ScreenBounds => WindowHelpers.GetClientScreenRect(_hwnd, AppWindow);
 
     /// <summary>Never takes focus, so there's nothing to interrupt (the menu is a popup of its own).</summary>
-    public bool IsInteracting => _drag.IsDragging || Menu.IsOpen;
+    public bool IsInteracting => _drag.IsDragging || Menu.IsOpen || _editing;
 
     public double PinOpacity
     {
@@ -198,6 +204,63 @@ public sealed partial class TimerPinWindow : Window, IPinSurface
         UpdateAll();
     }
 
+    // ---- Typing a time (425 = 4:25) -------------------------------------------------------------
+    // The window normally never takes focus; while typing it has to, so it's activatable just for that.
+
+    private bool _editing;
+
+    private void Root_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
+    {
+        BeginEdit();
+        e.Handled = true;
+    }
+
+    private void TypeTime_Click(object sender, RoutedEventArgs e) => BeginEdit();
+
+    private void BeginEdit()
+    {
+        if (_editing) return;
+        _editing = true;
+        StopAlarm();
+        _drag.Cancel();
+
+        WindowStyler.SetExStyleFlag(_hwnd, Win32.WS_EX_NOACTIVATE, false);
+        Win32.SetForegroundWindow(_hwnd);
+        Activate();
+
+        TimeText.Visibility = Visibility.Collapsed;
+        TimeEdit.Text = string.Empty;
+        TimeEdit.Visibility = Visibility.Visible;
+        DispatcherQueue.TryEnqueue(() => TimeEdit.Focus(FocusState.Programmatic)); // once the window is active
+    }
+
+    private void EndEdit(bool commit)
+    {
+        if (!_editing) return;
+        _editing = false;
+
+        if (commit && PinTimer.TryParseTyped(TimeEdit.Text, out var time)) _timer.SetDuration(time);
+
+        TimeEdit.Visibility = Visibility.Collapsed;
+        TimeText.Visibility = Visibility.Visible;
+        WindowStyler.SetExStyleFlag(_hwnd, Win32.WS_EX_NOACTIVATE, true);
+        UpdateAll();
+    }
+
+    private void TimeEdit_KeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key == Windows.System.VirtualKey.Enter)
+        {
+            EndEdit(commit: true);
+            e.Handled = true;
+        }
+        else if (e.Key == Windows.System.VirtualKey.Escape)
+        {
+            EndEdit(commit: false);
+            e.Handled = true;
+        }
+    }
+
     private void TimeText_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
     {
         if (_timer.Mode != PinTimerMode.Countdown) return;
@@ -270,6 +333,7 @@ public sealed partial class TimerPinWindow : Window, IPinSurface
     private void Root_PointerPressed(object sender, PointerRoutedEventArgs e)
     {
         StopAlarm(); // any click quiets a finished countdown
+        if (_editing) return; // clicks while typing go to the text box
         if (!e.GetCurrentPoint(Root).Properties.IsLeftButtonPressed) return;
         _drag.Begin(Root, e.Pointer);
         e.Handled = true;

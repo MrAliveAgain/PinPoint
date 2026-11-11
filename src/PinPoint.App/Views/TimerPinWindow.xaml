@@ -10,11 +10,15 @@
           PointerPressed="Root_PointerPressed"
           PointerMoved="Root_PointerMoved"
           PointerReleased="Root_PointerReleased"
-          PointerCaptureLost="Root_PointerCaptureLost">
+          PointerCaptureLost="Root_PointerCaptureLost"
+          DoubleTapped="Root_DoubleTapped">
         <FlyoutBase.AttachedFlyout>
             <MenuFlyout x:Name="Menu" ShouldConstrainToRootBounds="False" Opening="Menu_Opening">
                 <RadioMenuFlyoutItem x:Name="StopwatchItem" Text="Stopwatch" GroupName="TimerMode" Click="Stopwatch_Click" />
                 <RadioMenuFlyoutItem x:Name="CountdownItem" Text="Countdown" GroupName="TimerMode" Click="Countdown_Click" />
+                <MenuFlyoutItem Text="Type a time…" Click="TypeTime_Click">
+                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE765;" /></MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
                 <MenuFlyoutSubItem x:Name="DurationMenu" Text="Count down from">
                     <MenuFlyoutSubItem.Icon><FontIcon Glyph="&#xE916;" /></MenuFlyoutSubItem.Icon>
                 </MenuFlyoutSubItem>
@@ -61,7 +65,13 @@
             </Grid.ColumnDefinitions>
 
             <TextBlock x:Name="TimeText" Text="0:00" FontSize="30" FontWeight="SemiBold" VerticalAlignment="Center"
-                       PointerWheelChanged="TimeText_PointerWheelChanged" />
+                       PointerWheelChanged="TimeText_PointerWheelChanged"
+                       ToolTipService.ToolTip="Double-click to type a time (425 = 4:25). Scroll to adjust." />
+
+            <!-- Typing a countdown: 425 = 4:25, Enter to set, Esc to cancel. -->
+            <TextBox x:Name="TimeEdit" Visibility="Collapsed" FontSize="20" VerticalAlignment="Center" Margin="-4,0,6,0"
+                     PlaceholderText="425 = 4:25" MaxLength="8" IsSpellCheckEnabled="False"
+                     KeyDown="TimeEdit_KeyDown" />
 
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
                 <Button x:Name="StartButton" Click="Start_Click"
