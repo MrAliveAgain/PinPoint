@@ -68,7 +68,20 @@ public sealed class PinManager : IDisposable
 
     public event EventHandler? StateChanged;
 
+    /// <summary>"Hide all pins": everything, pinned windows included.</summary>
     public bool IsHidden { get; private set; }
+
+    private bool _notesHidden, _snipsHidden;
+
+    /// <summary>Notes are out of sight (hidden on their own, or with everything).</summary>
+    public bool AreNotesHidden => IsHidden || _notesHidden;
+
+    /// <summary>Snips are out of sight (hidden on their own, or with everything).</summary>
+    public bool AreSnipsHidden => IsHidden || _snipsHidden;
+
+    public bool HasNotesOpen => _notes.Count > 0;
+
+    private bool IsSurfaceHidden(IPinSurface surface) => surface is NotePinWindow ? AreNotesHidden : AreSnipsHidden;
 
     /// <summary>
     /// The global "click-through for everything" state: on only when every pin is click-through, so making one
@@ -151,7 +164,7 @@ public sealed class PinManager : IDisposable
 
     public ImagePinWindow PinSnip(CapturedFrame frame)
     {
-        ShowAll();
+        ShowAll(snips: true);
         var window = new ImagePinWindow(frame, _storage, _ocr, _settings);
         window.Closed += (_, _) => OnSnipClosed(window);
         _snips.Add(window);
@@ -178,7 +191,7 @@ public sealed class PinManager : IDisposable
     /// <summary>Opens a new, empty note near the mouse and puts the cursor in it.</summary>
     public void CreateNote()
     {
-        ShowAll();
+        ShowAll(notes: true);
         // With a board open, new notes belong to the board (it saves them); otherwise they're loose notes.
         AddNote(new StoredNote(NoteStore.CreateId(), string.Empty, null), activate: true, BoardMode ? null : _noteStore);
     }
@@ -243,6 +256,7 @@ public sealed class PinManager : IDisposable
         var b = saved.Bounds;
         window.ShowAt(new Core.Geometry.PixelRect(b.X, b.Y, b.Width, b.Height));
         window.RestoreBoardState(saved.ZoomStep, saved.Opacity, saved.Strokes, saved.Locked);
+        if (AreSnipsHidden) window.SetHidden(true);
         OnStateChanged();
     }
 
@@ -270,13 +284,14 @@ public sealed class PinManager : IDisposable
         window.Closed += (_, _) => OnNoteClosed(window);
         window.NewNoteRequested += (_, _) => CreateNoteBeside(window);
         window.DuplicateRequested += (_, _) => DuplicateNote(window);
+        window.HideNotesRequested += (_, _) => ToggleNotesHidden();
         window.ClickThroughChanged += (_, _) => OnStateChanged();
         window.ClickThroughAllRequested += (_, enable) => SetClickThroughAll(enable, notify: false); // the badge shows it
         window.IsAllClickThrough = () => IsClickThrough;
         _notes.Add(window);
         Items.Add(new NotePinItem(window));
         window.ShowAt(note.Layout, activate);
-        if (IsHidden) window.SetHidden(true);
+        if (AreNotesHidden) window.SetHidden(true);
         OnStateChanged();
     }
 
@@ -297,10 +312,57 @@ public sealed class PinManager : IDisposable
             return;
         }
 
-        IsHidden = !IsHidden;
-        _windows.SetHidden(IsHidden);
-        foreach (var surface in Surfaces) surface.SetHidden(IsHidden);
+        // Showing them again brings everything back, including notes or snips hidden on their own.
+        if (IsHidden) SetHiddenState(all: false, notes: false, snips: false);
+        else SetHiddenState(all: true, notes: _notesHidden, snips: _snipsHidden);
         _notifier.Show(IsHidden ? "" : "", IsHidden ? "Pins hidden" : "Pins shown");
+        OnStateChanged();
+    }
+
+    /// <summary>Hides every note (or brings them back), leaving snips and pinned windows alone.</summary>
+    public void ToggleNotesHidden()
+    {
+        if (_notes.Count == 0)
+        {
+            _notifier.Show("", "No notes open");
+            return;
+        }
+
+        bool hide = !AreNotesHidden;
+        // Bringing notes back out of "hide all" keeps the snips hidden.
+        if (hide) SetHiddenState(IsHidden, notes: true, snips: _snipsHidden);
+        else SetHiddenState(all: false, notes: false, snips: AreSnipsHidden);
+        _notifier.Show(hide ? "" : "", hide ? "Notes hidden" : "Notes shown",
+            hide ? "Bring them back from the tray menu, the Pins page or your shortcut." : null);
+    }
+
+    /// <summary>Hides every snip (or brings them back), leaving notes and pinned windows alone.</summary>
+    public void ToggleSnipsHidden()
+    {
+        if (_snips.Count == 0)
+        {
+            _notifier.Show("", "No snips pinned");
+            return;
+        }
+
+        bool hide = !AreSnipsHidden;
+        if (hide) SetHiddenState(IsHidden, notes: _notesHidden, snips: true);
+        else SetHiddenState(all: false, notes: AreNotesHidden, snips: false);
+        _notifier.Show(hide ? "" : "", hide ? "Snips hidden" : "Snips shown",
+            hide ? "Bring them back from the tray menu, the Pins page or your shortcut." : null);
+    }
+
+    /// <summary>Applies a new hidden state, showing/hiding only the kinds of pin whose visibility changed.</summary>
+    private void SetHiddenState(bool all, bool notes, bool snips)
+    {
+        bool windowsWere = IsHidden, notesWere = AreNotesHidden, snipsWere = AreSnipsHidden;
+        IsHidden = all;
+        _notesHidden = notes;
+        _snipsHidden = snips;
+
+        if (windowsWere != IsHidden) _windows.SetHidden(IsHidden);
+        if (notesWere != AreNotesHidden) foreach (var note in _notes) note.SetHidden(AreNotesHidden);
+        if (snipsWere != AreSnipsHidden) foreach (var snip in _snips) snip.SetHidden(AreSnipsHidden);
         OnStateChanged();
     }
 
@@ -427,7 +489,7 @@ public sealed class PinManager : IDisposable
         int changed = _windows.SetTemporarilyOpaque(true);
         foreach (var surface in Surfaces)
         {
-            if (!IsHidden && surface.SetTemporarilyOpaque(true)) changed++;
+            if (!IsSurfaceHidden(surface) && surface.SetTemporarilyOpaque(true)) changed++;
         }
 
         if (changed > 0)
@@ -458,12 +520,14 @@ public sealed class PinManager : IDisposable
         foreach (var note in _notes.ToArray()) note.Shutdown(); // saved, and back next launch
     }
 
-    private void ShowAll()
+    /// <summary>
+    /// A new pin is about to appear: lift "hide all", and if it's a note/snip, un-hide that kind too, so the
+    /// new one isn't the only one showing. Notes or snips hidden on their own otherwise stay hidden.
+    /// </summary>
+    private void ShowAll(bool notes = false, bool snips = false)
     {
-        if (!IsHidden) return;
-        IsHidden = false;
-        _windows.SetHidden(false);
-        foreach (var surface in Surfaces) surface.SetHidden(false);
+        if (!IsHidden && !(notes && _notesHidden) && !(snips && _snipsHidden)) return;
+        SetHiddenState(all: false, notes: !notes && _notesHidden, snips: !snips && _snipsHidden);
     }
 
     private void RaiseAll()
@@ -473,7 +537,8 @@ public sealed class PinManager : IDisposable
 
         // Only when something from another app actually covers a pin: re-raising pins that are already on top
         // makes them (and the video or game under them) recompose every time, which shows as flicker.
-        bool covered = _windows.AnyCovered() || Surfaces.Any(s => WindowEnumerator.IsCoveredByAnotherApp(s.Handle));
+        bool covered = _windows.AnyCovered() ||
+            Surfaces.Any(s => !IsSurfaceHidden(s) && WindowEnumerator.IsCoveredByAnotherApp(s.Handle));
         if (!covered) return;
 
         _windows.RaiseAll();

@@ -419,6 +419,11 @@ public sealed partial class NotePinWindow : Window, IPinSurface
 
     private void Duplicate_Click(object sender, RoutedEventArgs e) => DuplicateRequested?.Invoke(this, EventArgs.Empty);
 
+    /// <summary>Menu → Hide all notes (PinManager hides every note; the tray, Pins page or shortcut brings them back).</summary>
+    public event EventHandler? HideNotesRequested;
+
+    private void HideNotes_Click(object sender, RoutedEventArgs e) => HideNotesRequested?.Invoke(this, EventArgs.Empty);
+
     private void Menu_Opening(object sender, object e)
     {
         foreach (var item in new[] { Opacity100, Opacity80, Opacity60, Opacity40, Opacity20 })

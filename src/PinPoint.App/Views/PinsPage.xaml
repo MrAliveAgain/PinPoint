@@ -64,10 +64,26 @@
                 </Button>
 
                 <!-- Icon-only toggles keep the row from overflowing; tooltips name them. -->
-                <ToggleButton x:Name="HideAllToggle" Grid.Column="4" Click="HideAll_Click"
-                              ToolTipService.ToolTip="Hide all pins (click again to show them)">
-                    <FontIcon Glyph="&#xED1A;" FontSize="16" />
-                </ToggleButton>
+                <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="4">
+                    <ToggleButton x:Name="HideNotesToggle" Click="HideNotes_Click"
+                                  ToolTipService.ToolTip="Hide all notes (click again to show them)">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon Glyph="&#xED1A;" FontSize="14" />
+                            <TextBlock Text="Notes" />
+                        </StackPanel>
+                    </ToggleButton>
+                    <ToggleButton x:Name="HideSnipsToggle" Click="HideSnips_Click"
+                                  ToolTipService.ToolTip="Hide all snips (click again to show them)">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon Glyph="&#xED1A;" FontSize="14" />
+                            <TextBlock Text="Snips" />
+                        </StackPanel>
+                    </ToggleButton>
+                    <ToggleButton x:Name="HideAllToggle" Click="HideAll_Click"
+                                  ToolTipService.ToolTip="Hide all pins (click again to show them)">
+                        <FontIcon Glyph="&#xED1A;" FontSize="16" />
+                    </ToggleButton>
+                </StackPanel>
 
                 <ToggleButton x:Name="ClickThroughToggle" Grid.Column="5" Click="ClickThrough_Click"
                               ToolTipService.ToolTip="Click-through: clicks pass through every pin">

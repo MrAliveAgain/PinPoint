@@ -202,6 +202,29 @@ public sealed class AppHost : IDisposable
             Execute = Pins.ToggleHidden,
         });
 
+        // No default shortcuts (free to bind on the Settings page, so nothing clashes with games).
+        Commands.Add(new AppCommand
+        {
+            Id = CommandIds.ToggleHideNotes,
+            Title = "Hide all notes",
+            Description = "Hide every note (snips stay), then bring them back.",
+            Glyph = "",
+            IsChecked = () => Pins.AreNotesHidden,
+            CanExecute = () => Pins.HasNotesOpen,
+            Execute = Pins.ToggleNotesHidden,
+        });
+
+        Commands.Add(new AppCommand
+        {
+            Id = CommandIds.ToggleHideSnips,
+            Title = "Hide all snips",
+            Description = "Hide every pinned screenshot (notes stay), then bring them back.",
+            Glyph = "",
+            IsChecked = () => Pins.AreSnipsHidden,
+            CanExecute = () => Pins.HasSnips,
+            Execute = Pins.ToggleSnipsHidden,
+        });
+
         Commands.Add(new AppCommand
         {
             Id = CommandIds.ToggleClickThrough,

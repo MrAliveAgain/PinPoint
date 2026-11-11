@@ -68,6 +68,10 @@ public sealed partial class PinsPage : Page
 
         HideAllToggle.IsEnabled = ClickThroughToggle.IsEnabled = pins.HasPins;
         HideAllToggle.IsChecked = pins.IsHidden;
+        HideNotesToggle.IsEnabled = pins.HasNotesOpen;
+        HideSnipsToggle.IsEnabled = pins.HasSnips;
+        HideNotesToggle.IsChecked = pins.HasNotesOpen && pins.AreNotesHidden;
+        HideSnipsToggle.IsChecked = pins.HasSnips && pins.AreSnipsHidden;
         ClickThroughToggle.IsChecked = pins.IsClickThrough;
 
         var snip = _host.Commands.Get(CommandIds.SnipAndPin);
@@ -248,6 +252,10 @@ public sealed partial class PinsPage : Page
     private void NewNote_Click(object sender, RoutedEventArgs e) => _host.Pins.CreateNote();
 
     private void HideAll_Click(object sender, RoutedEventArgs e) => _host.Pins.ToggleHidden();
+
+    private void HideNotes_Click(object sender, RoutedEventArgs e) => _host.Pins.ToggleNotesHidden();
+
+    private void HideSnips_Click(object sender, RoutedEventArgs e) => _host.Pins.ToggleSnipsHidden();
 
     private void ClickThrough_Click(object sender, RoutedEventArgs e) => _host.Pins.ToggleClickThrough();
 
