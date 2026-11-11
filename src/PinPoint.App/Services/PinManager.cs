@@ -69,15 +69,15 @@ public sealed class PinManager : IDisposable
     public event EventHandler? StateChanged;
 
     /// <summary>"Hide all pins": everything, pinned windows included.</summary>
-    public bool IsHidden { get; private set; }
+    public bool IsHidden => _windowsHidden && _notesHidden && _snipsHidden;
 
-    private bool _notesHidden, _snipsHidden;
+    // Each kind of pin is hidden on its own; "hide all" just hides all three. That way a new pin only brings
+    // back its own kind (pinning a window or snipping something doesn't make hidden notes reappear).
+    private bool _windowsHidden, _notesHidden, _snipsHidden;
 
-    /// <summary>Notes are out of sight (hidden on their own, or with everything).</summary>
-    public bool AreNotesHidden => IsHidden || _notesHidden;
+    public bool AreNotesHidden => _notesHidden;
 
-    /// <summary>Snips are out of sight (hidden on their own, or with everything).</summary>
-    public bool AreSnipsHidden => IsHidden || _snipsHidden;
+    public bool AreSnipsHidden => _snipsHidden;
 
     public bool HasNotesOpen => _notes.Count > 0;
 
@@ -120,7 +120,7 @@ public sealed class PinManager : IDisposable
             return;
         }
 
-        ShowAll();
+        ShowAll(windows: true);
         switch (_windows.Toggle(hwnd))
         {
             case PinResult.Pinned:
@@ -142,7 +142,7 @@ public sealed class PinManager : IDisposable
 
     public void PinWindow(nint hwnd)
     {
-        ShowAll();
+        ShowAll(windows: true);
         var (result, pin) = _windows.Pin(hwnd);
         if (result == PinResult.Pinned) _notifier.Show("", "Pinned on top", pin?.Title);
         else if (result == PinResult.Failed) _notifier.Show("", "Couldn't pin that window", "It's running as administrator.");
@@ -313,8 +313,8 @@ public sealed class PinManager : IDisposable
         }
 
         // Showing them again brings everything back, including notes or snips hidden on their own.
-        if (IsHidden) SetHiddenState(all: false, notes: false, snips: false);
-        else SetHiddenState(all: true, notes: _notesHidden, snips: _snipsHidden);
+        bool hide = !IsHidden;
+        SetHiddenState(windows: hide, notes: hide, snips: hide);
         _notifier.Show(IsHidden ? "" : "", IsHidden ? "Pins hidden" : "Pins shown");
         OnStateChanged();
     }
@@ -328,10 +328,8 @@ public sealed class PinManager : IDisposable
             return;
         }
 
-        bool hide = !AreNotesHidden;
-        // Bringing notes back out of "hide all" keeps the snips hidden.
-        if (hide) SetHiddenState(IsHidden, notes: true, snips: _snipsHidden);
-        else SetHiddenState(all: false, notes: false, snips: AreSnipsHidden);
+        bool hide = !_notesHidden;
+        SetHiddenState(_windowsHidden, notes: hide, snips: _snipsHidden);
         _notifier.Show(hide ? "" : "", hide ? "Notes hidden" : "Notes shown",
             hide ? "Bring them back from the tray menu, the Pins page or your shortcut." : null);
     }
@@ -345,24 +343,23 @@ public sealed class PinManager : IDisposable
             return;
         }
 
-        bool hide = !AreSnipsHidden;
-        if (hide) SetHiddenState(IsHidden, notes: _notesHidden, snips: true);
-        else SetHiddenState(all: false, notes: AreNotesHidden, snips: false);
+        bool hide = !_snipsHidden;
+        SetHiddenState(_windowsHidden, notes: _notesHidden, snips: hide);
         _notifier.Show(hide ? "" : "", hide ? "Snips hidden" : "Snips shown",
             hide ? "Bring them back from the tray menu, the Pins page or your shortcut." : null);
     }
 
     /// <summary>Applies a new hidden state, showing/hiding only the kinds of pin whose visibility changed.</summary>
-    private void SetHiddenState(bool all, bool notes, bool snips)
+    private void SetHiddenState(bool windows, bool notes, bool snips)
     {
-        bool windowsWere = IsHidden, notesWere = AreNotesHidden, snipsWere = AreSnipsHidden;
-        IsHidden = all;
+        bool windowsWere = _windowsHidden, notesWere = _notesHidden, snipsWere = _snipsHidden;
+        _windowsHidden = windows;
         _notesHidden = notes;
         _snipsHidden = snips;
 
-        if (windowsWere != IsHidden) _windows.SetHidden(IsHidden);
-        if (notesWere != AreNotesHidden) foreach (var note in _notes) note.SetHidden(AreNotesHidden);
-        if (snipsWere != AreSnipsHidden) foreach (var snip in _snips) snip.SetHidden(AreSnipsHidden);
+        if (windowsWere != windows) _windows.SetHidden(windows);
+        if (notesWere != notes) foreach (var note in _notes) note.SetHidden(notes);
+        if (snipsWere != snips) foreach (var snip in _snips) snip.SetHidden(snips);
         OnStateChanged();
     }
 
@@ -521,13 +518,13 @@ public sealed class PinManager : IDisposable
     }
 
     /// <summary>
-    /// A new pin is about to appear: lift "hide all", and if it's a note/snip, un-hide that kind too, so the
-    /// new one isn't the only one showing. Notes or snips hidden on their own otherwise stay hidden.
+    /// A new pin is about to appear: un-hide its own kind (so it isn't the only one showing). Other kinds stay
+    /// hidden, e.g. pinning a window or snipping doesn't bring hidden notes back.
     /// </summary>
-    private void ShowAll(bool notes = false, bool snips = false)
+    private void ShowAll(bool windows = false, bool notes = false, bool snips = false)
     {
-        if (!IsHidden && !(notes && _notesHidden) && !(snips && _snipsHidden)) return;
-        SetHiddenState(all: false, notes: !notes && _notesHidden, snips: !snips && _snipsHidden);
+        if (!(windows && _windowsHidden) && !(notes && _notesHidden) && !(snips && _snipsHidden)) return;
+        SetHiddenState(windows: !windows && _windowsHidden, notes: !notes && _notesHidden, snips: !snips && _snipsHidden);
     }
 
     private void RaiseAll()
