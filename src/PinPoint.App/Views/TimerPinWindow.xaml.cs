@@ -73,6 +73,10 @@ public sealed partial class TimerPinWindow : Window, IPinSurface
         _flash.Interval = TimeSpan.FromMilliseconds(400);
         _flash.Tick += (_, _) => OnFlash();
 
+        ShowSoundState();
+        AppHost.Current.Settings.Changed += OnSettingsChanged; // all timers share the silent setting
+        Closed += (_, _) => AppHost.Current.Settings.Changed -= OnSettingsChanged;
+
         // Switching back to the game while typing keeps the typed time.
         Activated += (_, e) =>
         {
@@ -303,6 +307,20 @@ public sealed partial class TimerPinWindow : Window, IPinSurface
 
     private void Silent_Click(object sender, RoutedEventArgs e) =>
         AppHost.Current.Settings.Update(s => s.TimerSilent = SilentItem.IsChecked);
+
+    /// <summary>The header's speaker button: sound on/off for every timer.</summary>
+    private void SoundButton_Click(object sender, RoutedEventArgs e) =>
+        AppHost.Current.Settings.Update(s => s.TimerSilent = !s.TimerSilent);
+
+    private void ShowSoundState()
+    {
+        SoundIcon.Glyph = IsSilent ? "" : ""; // mute : volume
+        ToolTipService.SetToolTip(SoundButton, IsSilent
+            ? "Silent: when time's up it only flashes. Click to turn the sound on."
+            : "Sound on: when time's up it beeps. Click for silent (flash only).");
+    }
+
+    private void OnSettingsChanged(object? sender, EventArgs e) => DispatcherQueue.TryEnqueue(ShowSoundState);
 
     private void Menu_Opening(object sender, object e)
     {

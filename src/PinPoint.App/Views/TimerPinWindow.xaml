@@ -53,11 +53,19 @@
                 <TextBlock x:Name="ModeText" Text="Stopwatch" Style="{StaticResource CaptionTextBlockStyle}"
                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
             </StackPanel>
-            <Button HorizontalAlignment="Right" Click="Close_Click"
-                    Width="32" Height="26" Padding="0" CornerRadius="0" IsTabStop="False" AllowFocusOnInteraction="False"
-                    Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Close">
-                <FontIcon Glyph="&#xE711;" FontSize="10" />
-            </Button>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <!-- Sound on/off for when time's up (shared by all timers). -->
+                <Button x:Name="SoundButton" Click="SoundButton_Click"
+                        Width="32" Height="26" Padding="0" CornerRadius="0" IsTabStop="False" AllowFocusOnInteraction="False"
+                        Background="Transparent" BorderThickness="0">
+                    <FontIcon x:Name="SoundIcon" Glyph="&#xE767;" FontSize="11" />
+                </Button>
+                <Button Click="Close_Click"
+                        Width="32" Height="26" Padding="0" CornerRadius="0" IsTabStop="False" AllowFocusOnInteraction="False"
+                        Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Close">
+                    <FontIcon Glyph="&#xE711;" FontSize="10" />
+                </Button>
+            </StackPanel>
         </Grid>
 
         <!-- Time + controls -->
