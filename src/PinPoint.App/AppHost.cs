@@ -301,6 +301,9 @@ public sealed class AppHost : IDisposable
                 IsEnabled: command.CanExecute?.Invoke() ?? true));
         }
 
+        items.Add(new TrayMenuItem("All notes at 50% opacity", Deferred(Pins.ToggleNotesHalfFaded),
+            IsChecked: Pins.AreNotesHalfFaded, IsEnabled: Pins.HasNotesOpen));
+
         items.Add(new TrayMenuItem("Snip after a delay")
         {
             Children = [.. new[] { 3, 5, 10 }.Select(s => new TrayMenuItem($"In {s} seconds", Deferred(() => Snips.StartAfter(s))))],

@@ -39,6 +39,14 @@ public sealed partial class ManagerWindow : Window
         CenterOnCursorMonitor(width: 960, height: 700);
         Navigate(PinsPageTag);
         Activated += (_, e) => KeepAbovePins(e.WindowActivationState != WindowActivationState.Deactivated);
+
+        // Minimize to the tray: a minimized window is hidden, so it's out of the taskbar and Alt+Tab.
+        AppWindow.Changed += (_, e) =>
+        {
+            if (!AppHost.Current.Settings.Current.MinimizeToTray) return;
+            if (AppWindow.IsVisible && AppWindow.Presenter is OverlappedPresenter { State: OverlappedPresenterState.Minimized })
+                AppWindow.Hide();
+        };
     }
 
     /// <summary>
@@ -67,6 +75,7 @@ public sealed partial class ManagerWindow : Window
     {
         if (page is not null) Navigate(page);
         if (AppWindow.Presenter is OverlappedPresenter { State: OverlappedPresenterState.Minimized } presenter) presenter.Restore();
+        if (!AppWindow.IsVisible) AppWindow.Show(activateWindow: true); // was tucked into the tray
         Activate();
         Win32.SetForegroundWindow(_hwnd);
     }

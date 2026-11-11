@@ -380,6 +380,23 @@ public sealed class PinManager : IDisposable
             hide ? "Bring them back from the tray menu, the Pins page or your shortcut." : null);
     }
 
+    /// <summary>True when every open note is at (about) half opacity, for the tray tick.</summary>
+    public bool AreNotesHalfFaded => _notes.Count > 0 && _notes.All(n => Math.Abs(n.PinOpacity - 0.5) < 0.01);
+
+    /// <summary>Tray → every note to 50% opacity, or back to fully solid if they already are.</summary>
+    public void ToggleNotesHalfFaded()
+    {
+        if (_notes.Count == 0)
+        {
+            _notifier.Show("", "No notes open");
+            return;
+        }
+
+        double target = AreNotesHalfFaded ? 1.0 : 0.5;
+        foreach (var note in _notes) note.PinOpacity = target;
+        _notifier.Show("", target < 1 ? "Notes at 50% opacity" : "Notes fully solid");
+    }
+
     /// <summary>Hides every pinned app window (or brings them back), leaving snips and notes alone.</summary>
     public void ToggleWindowsHidden()
     {

@@ -26,6 +26,9 @@ public sealed class AppSettings
     /// <summary>Delay before the Snip &amp; pin button freezes the screen (0, 3, 5 or 10 s), like Snipping Tool.</summary>
     public int SnipDelaySeconds { get; set; }
 
+    /// <summary>Minimizing the main window hides it to the tray (out of the taskbar and Alt+Tab).</summary>
+    public bool MinimizeToTray { get; set; } = true;
+
     public bool HighlightPinnedWindows { get; set; } = true;
 
     /// <summary>#RRGGBB border colour for pinned windows.</summary>

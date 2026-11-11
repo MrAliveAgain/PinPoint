@@ -53,6 +53,7 @@ public sealed partial class SettingsPage : Page
             KeepFocusToggle.IsOn = !settings.PinsTakeFocus;
             HighlightToggle.IsOn = settings.HighlightPinnedWindows;
             NotificationsToggle.IsOn = settings.ShowNotifications;
+            MinimizeToTrayToggle.IsOn = settings.MinimizeToTray;
             StartupToggle.IsOn = StartupRegistration.IsEnabled;
             FolderCard.Description = _host.Settings.SnipFolder;
             AboutCard.Description = $"Version {typeof(App).Assembly.GetName().Version?.ToString(3)} · Pin windows and snips on top of anything.";
@@ -162,6 +163,8 @@ public sealed partial class SettingsPage : Page
     private void SaveSnips_Toggled(object sender, RoutedEventArgs e) => Set(s => s.SaveSnips = SaveSnipsToggle.IsOn);
 
     private void Clipboard_Toggled(object sender, RoutedEventArgs e) => Set(s => s.CopySnipsToClipboard = ClipboardToggle.IsOn);
+
+    private void MinimizeToTray_Toggled(object sender, RoutedEventArgs e) => Set(s => s.MinimizeToTray = MinimizeToTrayToggle.IsOn);
 
     private void KeepFocus_Toggled(object sender, RoutedEventArgs e) => Set(s => s.PinsTakeFocus = !KeepFocusToggle.IsOn);
 

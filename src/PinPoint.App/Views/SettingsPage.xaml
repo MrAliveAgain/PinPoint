@@ -50,6 +50,10 @@
             </controls:SettingsCard>
 
             <TextBlock Text="General" Style="{StaticResource SectionHeaderStyle}" />
+            <controls:SettingsCard Glyph="&#xE921;" Header="Minimize to the tray"
+                                   Description="Minimizing this window tucks it into the tray icon, out of the taskbar and Alt+Tab.">
+                <ToggleSwitch x:Name="MinimizeToTrayToggle" OnContent="" OffContent="" MinWidth="0" Toggled="MinimizeToTray_Toggled" />
+            </controls:SettingsCard>
             <controls:SettingsCard Glyph="&#xE7E8;" Header="Start with Windows"
                                    Description="Launch quietly into the system tray when you sign in.">
                 <ToggleSwitch x:Name="StartupToggle" OnContent="" OffContent="" MinWidth="0" Toggled="Startup_Toggled" />
