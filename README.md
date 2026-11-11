@@ -28,7 +28,7 @@ It sits in the tray and doesn't do anything until you press a shortcut.
 
 ## What it does
 
-- **Snip & pin.** <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>S</kbd> freezes the screen. Drag a box, or click a window to grab all of it, and that piece stays on top right where it was. It's also saved as a PNG and copied to your clipboard.
+- **Snip & pin.** <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>S</kbd> freezes the screen. Drag a box, or click a window to grab all of it, and that piece stays on top right where it was. It's also saved as a PNG and copied to your clipboard. Need to open a menu or hover something first? Set a 3, 5 or 10 second delay next to the Snip & pin button (or use **Snip after a delay** in the tray).
 - **Pin any window.** <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>P</kbd> keeps the window you're in above everything else, with a coloured border so you can tell which one it is. Press it again to unpin.
 - **Grab text out of snips.** If a snip has text in it, a small **T** button appears when you hover. Click it, drag over the words you want, and they're copied when you let go. Tables keep their rows and columns when you paste them. It uses the text recognition built into Windows, so it all happens on your PC. You can also right-click a snip → **Copy text** to grab all of it at once.
 
@@ -42,7 +42,7 @@ It sits in the tray and doesn't do anything until you press a shortcut.
 - **Boards.** Save the snips and notes you've got up as a board and pick up where you left off later, like a document. Export or copy a board as one picture, too. [More below](#boards).
 - **Pin any image.** Copied a picture from a website, or have a screenshot on the clipboard? <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>I</kbd> pins it like a snip. You can also drop image files onto the PinPoint window.
 - **Stays over games.** Anything in borderless or windowed mode. If a game puts itself back on top, PinPoint puts your pins back over it.
-- **Easy to get out of the way.** Hide every pin at once, fade them, or make them click-through so your clicks go straight to the game. To fade several at once, Shift- or Ctrl-click them in the Pins list and drag any of their sliders.
+- **Easy to get out of the way.** Hide every pin at once (or just the notes, or just the snips), fade them, or make them click-through so your clicks go straight to the game. To fade several at once, Shift- or Ctrl-click them in the Pins list and drag any of their sliders.
 - **Small and quick.** No installer, no account, no internet connection. Just an exe in a folder.
 
 <p align="center">
