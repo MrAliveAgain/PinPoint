@@ -397,6 +397,28 @@ public sealed class PinManager : IDisposable
     }
 
     /// <summary>
+    /// Drops every pin out of the always-on-top band until disposed, so a Save/Open dialog (an ordinary window)
+    /// comes up in front of them instead of behind. Re-raising is held off meanwhile; pins go back on top after.
+    /// </summary>
+    public IDisposable LowerForDialog()
+    {
+        _raiseSuspensions++;
+        var lowered = Surfaces.Select(s => s.Handle).Concat(_windows.Pins.Select(p => p.Handle)).ToList();
+        foreach (nint hwnd in lowered) WindowStyler.SetTopmost(hwnd, false);
+
+        return new Scope(() =>
+        {
+            _raiseSuspensions--;
+            foreach (nint hwnd in lowered)
+            {
+                if (Win32.IsWindow(hwnd)) WindowStyler.SetTopmost(hwnd, true);
+            }
+
+            foreach (var surface in Surfaces) surface.RaiseTopmost(); // notes' click-through badges back above
+        });
+    }
+
+    /// <summary>
     /// Shows faded pins fully opaque until disposed, so a screen capture of a faded guide comes out
     /// clean instead of blended with whatever is behind it. Their opacity settings are untouched.
     /// </summary>

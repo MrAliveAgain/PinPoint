@@ -21,13 +21,30 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <Button Style="{StaticResource AccentButtonStyle}" Click="Snip_Click">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon Glyph="&#xE7A8;" FontSize="16" />
-                        <TextBlock Text="Snip &amp; pin" />
-                        <TextBlock x:Name="SnipHotkeyText" Opacity="0.7" />
-                    </StackPanel>
-                </Button>
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <Button Style="{StaticResource AccentButtonStyle}" Click="Snip_Click">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE7A8;" FontSize="16" />
+                            <TextBlock Text="Snip &amp; pin" />
+                            <TextBlock x:Name="SnipHotkeyText" Opacity="0.7" />
+                        </StackPanel>
+                    </Button>
+                    <!-- Delay like Snipping Tool: for this button (the shortcut always snips straight away). -->
+                    <DropDownButton x:Name="DelayButton" ToolTipService.ToolTip="Delay before the screen is captured (this button only; the shortcut snips straight away)">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon Glyph="&#xE916;" FontSize="14" />
+                            <TextBlock x:Name="DelayText" Text="No delay" />
+                        </StackPanel>
+                        <DropDownButton.Flyout>
+                            <MenuFlyout Placement="BottomEdgeAlignedLeft">
+                                <RadioMenuFlyoutItem x:Name="Delay0" Text="No delay" GroupName="SnipDelay" Tag="0" Click="Delay_Click" />
+                                <RadioMenuFlyoutItem x:Name="Delay3" Text="3 seconds" GroupName="SnipDelay" Tag="3" Click="Delay_Click" />
+                                <RadioMenuFlyoutItem x:Name="Delay5" Text="5 seconds" GroupName="SnipDelay" Tag="5" Click="Delay_Click" />
+                                <RadioMenuFlyoutItem x:Name="Delay10" Text="10 seconds" GroupName="SnipDelay" Tag="10" Click="Delay_Click" />
+                            </MenuFlyout>
+                        </DropDownButton.Flyout>
+                    </DropDownButton>
+                </StackPanel>
 
                 <DropDownButton Grid.Column="1">
                     <StackPanel Orientation="Horizontal" Spacing="8">

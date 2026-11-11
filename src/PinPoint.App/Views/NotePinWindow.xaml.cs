@@ -361,7 +361,8 @@ public sealed partial class NotePinWindow : Window, IPinSurface
         picker.FileTypeChoices.Add("Text file", [".txt"]);
         WinRT.Interop.InitializeWithWindow.Initialize(picker, _hwnd);
 
-        var file = await picker.PickSaveFileAsync();
+        Windows.Storage.StorageFile? file;
+        using (AppHost.Current.Pins.LowerForDialog()) file = await picker.PickSaveFileAsync(); // dialog in front of pins
         return file?.Path;
     }
 

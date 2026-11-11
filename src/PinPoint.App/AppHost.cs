@@ -258,6 +258,11 @@ public sealed class AppHost : IDisposable
                 IsEnabled: command.CanExecute?.Invoke() ?? true));
         }
 
+        items.Add(new TrayMenuItem("Snip after a delay")
+        {
+            Children = [.. new[] { 3, 5, 10 }.Select(s => new TrayMenuItem($"In {s} seconds", Deferred(() => Snips.StartAfter(s))))],
+        });
+
         items.Add(TrayMenuItem.Separator);
         items.Add(new TrayMenuItem("Open snips folder", Deferred(Storage.OpenFolder)));
         items.Add(new TrayMenuItem("Boards") { Children = BuildBoardsMenu(Deferred) });

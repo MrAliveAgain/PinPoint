@@ -15,8 +15,40 @@ public sealed class SnipService(PinManager pins, SnipStorage storage, SettingsSe
     private readonly IScreenCapture _capture = new HdrAwareScreenCapture();
     private SnipOverlayWindow? _overlay;
 
+    private CancellationTokenSource? _delay;
+
+    /// <summary>
+    /// Snips after <paramref name="seconds"/>, so you can open a menu or hover something first, like Snipping
+    /// Tool's delay. Nothing is shown during the wait (it would end up in the shot). Starting again restarts it.
+    /// </summary>
+    public async void StartAfter(int seconds)
+    {
+        _delay?.Cancel();
+        if (seconds <= 0)
+        {
+            Start();
+            return;
+        }
+
+        var cts = _delay = new CancellationTokenSource();
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(seconds), cts.Token);
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+
+        if (_delay == cts) _delay = null;
+        Start();
+    }
+
     public async void Start()
     {
+        _delay?.Cancel(); // a pending delayed snip is replaced by this one
+        _delay = null;
+
         // Pressing the shortcut again while selecting cancels.
         if (_overlay is { IsSelecting: true })
         {

@@ -38,6 +38,29 @@ public sealed partial class ManagerWindow : Window
 
         CenterOnCursorMonitor(width: 960, height: 700);
         Navigate(PinsPageTag);
+        Activated += (_, e) => KeepAbovePins(e.WindowActivationState != WindowActivationState.Deactivated);
+    }
+
+    /// <summary>
+    /// Pins are always on top, so they used to cover this window even after Alt+Tab or opening it from the tray.
+    /// While it's the active window it joins the always-on-top band (above the pins); when you switch away it
+    /// drops back to a normal window, tucked just under whatever you switched to rather than over it.
+    /// </summary>
+    private void KeepAbovePins(bool active)
+    {
+        if (active)
+        {
+            WindowStyler.SetTopmost(_hwnd, true);
+            return;
+        }
+
+        WindowStyler.SetTopmost(_hwnd, false);
+        nint foreground = Win32.GetForegroundWindow();
+        if (foreground != 0 && foreground != _hwnd && !WindowStyler.HasExStyle(foreground, Win32.WS_EX_TOPMOST))
+        {
+            Win32.SetWindowPos(_hwnd, foreground, 0, 0, 0, 0,
+                Win32.SWP_NOMOVE | Win32.SWP_NOSIZE | Win32.SWP_NOACTIVATE | Win32.SWP_NOOWNERZORDER);
+        }
     }
 
     public void ShowAndActivate(string? page)

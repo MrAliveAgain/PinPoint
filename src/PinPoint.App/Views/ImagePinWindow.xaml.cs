@@ -417,7 +417,8 @@ public sealed partial class ImagePinWindow : Window, IPinSurface
             picker.FileTypeChoices.Add("PNG image", [".png"]);
             WinRT.Interop.InitializeWithWindow.Initialize(picker, _hwnd);
 
-            var file = await picker.PickSaveFileAsync();
+            Windows.Storage.StorageFile? file;
+            using (AppHost.Current.Pins.LowerForDialog()) file = await picker.PickSaveFileAsync(); // dialog in front of pins
             if (file is null) return;
 
             await _storage.SaveToAsync(Frame, file.Path);

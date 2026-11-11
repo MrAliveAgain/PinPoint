@@ -72,6 +72,7 @@ public sealed partial class PinsPage : Page
 
         var snip = _host.Commands.Get(CommandIds.SnipAndPin);
         SnipHotkeyText.Text = _host.Settings.GetHotkey(snip)?.ToDisplayString() ?? string.Empty;
+        ShowDelay();
 
         BuildShortcutHints();
         BuildMouseHints();
@@ -195,7 +196,23 @@ public sealed partial class PinsPage : Page
             await Task.Delay(250); // let the minimise animation finish
         }
 
-        _host.Snips.Start();
+        _host.Snips.StartAfter(_host.Settings.Current.SnipDelaySeconds);
+    }
+
+    private void Delay_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { Tag: string tag }) return;
+        int seconds = int.Parse(tag, System.Globalization.CultureInfo.InvariantCulture);
+        _host.Settings.Update(s => s.SnipDelaySeconds = seconds);
+        ShowDelay();
+    }
+
+    private void ShowDelay()
+    {
+        int seconds = _host.Settings.Current.SnipDelaySeconds;
+        DelayText.Text = seconds > 0 ? $"{seconds} s" : "No delay";
+        foreach (var item in new[] { Delay0, Delay3, Delay5, Delay10 })
+            item.IsChecked = (string)item.Tag == seconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
     }
 
     private void WindowMenu_Opening(object sender, object e)

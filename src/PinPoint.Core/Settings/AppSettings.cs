@@ -23,6 +23,9 @@ public sealed class AppSettings
 
     public bool CopySnipsToClipboard { get; set; } = true;
 
+    /// <summary>Delay before the Snip &amp; pin button freezes the screen (0, 3, 5 or 10 s), like Snipping Tool.</summary>
+    public int SnipDelaySeconds { get; set; }
+
     public bool HighlightPinnedWindows { get; set; } = true;
 
     /// <summary>#RRGGBB border colour for pinned windows.</summary>

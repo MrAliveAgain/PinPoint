@@ -200,7 +200,8 @@ public sealed partial class SettingsPage : Page
             if (XamlRoot?.ContentIslandEnvironment?.AppWindowId is { } id)
                 WinRT.Interop.InitializeWithWindow.Initialize(picker, Win32Interop.GetWindowFromWindowId(id));
 
-            var folder = await picker.PickSingleFolderAsync();
+            Windows.Storage.StorageFolder? folder;
+            using (AppHost.Current.Pins.LowerForDialog()) folder = await picker.PickSingleFolderAsync();
             if (folder is null) return;
 
             _host.Settings.Update(s => s.SnipFolder = folder.Path);

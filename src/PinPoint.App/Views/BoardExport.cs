@@ -266,7 +266,7 @@ public static class BoardExport
         picker.FileTypeChoices.Add("PNG image", [".png"]);
         WinRT.Interop.InitializeWithWindow.Initialize(picker, ownerWindow);
 
-        return (await picker.PickSaveFileAsync())?.Path;
+        using (AppHost.Current.Pins.LowerForDialog()) return (await picker.PickSaveFileAsync())?.Path;
     }
 
     /// <summary>Asks for a background picture (starting in Pictures). Null if cancelled.</summary>
@@ -275,7 +275,7 @@ public static class BoardExport
         var picker = new FileOpenPicker { SuggestedStartLocation = PickerLocationId.PicturesLibrary, ViewMode = PickerViewMode.Thumbnail };
         foreach (string type in (string[])[".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif"]) picker.FileTypeFilter.Add(type);
         WinRT.Interop.InitializeWithWindow.Initialize(picker, ownerWindow);
-        return (await picker.PickSingleFileAsync())?.Path;
+        using (AppHost.Current.Pins.LowerForDialog()) return (await picker.PickSingleFileAsync())?.Path;
     }
 
     /// <summary>Pins to choose from on the left; the picture as it will be saved, and the options, on the right.</summary>
