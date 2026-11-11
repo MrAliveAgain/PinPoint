@@ -30,7 +30,7 @@
                         IsBackButtonVisible="Collapsed"
                         IsPaneToggleButtonVisible="False"
                         IsSettingsVisible="True"
-                        OpenPaneLength="220"
+                        OpenPaneLength="150"
                         SelectionChanged="Nav_SelectionChanged">
             <NavigationView.MenuItems>
                 <NavigationViewItem Content="Pins" Tag="pins" IsSelected="True">
