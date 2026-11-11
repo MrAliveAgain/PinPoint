@@ -227,6 +227,17 @@ public sealed class AppHost : IDisposable
 
         Commands.Add(new AppCommand
         {
+            Id = CommandIds.ToggleHideWindows,
+            Title = "Hide pinned windows",
+            Description = "Hide every app window you've pinned on top (snips and notes stay), then bring them back.",
+            Glyph = "",
+            IsChecked = () => Pins.AreWindowsHidden,
+            CanExecute = () => Pins.HasWindowPins,
+            Execute = Pins.ToggleWindowsHidden,
+        });
+
+        Commands.Add(new AppCommand
+        {
             Id = CommandIds.ToggleClickThrough,
             Title = "Click-through pins",
             Description = "Let clicks pass through pins to the game underneath.",

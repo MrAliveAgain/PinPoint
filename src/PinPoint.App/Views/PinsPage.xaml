@@ -71,6 +71,13 @@
                             <TextBlock Text="Hide snips" />
                         </StackPanel>
                     </ToggleButton>
+                    <ToggleButton x:Name="HideWindowsToggle" Click="HideWindows_Click"
+                                  ToolTipService.ToolTip="Hide all pinned windows (click again to show them)">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon Glyph="&#xED1A;" FontSize="14" />
+                            <TextBlock Text="Hide windows" />
+                        </StackPanel>
+                    </ToggleButton>
                     <ToggleButton x:Name="HideAllToggle" Click="HideAll_Click"
                                   ToolTipService.ToolTip="Hide all pins (click again to show them)">
                         <StackPanel Orientation="Horizontal" Spacing="6">

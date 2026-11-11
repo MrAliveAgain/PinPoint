@@ -37,6 +37,7 @@ public static class CommandIds
     public const string ToggleHideAll = "toggleHideAll";
     public const string ToggleHideNotes = "toggleHideNotes";
     public const string ToggleHideSnips = "toggleHideSnips";
+    public const string ToggleHideWindows = "toggleHideWindows";
     public const string ToggleClickThrough = "toggleClickThrough";
     public const string CloseAllSnips = "closeAllSnips";
     public const string MoreOpaque = "pinsMoreOpaque";

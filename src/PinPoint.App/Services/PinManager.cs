@@ -79,6 +79,10 @@ public sealed class PinManager : IDisposable
 
     public bool AreSnipsHidden => _snipsHidden;
 
+    public bool AreWindowsHidden => _windowsHidden;
+
+    public bool HasWindowPins => _windows.Pins.Count > 0;
+
     public bool HasNotesOpen => _notes.Count > 0;
 
     private bool IsSurfaceHidden(IPinSurface surface) => surface is NotePinWindow ? AreNotesHidden : AreSnipsHidden;
@@ -346,6 +350,21 @@ public sealed class PinManager : IDisposable
         bool hide = !_snipsHidden;
         SetHiddenState(_windowsHidden, notes: _notesHidden, snips: hide);
         _notifier.Show(hide ? "" : "", hide ? "Snips hidden" : "Snips shown",
+            hide ? "Bring them back from the tray menu, the Pins page or your shortcut." : null);
+    }
+
+    /// <summary>Hides every pinned app window (or brings them back), leaving snips and notes alone.</summary>
+    public void ToggleWindowsHidden()
+    {
+        if (_windows.Pins.Count == 0)
+        {
+            _notifier.Show("", "No windows pinned");
+            return;
+        }
+
+        bool hide = !_windowsHidden;
+        SetHiddenState(windows: hide, notes: _notesHidden, snips: _snipsHidden);
+        _notifier.Show(hide ? "" : "", hide ? "Pinned windows hidden" : "Pinned windows shown",
             hide ? "Bring them back from the tray menu, the Pins page or your shortcut." : null);
     }
 
