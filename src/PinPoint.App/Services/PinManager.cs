@@ -130,7 +130,10 @@ public sealed class PinManager : IDisposable
             if (Items.OfType<TimerPinItem>().FirstOrDefault(i => i.Window == window) is { } item) Items.Remove(item);
             OnStateChanged();
         };
-        window.Finished += (_, _) => _notifier.Show("", "Time's up", window.Title, force: true);
+        window.Finished += (_, _) =>
+        {
+            if (!TimerPinWindow.IsSilent) _notifier.Show("", "Time's up", window.Title, force: true);
+        };
         _timers.Add(window);
         Items.Add(new TimerPinItem(window));
         window.ShowNearCursor();

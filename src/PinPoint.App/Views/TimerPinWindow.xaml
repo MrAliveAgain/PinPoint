@@ -22,6 +22,9 @@
                 <MenuFlyoutSubItem x:Name="DurationMenu" Text="Count down from">
                     <MenuFlyoutSubItem.Icon><FontIcon Glyph="&#xE916;" /></MenuFlyoutSubItem.Icon>
                 </MenuFlyoutSubItem>
+                <ToggleMenuFlyoutItem x:Name="SilentItem" Text="Silent (flash only)" Click="Silent_Click">
+                    <ToggleMenuFlyoutItem.Icon><FontIcon Glyph="&#xE74F;" /></ToggleMenuFlyoutItem.Icon>
+                </ToggleMenuFlyoutItem>
                 <MenuFlyoutSeparator />
                 <MenuFlyoutSubItem Text="Opacity">
                     <MenuFlyoutSubItem.Icon><FontIcon Glyph="&#xE706;" /></MenuFlyoutSubItem.Icon>

@@ -277,7 +277,7 @@ public sealed partial class TimerPinWindow : Window, IPinSurface
     private void StartAlarm()
     {
         _flashesLeft = 14; // about 5.5 s
-        Win32.MessageBeep(Win32.MB_ICONEXCLAMATION);
+        if (!IsSilent) Win32.MessageBeep(Win32.MB_ICONEXCLAMATION);
         _flash.Start();
     }
 
@@ -285,7 +285,7 @@ public sealed partial class TimerPinWindow : Window, IPinSurface
     {
         _flashesLeft--;
         Root.Background = _flashesLeft % 2 == 1 ? _alarmBackground : _normalBackground;
-        if (_flashesLeft % 4 == 0 && _flashesLeft >= 6) Win32.MessageBeep(Win32.MB_ICONEXCLAMATION);
+        if (!IsSilent && _flashesLeft % 4 == 0 && _flashesLeft >= 6) Win32.MessageBeep(Win32.MB_ICONEXCLAMATION);
         if (_flashesLeft <= 0) StopAlarm();
     }
 
@@ -298,8 +298,15 @@ public sealed partial class TimerPinWindow : Window, IPinSurface
 
     // ---- Menu --------------------------------------------------------------------------------------
 
+    /// <summary>Silent timers just flash when they end: no beeps, no pop-up. Remembered for new timers too.</summary>
+    public static bool IsSilent => AppHost.Current.Settings.Current.TimerSilent;
+
+    private void Silent_Click(object sender, RoutedEventArgs e) =>
+        AppHost.Current.Settings.Update(s => s.TimerSilent = SilentItem.IsChecked);
+
     private void Menu_Opening(object sender, object e)
     {
+        SilentItem.IsChecked = IsSilent;
         StopwatchItem.IsChecked = _timer.Mode == PinTimerMode.Stopwatch;
         CountdownItem.IsChecked = _timer.Mode == PinTimerMode.Countdown;
         foreach (var item in new[] { Opacity100, Opacity80, Opacity60, Opacity40, Opacity20 })

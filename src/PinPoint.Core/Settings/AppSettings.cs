@@ -29,6 +29,9 @@ public sealed class AppSettings
     /// <summary>Minimizing the main window hides it to the tray (out of the taskbar and Alt+Tab).</summary>
     public bool MinimizeToTray { get; set; } = true;
 
+    /// <summary>Timers end quietly: a flash only, no beeps and no pop-up.</summary>
+    public bool TimerSilent { get; set; }
+
     public bool HighlightPinnedWindows { get; set; } = true;
 
     /// <summary>#RRGGBB border colour for pinned windows.</summary>
