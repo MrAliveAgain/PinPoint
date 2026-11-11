@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="PinPoint.Views.TimerPinWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="PinPoint timer">
+
+    <!-- Drag anywhere (buttons excepted). Right-click for mode, countdown length, opacity. -->
+    <Grid x:Name="Root" Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+          PointerPressed="Root_PointerPressed"
+          PointerMoved="Root_PointerMoved"
+          PointerReleased="Root_PointerReleased"
+          PointerCaptureLost="Root_PointerCaptureLost">
+        <FlyoutBase.AttachedFlyout>
+            <MenuFlyout x:Name="Menu" ShouldConstrainToRootBounds="False" Opening="Menu_Opening">
+                <RadioMenuFlyoutItem x:Name="StopwatchItem" Text="Stopwatch" GroupName="TimerMode" Click="Stopwatch_Click" />
+                <RadioMenuFlyoutItem x:Name="CountdownItem" Text="Countdown" GroupName="TimerMode" Click="Countdown_Click" />
+                <MenuFlyoutSubItem x:Name="DurationMenu" Text="Count down from">
+                    <MenuFlyoutSubItem.Icon><FontIcon Glyph="&#xE916;" /></MenuFlyoutSubItem.Icon>
+                </MenuFlyoutSubItem>
+                <MenuFlyoutSeparator />
+                <MenuFlyoutSubItem Text="Opacity">
+                    <MenuFlyoutSubItem.Icon><FontIcon Glyph="&#xE706;" /></MenuFlyoutSubItem.Icon>
+                    <RadioMenuFlyoutItem x:Name="Opacity100" Text="100%" GroupName="TimerOpacity" Tag="1.0" Click="Opacity_Click" />
+                    <RadioMenuFlyoutItem x:Name="Opacity80" Text="80%" GroupName="TimerOpacity" Tag="0.8" Click="Opacity_Click" />
+                    <RadioMenuFlyoutItem x:Name="Opacity60" Text="60%" GroupName="TimerOpacity" Tag="0.6" Click="Opacity_Click" />
+                    <RadioMenuFlyoutItem x:Name="Opacity40" Text="40%" GroupName="TimerOpacity" Tag="0.4" Click="Opacity_Click" />
+                    <RadioMenuFlyoutItem x:Name="Opacity20" Text="20%" GroupName="TimerOpacity" Tag="0.2" Click="Opacity_Click" />
+                </MenuFlyoutSubItem>
+                <MenuFlyoutSeparator />
+                <MenuFlyoutItem Text="Close" Click="Close_Click">
+                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE711;" /></MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+            </MenuFlyout>
+        </FlyoutBase.AttachedFlyout>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="26" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
+            <StackPanel Orientation="Horizontal" Spacing="6" Margin="10,0" VerticalAlignment="Center" IsHitTestVisible="False">
+                <FontIcon Glyph="&#xE916;" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock x:Name="ModeText" Text="Stopwatch" Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+            <Button HorizontalAlignment="Right" Click="Close_Click"
+                    Width="32" Height="26" Padding="0" CornerRadius="0" IsTabStop="False" AllowFocusOnInteraction="False"
+                    Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Close">
+                <FontIcon Glyph="&#xE711;" FontSize="10" />
+            </Button>
+        </Grid>
+
+        <!-- Time + controls -->
+        <Grid Grid.Row="1" Padding="12,0,6,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock x:Name="TimeText" Text="0:00" FontSize="30" FontWeight="SemiBold" VerticalAlignment="Center"
+                       PointerWheelChanged="TimeText_PointerWheelChanged" />
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                <Button x:Name="StartButton" Click="Start_Click"
+                        Width="34" Height="34" Padding="0" IsTabStop="False" AllowFocusOnInteraction="False"
+                        ToolTipService.ToolTip="Start / pause">
+                    <FontIcon x:Name="StartIcon" Glyph="&#xE768;" FontSize="14" />
+                </Button>
+                <Button Click="Reset_Click"
+                        Width="34" Height="34" Padding="0" IsTabStop="False" AllowFocusOnInteraction="False"
+                        ToolTipService.ToolTip="Reset">
+                    <FontIcon Glyph="&#xE777;" FontSize="14" />
+                </Button>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

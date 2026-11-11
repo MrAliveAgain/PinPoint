@@ -253,6 +253,8 @@ public sealed partial class PinsPage : Page
 
     private void NewNote_Click(object sender, RoutedEventArgs e) => _host.Pins.CreateNote();
 
+    private void NewTimer_Click(object sender, RoutedEventArgs e) => _host.Pins.CreateTimer();
+
     private void HideAll_Click(object sender, RoutedEventArgs e) => _host.Pins.ToggleHidden();
 
     private void HideNotes_Click(object sender, RoutedEventArgs e) => _host.Pins.ToggleNotesHidden();

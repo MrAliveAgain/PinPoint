@@ -54,6 +54,13 @@
                             <TextBlock Text="New note" />
                         </StackPanel>
                     </Button>
+
+                    <Button Click="NewTimer_Click" ToolTipService.ToolTip="Pin a stopwatch or countdown on top">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE916;" FontSize="16" />
+                            <TextBlock Text="Timer" />
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Spacing="4">

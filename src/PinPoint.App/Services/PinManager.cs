@@ -85,7 +85,12 @@ public sealed class PinManager : IDisposable
 
     public bool HasNotesOpen => _notes.Count > 0;
 
-    private bool IsSurfaceHidden(IPinSurface surface) => surface is NotePinWindow ? AreNotesHidden : AreSnipsHidden;
+    private bool IsSurfaceHidden(IPinSurface surface) => surface switch
+    {
+        NotePinWindow => _notesHidden,
+        TimerPinWindow => IsHidden,
+        _ => _snipsHidden,
+    };
 
     /// <summary>
     /// The global "click-through for everything" state: on only when every pin is click-through, so making one
@@ -109,7 +114,29 @@ public sealed class PinManager : IDisposable
     public string NotesFolder => _noteStore.Directory;
 
     /// <summary>Every PinPoint-owned pin window (snips and notes), treated alike for raise/hide/fade.</summary>
-    private IEnumerable<IPinSurface> Surfaces => _snips.Cast<IPinSurface>().Concat(_notes);
+    private IEnumerable<IPinSurface> Surfaces => _snips.Cast<IPinSurface>().Concat(_notes).Concat(_timers);
+
+    // ---- Timers -------------------------------------------------------------------------------
+
+    private readonly List<TimerPinWindow> _timers = [];
+
+    /// <summary>Pins a small stopwatch / countdown near the mouse. Timers hide only with "hide all".</summary>
+    public void CreateTimer()
+    {
+        var window = new TimerPinWindow();
+        window.Closed += (_, _) =>
+        {
+            _timers.Remove(window);
+            if (Items.OfType<TimerPinItem>().FirstOrDefault(i => i.Window == window) is { } item) Items.Remove(item);
+            OnStateChanged();
+        };
+        window.Finished += (_, _) => _notifier.Show("", "Time's up", window.Title, force: true);
+        _timers.Add(window);
+        Items.Add(new TimerPinItem(window));
+        window.ShowNearCursor();
+        if (IsHidden) window.SetHidden(true);
+        OnStateChanged();
+    }
 
     // ---- Window pins --------------------------------------------------------------------------
 
@@ -371,7 +398,7 @@ public sealed class PinManager : IDisposable
     /// <summary>Applies a new hidden state, showing/hiding only the kinds of pin whose visibility changed.</summary>
     private void SetHiddenState(bool windows, bool notes, bool snips)
     {
-        bool windowsWere = _windowsHidden, notesWere = _notesHidden, snipsWere = _snipsHidden;
+        bool windowsWere = _windowsHidden, notesWere = _notesHidden, snipsWere = _snipsHidden, allWere = IsHidden;
         _windowsHidden = windows;
         _notesHidden = notes;
         _snipsHidden = snips;
@@ -379,6 +406,7 @@ public sealed class PinManager : IDisposable
         if (windowsWere != windows) _windows.SetHidden(windows);
         if (notesWere != notes) foreach (var note in _notes) note.SetHidden(notes);
         if (snipsWere != snips) foreach (var snip in _snips) snip.SetHidden(snips);
+        if (allWere != IsHidden) foreach (var timer in _timers) timer.SetHidden(IsHidden);
         OnStateChanged();
     }
 
@@ -534,6 +562,7 @@ public sealed class PinManager : IDisposable
         RestoreExternalWindows();
         CloseAllSnips();
         foreach (var note in _notes.ToArray()) note.Shutdown(); // saved, and back next launch
+        foreach (var timer in _timers.ToArray()) timer.CloseTimer();
     }
 
     /// <summary>

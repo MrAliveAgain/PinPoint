@@ -182,6 +182,15 @@ public sealed class AppHost : IDisposable
 
         Commands.Add(new AppCommand
         {
+            Id = CommandIds.NewTimer,
+            Title = "New timer",
+            Description = "Pin a small stopwatch or countdown on top. Right-click it to switch modes or pick a time.",
+            Glyph = "",
+            Execute = Pins.CreateTimer,
+        });
+
+        Commands.Add(new AppCommand
+        {
             Id = CommandIds.PinCopiedImage,
             Title = "Pin copied image",
             Description = "Pin a picture you've copied (from a browser, an image viewer, a screenshot, or image files in Explorer) on top, like a snip. You can also drag image files onto this window.",

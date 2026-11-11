@@ -122,6 +122,41 @@ public sealed class SnipPinItem : PinItem
     public override void CopyText() => Window.CopyAllText();
 }
 
+public sealed class TimerPinItem : PinItem
+{
+    public TimerPinItem(TimerPinWindow window)
+    {
+        Window = window;
+        window.Changed += (_, _) => Refresh();
+    }
+
+    public TimerPinWindow Window { get; }
+
+    public override string Title => Window.Title;
+
+    public override string Subtitle => Window.IsRunning ? "Timer · running" : "Timer";
+
+    public override string Glyph => ""; // stopwatch
+
+    public override bool SupportsOpacity => true;
+
+    public override double OpacityPercent
+    {
+        get => Math.Round(Window.PinOpacity * 100);
+        set
+        {
+            if (Math.Abs(value - OpacityPercent) < 0.5) return;
+            Window.PinOpacity = value / 100;
+            OnPropertyChanged();
+            OnOpacityEdited(value);
+        }
+    }
+
+    public override string RemoveLabel => "Close";
+
+    public override void Remove() => Window.CloseTimer();
+}
+
 public sealed class NotePinItem : PinItem
 {
     public NotePinItem(NotePinWindow window)
