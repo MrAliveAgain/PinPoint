@@ -42,7 +42,7 @@ It sits in the tray and doesn't do anything until you press a shortcut.
 - **Boards.** Save the snips and notes you've got up as a board and pick up where you left off later, like a document. Export or copy a board as one picture, too. [More below](#boards).
 - **Pin any image.** Copied a picture from a website, or have a screenshot on the clipboard? <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>I</kbd> pins it like a snip. You can also drop image files onto the PinPoint window.
 - **Stays over games.** Anything in borderless or windowed mode. If a game puts itself back on top, PinPoint puts your pins back over it.
-- **Easy to get out of the way.** Hide every pin at once (or just the notes, or just the snips), fade them, or make them click-through so your clicks go straight to the game. To fade several at once, Shift- or Ctrl-click them in the Pins list and drag any of their sliders.
+- **Easy to get out of the way.** Hide every pin at once (or just the notes, the snips or the pinned windows), fade them, or make them click-through so your clicks go straight to the game. To fade several at once, Shift- or Ctrl-click them in the Pins list and drag any of their sliders.
 - **Small and quick.** No installer, no account, no internet connection. Just an exe in a folder.
 
 <p align="center">
