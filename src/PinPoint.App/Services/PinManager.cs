@@ -523,24 +523,52 @@ public sealed class PinManager : IDisposable
     }
 
     /// <summary>
-    /// Drops every pin out of the always-on-top band until disposed, so a Save/Open dialog (an ordinary window)
-    /// comes up in front of them instead of behind. Re-raising is held off meanwhile; pins go back on top after.
+    /// Wrap a Save/Open dialog in this so it comes up in front of pins and games. The pins stay on top (lowering
+    /// them let a borderless game cover the snip you were saving); instead the dialog itself is made always on top
+    /// and brought forward as soon as it appears. Re-raising pins is held off while it's open so they don't jump
+    /// back over it.
     /// </summary>
-    public IDisposable LowerForDialog()
+    public IDisposable DialogInFront()
     {
         _raiseSuspensions++;
-        var lowered = Surfaces.Select(s => s.Handle).Concat(_windows.Pins.Select(p => p.Handle)).ToList();
-        foreach (nint hwnd in lowered) WindowStyler.SetTopmost(hwnd, false);
-
+        var stop = new CancellationTokenSource();
+        _ = BringDialogForwardAsync(stop.Token);
         return new Scope(() =>
         {
+            stop.Cancel();
             _raiseSuspensions--;
-            foreach (nint hwnd in lowered)
-            {
-                if (Win32.IsWindow(hwnd)) WindowStyler.SetTopmost(hwnd, true);
-            }
+        });
+    }
 
-            foreach (var surface in Surfaces) surface.RaiseTopmost(); // notes' click-through badges back above
+    /// <summary>
+    /// Watches (off the UI thread, which is busy running the dialog) for our process's dialog window
+    /// (class #32770) to appear, then puts it on top and gives it focus.
+    /// </summary>
+    private static async Task BringDialogForwardAsync(CancellationToken cancel)
+    {
+        await Task.Run(async () =>
+        {
+            uint pid = (uint)Environment.ProcessId;
+            var deadline = DateTime.UtcNow.AddSeconds(10);
+            while (!cancel.IsCancellationRequested && DateTime.UtcNow < deadline)
+            {
+                foreach (nint hwnd in WindowEnumerator.TopLevelInZOrder())
+                {
+                    if (!Win32.IsWindowVisible(hwnd) || Win32.GetProcessId(hwnd) != pid || Win32.GetClassName(hwnd) != "#32770") continue;
+                    WindowStyler.SetTopmost(hwnd, true);
+                    Win32.SetForegroundWindow(hwnd);
+                    return;
+                }
+
+                try
+                {
+                    await Task.Delay(40, cancel);
+                }
+                catch (TaskCanceledException)
+                {
+                    return;
+                }
+            }
         });
     }
 

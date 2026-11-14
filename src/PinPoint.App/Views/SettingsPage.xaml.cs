@@ -204,7 +204,7 @@ public sealed partial class SettingsPage : Page
                 WinRT.Interop.InitializeWithWindow.Initialize(picker, Win32Interop.GetWindowFromWindowId(id));
 
             Windows.Storage.StorageFolder? folder;
-            using (AppHost.Current.Pins.LowerForDialog()) folder = await picker.PickSingleFolderAsync();
+            using (AppHost.Current.Pins.DialogInFront()) folder = await picker.PickSingleFolderAsync();
             if (folder is null) return;
 
             _host.Settings.Update(s => s.SnipFolder = folder.Path);
