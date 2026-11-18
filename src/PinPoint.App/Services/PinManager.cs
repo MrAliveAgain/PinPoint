@@ -556,8 +556,10 @@ public sealed class PinManager : IDisposable
                 {
                     if (!Win32.IsWindowVisible(hwnd) || Win32.GetProcessId(hwnd) != pid || Win32.GetClassName(hwnd) != "#32770") continue;
                     WindowStyler.SetTopmost(hwnd, true);
-                    Win32.SetForegroundWindow(hwnd);
-                    return;
+                    // Focus too, so you can type the file name straight away (a plain SetForegroundWindow is
+                    // often refused here, leaving the keyboard on the page you snipped). Retried until it sticks.
+                    if (Win32.ForceForeground(hwnd)) return;
+                    break;
                 }
 
                 try
