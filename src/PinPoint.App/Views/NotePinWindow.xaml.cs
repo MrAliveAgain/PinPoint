@@ -475,8 +475,16 @@ public sealed partial class NotePinWindow : Window, IPinSurface
     private void ApplyLayering()
     {
         bool layered = _opacity < 0.999 || _clickThrough;
+        if (_gleam is null)
+        {
+            _gleam = new Controls.GleamLayer { Enabled = false, Strength = 0.85 };
+            Grid.SetRowSpan(_gleam, 2);
+            Root.Children.Add(_gleam);
+        }
+
         _glass ??= new PinGlass(this, Root, glass =>
         {
+            _gleam.Enabled = glass; // light on the glass only while it is glass
             // Glass: the body is the material itself; the header a light layer on it. Solid: the classic paper.
             var res = Application.Current.Resources;
             Root.Background = glass ? null : (Microsoft.UI.Xaml.Media.Brush)res["SolidBackgroundFillColorBaseBrush"];
@@ -497,6 +505,7 @@ public sealed partial class NotePinWindow : Window, IPinSurface
     }
 
     private PinGlass? _glass;
+    private Controls.GleamLayer? _gleam;
 
     private static bool IsOnScreen(NoteLayout? layout)
     {

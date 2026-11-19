@@ -399,8 +399,16 @@ public sealed partial class TimerPinWindow : Window, IPinSurface
     private void ApplyLayering()
     {
         bool layered = _opacity < 0.999 || _clickThrough;
+        if (_gleam is null)
+        {
+            _gleam = new Controls.GleamLayer { Enabled = false, Strength = 0.85 };
+            Grid.SetRowSpan(_gleam, 2);
+            Root.Children.Add(_gleam);
+        }
+
         _glass ??= new PinGlass(this, Root, glass =>
         {
+            _gleam.Enabled = glass; // light on the glass only while it is glass
             var res = Application.Current.Resources;
             _isGlass = glass;
             if (_flashesLeft == 0) Root.Background = NormalBackground;
@@ -421,6 +429,7 @@ public sealed partial class TimerPinWindow : Window, IPinSurface
     }
 
     private PinGlass? _glass;
+    private Controls.GleamLayer? _gleam;
     private bool _isGlass;
 
     /// <summary>The body when not flashing: the glass itself, or the solid surface.</summary>

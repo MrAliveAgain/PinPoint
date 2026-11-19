@@ -81,7 +81,10 @@ public sealed class QuickSlotTile : Window
             Child = _badgeIcon,
         };
 
-        _root = new Grid { Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent), Children = { _active, _hover, _icon, _badge } };
+        // Light on the glass (Settings > Gleam): rim, sheen and a colour of light, under the icon.
+        var gleam = new Controls.GleamLayer { Radius = 7 };
+
+        _root = new Grid { Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent), Children = { _active, gleam, _hover, _icon, _badge } };
         _root.PointerEntered += (_, _) => _hover.Opacity = 0.07;
         _root.PointerExited += (_, _) =>
         {

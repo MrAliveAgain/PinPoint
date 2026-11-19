@@ -39,6 +39,13 @@ public sealed class AppSettings
     [JsonConverter(typeof(JsonStringEnumConverter<AppearanceStyle>))]
     public AppearanceStyle Appearance { get; set; } = AppearanceStyle.Glass;
 
+    /// <summary>Light on the glass: a rim highlight, a soft sheen and a colour of light (Off turns it all off).</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter<GleamStyle>))]
+    public GleamStyle Gleam { get; set; } = GleamStyle.Accent;
+
+    /// <summary>How strong the gleam is: 1 subtle, 2 medium, 3 strong.</summary>
+    public int GleamIntensity { get; set; } = 2;
+
     public bool HighlightPinnedWindows { get; set; } = true;
 
     /// <summary>#RRGGBB border colour for pinned windows.</summary>
@@ -82,6 +89,23 @@ public sealed class AppSettings
 
     /// <summary>How many times a snip has pointed out "text found, click T". Stops after a few.</summary>
     public int TextHintsShown { get; set; }
+}
+
+public enum GleamStyle
+{
+    Off,
+
+    /// <summary>Shades of the Windows accent colour.</summary>
+    Accent,
+
+    /// <summary>Light split by a prism: a thin spectral band across a corner.</summary>
+    Prism,
+
+    /// <summary>Sky light: cool blue into warm peach.</summary>
+    Sky,
+
+    /// <summary>Warm sunlight: gold into white.</summary>
+    Sunlight,
 }
 
 public enum AppearanceStyle

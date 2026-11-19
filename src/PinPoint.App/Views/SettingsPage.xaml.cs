@@ -55,6 +55,9 @@ public sealed partial class SettingsPage : Page
             NotificationsToggle.IsOn = settings.ShowNotifications;
             AppearanceBox.SelectedItem = AppearanceBox.Items.OfType<ComboBoxItem>()
                 .FirstOrDefault(i => (string)i.Tag == settings.Appearance.ToString());
+            GleamBox.SelectedItem = GleamBox.Items.OfType<ComboBoxItem>().FirstOrDefault(i => (string)i.Tag == settings.Gleam.ToString());
+            GleamStrengthBox.SelectedItem = GleamStrengthBox.Items.OfType<ComboBoxItem>()
+                .FirstOrDefault(i => (string)i.Tag == settings.GleamIntensity.ToString(System.Globalization.CultureInfo.InvariantCulture));
             MinimizeToTrayToggle.IsOn = settings.MinimizeToTray;
             StartupToggle.IsOn = StartupRegistration.IsEnabled;
             FolderCard.Description = _host.Settings.SnipFolder;
@@ -167,6 +170,15 @@ public sealed partial class SettingsPage : Page
     private void Clipboard_Toggled(object sender, RoutedEventArgs e) => Set(s => s.CopySnipsToClipboard = ClipboardToggle.IsOn);
 
     private void MinimizeToTray_Toggled(object sender, RoutedEventArgs e) => Set(s => s.MinimizeToTray = MinimizeToTrayToggle.IsOn);
+
+    private void Gleam_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loading) return;
+        if (GleamBox.SelectedItem is ComboBoxItem { Tag: string style } && Enum.TryParse<Core.Settings.GleamStyle>(style, out var gleam))
+            Set(s => s.Gleam = gleam);
+        if (GleamStrengthBox.SelectedItem is ComboBoxItem { Tag: string level })
+            Set(s => s.GleamIntensity = int.Parse(level, System.Globalization.CultureInfo.InvariantCulture));
+    }
 
     private void Appearance_Changed(object sender, SelectionChangedEventArgs e)
     {

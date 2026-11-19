@@ -91,6 +91,7 @@ public sealed partial class ManagerWindow : Window
     }
 
     private Core.Settings.AppearanceStyle? _appliedAppearance;
+    private Controls.GleamLayer? _gleam;
 
     private void OnSettingsChanged(object? sender, EventArgs e) => DispatcherQueue.TryEnqueue(ApplyAppearance);
 
@@ -107,6 +108,16 @@ public sealed partial class ManagerWindow : Window
             Core.Settings.AppearanceStyle.Subtle => new Microsoft.UI.Xaml.Media.MicaBackdrop { Kind = Microsoft.UI.Composition.SystemBackdrops.MicaKind.BaseAlt },
             _ => null,
         };
+
+        // Light on the glass: behind the content (so text stays crisp), gentler than on the small pins.
+        if (_gleam is null)
+        {
+            _gleam = new Controls.GleamLayer { Radius = 0, Strength = 0.4 };
+            Grid.SetRowSpan(_gleam, 2);
+            Root.Children.Insert(0, _gleam);
+        }
+
+        _gleam.Enabled = style == Core.Settings.AppearanceStyle.Glass;
 
         // Solid needs an actual surface under everything; the materials want it clear.
         Root.Background = style == Core.Settings.AppearanceStyle.Solid

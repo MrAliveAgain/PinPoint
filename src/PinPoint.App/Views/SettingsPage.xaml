@@ -58,6 +58,23 @@
                     <ComboBoxItem Content="Solid" Tag="Solid" />
                 </ComboBox>
             </controls:SettingsCard>
+            <controls:SettingsCard Glyph="&#xE706;" Header="Gleam"
+                                   Description="Light on the glass: a bright rim, a soft sheen and a colour of light, as if sky or sun were passing through.">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <ComboBox x:Name="GleamBox" MinWidth="120" SelectionChanged="Gleam_Changed">
+                        <ComboBoxItem Content="Off" Tag="Off" />
+                        <ComboBoxItem Content="Accent" Tag="Accent" />
+                        <ComboBoxItem Content="Prism" Tag="Prism" />
+                        <ComboBoxItem Content="Sky" Tag="Sky" />
+                        <ComboBoxItem Content="Sunlight" Tag="Sunlight" />
+                    </ComboBox>
+                    <ComboBox x:Name="GleamStrengthBox" MinWidth="110" SelectionChanged="Gleam_Changed">
+                        <ComboBoxItem Content="Subtle" Tag="1" />
+                        <ComboBoxItem Content="Medium" Tag="2" />
+                        <ComboBoxItem Content="Strong" Tag="3" />
+                    </ComboBox>
+                </StackPanel>
+            </controls:SettingsCard>
             <controls:SettingsCard Glyph="&#xE921;" Header="Minimize to the tray"
                                    Description="Minimizing this window tucks it into the tray icon, out of the taskbar and Alt+Tab.">
                 <ToggleSwitch x:Name="MinimizeToTrayToggle" OnContent="" OffContent="" MinWidth="0" Toggled="MinimizeToTray_Toggled" />
