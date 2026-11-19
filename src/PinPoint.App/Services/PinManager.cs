@@ -925,6 +925,15 @@ public sealed class PinManager : IDisposable
     /// Shows faded pins fully opaque until disposed, so a screen capture of a faded guide comes out
     /// clean instead of blended with whatever is behind it. Their opacity settings are untouched.
     /// </summary>
+    /// <summary>Called with true just before a screen capture and false after; returns whether it hid anything.</summary>
+    public Func<bool, bool>? CaptureHook { get; set; }
+
+    /// <summary>Pins were just pushed back on top (other floating PinPoint UI follows them up).</summary>
+    public event Action? Raised;
+
+    /// <summary>For other parts of the app whose state the tray/Pins page show (quick slots on/off).</summary>
+    public void NotifyStateChanged() => OnStateChanged();
+
     public IDisposable ShowSolidForCapture()
     {
         int changed = _windows.SetTemporarilyOpaque(true);
@@ -933,7 +942,8 @@ public sealed class PinManager : IDisposable
             if (!IsSurfaceHidden(surface) && surface.SetTemporarilyOpaque(true)) changed++;
         }
 
-        if (changed > 0)
+        bool hooked = CaptureHook?.Invoke(true) == true; // e.g. quick slots step out of the shot
+        if (changed > 0 || hooked)
         {
             // Let DWM compose a frame with the new alpha before anyone reads the screen.
             Win32.DwmFlush();
@@ -942,6 +952,7 @@ public sealed class PinManager : IDisposable
 
         return new Scope(() =>
         {
+            if (hooked) CaptureHook?.Invoke(false);
             if (changed == 0) return;
             _windows.SetTemporarilyOpaque(false);
             foreach (var surface in Surfaces) surface.SetTemporarilyOpaque(false);
@@ -994,6 +1005,7 @@ public sealed class PinManager : IDisposable
 
         _windows.RaiseAll();
         foreach (var surface in Surfaces) surface.RaiseTopmost();
+        Raised?.Invoke();
     }
 
     private void Maintain()

@@ -63,6 +63,7 @@
                     </Button>
                 </StackPanel>
 
+                <!-- Out of the way: peek past pins, or hide some/all of them. -->
                 <StackPanel Orientation="Horizontal" Spacing="4">
                     <ToggleButton x:Name="PeekToggle" Click="Peek_Click" Margin="0,0,8,0"
                                   ToolTipService.ToolTip="Peek: slide pins out to the screen edges to get at what's under them, then back (the shortcut: tap to toggle, hold to peek while held)">
@@ -99,7 +100,18 @@
                             <TextBlock Text="Hide all" />
                         </StackPanel>
                     </ToggleButton>
-                    <ToggleButton x:Name="ClickThroughToggle" Click="ClickThrough_Click" Margin="8,0,0,0"
+                </StackPanel>
+
+                <!-- How pins behave: clicks pass through; the floating quick-slot buttons. -->
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <ToggleButton x:Name="QuickSlotsToggle" Click="QuickSlots_Click"
+                                  ToolTipService.ToolTip="Quick slots: floating glass buttons for any action, one click each (right-click a slot to choose its action, drag to move)">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon Glyph="&#xF0E2;" FontSize="14" />
+                            <TextBlock Text="Quick slots" />
+                        </StackPanel>
+                    </ToggleButton>
+                    <ToggleButton x:Name="ClickThroughToggle" Click="ClickThrough_Click"
                                   ToolTipService.ToolTip="Click-through: clicks pass through every pin">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <FontIcon Glyph="&#xE8B0;" FontSize="14" />

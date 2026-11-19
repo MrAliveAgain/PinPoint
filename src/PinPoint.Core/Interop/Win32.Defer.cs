@@ -4,6 +4,10 @@ namespace PinPoint.Core.Interop;
 
 public static unsafe partial class Win32
 {
+    /// <summary>A monitor's DPI (type 0 = effective DPI, what scaling uses). Returns an HRESULT (0 = ok).</summary>
+    [LibraryImport("shcore.dll")]
+    public static partial int GetDpiForMonitor(nint hmonitor, int dpiType, out uint dpiX, out uint dpiY);
+
     [LibraryImport("user32.dll")]
     public static partial nint BeginDeferWindowPos(int nNumWindows);
 

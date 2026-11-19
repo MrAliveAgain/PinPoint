@@ -32,6 +32,9 @@ public sealed class AppSettings
     /// <summary>Timers end quietly: a flash only, no beeps and no pop-up.</summary>
     public bool TimerSilent { get; set; }
 
+    /// <summary>The floating glass quick-slot buttons.</summary>
+    public QuickSlotSettings QuickSlots { get; set; } = new();
+
     public bool HighlightPinnedWindows { get; set; } = true;
 
     /// <summary>#RRGGBB border colour for pinned windows.</summary>
@@ -75,6 +78,26 @@ public sealed class AppSettings
 
     /// <summary>How many times a snip has pointed out "text found, click T". Stops after a few.</summary>
     public int TextHintsShown { get; set; }
+}
+
+/// <summary>The floating glass quick-slot buttons: which actions, how they're laid out, where.</summary>
+public sealed class QuickSlotSettings
+{
+    public bool Visible { get; set; }
+
+    [JsonConverter(typeof(JsonStringEnumConverter<Geometry.QuickSlotArrangement>))]
+    public Geometry.QuickSlotArrangement Arrangement { get; set; } = Geometry.QuickSlotArrangement.Diamond;
+
+    /// <summary>Tile edge in DIPs: 36 small, 44 medium, 56 large.</summary>
+    public int TileSize { get; set; } = 44;
+
+    /// <summary>Command ids, one per slot (blank = empty slot). Diamond order: top, right, bottom, left.</summary>
+    public List<string> Commands { get; set; } = ["peekPins", "snipAndPin", "toggleClickThrough", "toggleHideAll"];
+
+    /// <summary>Top-left of the group in screen pixels; null until it's first placed.</summary>
+    public int? X { get; set; }
+
+    public int? Y { get; set; }
 }
 
 [JsonSourceGenerationOptions(WriteIndented = true, PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,

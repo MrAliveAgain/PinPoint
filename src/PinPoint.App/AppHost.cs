@@ -35,7 +35,10 @@ public sealed class AppHost : IDisposable
         Snips = new SnipService(Pins, Storage, Settings, Notifier);
         Boards = new BoardService(dispatcher, Pins, Settings);
         RegisterCommands();
+        QuickSlots = new QuickSlots(dispatcher, Settings, Commands, Pins);
     }
+
+    public QuickSlots QuickSlots { get; }
 
     /// <summary>For XAML pages, which the Frame constructs without arguments.</summary>
     public static AppHost Current { get; private set; } = null!;
@@ -77,6 +80,7 @@ public sealed class AppHost : IDisposable
         _tray.Invoked += () => ShowManager();
 
         Pins.RestoreNotes(); // notes that were open last time come back where they were
+        QuickSlots.RestoreIfVisible();
         _ = Boards.RestoreLastAsync(); // and so does the board you were working on
 
         // Last line of defence: never leave other apps' windows topmost/transparent behind us.
@@ -139,6 +143,7 @@ public sealed class AppHost : IDisposable
         Boards.FlushForExit(); // before pins close: the open board is saved as it looks right now
         Settings.Flush();
         _manager?.Close();
+        QuickSlots.Close();
         Pins.Dispose();
         Snips.Close();
         Notifier.Close();
@@ -243,6 +248,16 @@ public sealed class AppHost : IDisposable
             IsChecked = () => Pins.AreWindowsHidden,
             CanExecute = () => Pins.HasWindowPins,
             Execute = Pins.ToggleWindowsHidden,
+        });
+
+        Commands.Add(new AppCommand
+        {
+            Id = Services.QuickSlots.ToggleCommandId,
+            Title = "Quick slots",
+            Description = "Floating glass buttons for any PinPoint action, one click each. Right-click a slot to pick its action; drag to move them.",
+            Glyph = "",
+            IsChecked = () => QuickSlots.IsVisible,
+            Execute = () => QuickSlots.Toggle(),
         });
 
         Commands.Add(new AppCommand
