@@ -10,8 +10,8 @@
             <Color x:Key="NoteGlassHoverColor">#A6191D24</Color>
             <Color x:Key="NoteEditingColor">#FF191D24</Color>
             <SolidColorBrush x:Key="CardSurfaceBackground" Color="White" Opacity="0.05" />
-            <SolidColorBrush x:Key="GlassTintNeutral" Color="#14FFFFFF" />
-            <SolidColorBrush x:Key="GlassTintAccent" Color="{ThemeResource SystemAccentColor}" Opacity="0.40" />
+            <SolidColorBrush x:Key="GlassTintNeutral" Color="#0DFFFFFF" />
+            <SolidColorBrush x:Key="GlassTintAccent" Color="{ThemeResource SystemAccentColor}" Opacity="0.24" />
             <LinearGradientBrush x:Key="CardSurfaceBorder" StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Color="#29FFFFFF" Offset="0" />
                 <GradientStop Color="#0AFFFFFF" Offset="1" />
@@ -23,7 +23,7 @@
             <Color x:Key="NoteEditingColor">#FFF3F5F8</Color>
             <SolidColorBrush x:Key="CardSurfaceBackground" Color="Black" Opacity="0.03" />
             <SolidColorBrush x:Key="GlassTintNeutral" Color="#0F000000" />
-            <SolidColorBrush x:Key="GlassTintAccent" Color="{ThemeResource SystemAccentColor}" Opacity="0.72" />
+            <SolidColorBrush x:Key="GlassTintAccent" Color="{ThemeResource SystemAccentColor}" Opacity="0.32" />
             <LinearGradientBrush x:Key="CardSurfaceBorder" StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Color="#1A000000" Offset="0" />
                 <GradientStop Color="#08000000" Offset="1" />
@@ -64,72 +64,66 @@
                             <ScalarTransition Duration="0:0:0.12" />
                         </Grid.OpacityTransition>
 
-                        <!-- Tint: the body of the glass. -->
+                        <!-- Body: a nearly clear pane (the acrylic behind does the blurring); tinted only on the primary drop. -->
                         <Border Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}" />
 
-                        <!-- Curvature: a convex drop is lit on top and deepens toward the bottom. -->
+                        <!-- Depth: barely-there light falling from the top half, a faint deepening at the very bottom. -->
                         <Border CornerRadius="{TemplateBinding CornerRadius}">
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
-                                    <GradientStop Color="#26FFFFFF" Offset="0" />
-                                    <GradientStop Color="#00FFFFFF" Offset="0.48" />
-                                    <GradientStop Color="#00000000" Offset="0.52" />
-                                    <GradientStop Color="#33000000" Offset="1" />
+                                    <GradientStop Color="#12FFFFFF" Offset="0" />
+                                    <GradientStop Color="#00FFFFFF" Offset="0.5" />
+                                    <GradientStop Color="#00000000" Offset="0.75" />
+                                    <GradientStop Color="#14000000" Offset="1" />
                                 </LinearGradientBrush>
                             </Border.Background>
                         </Border>
 
-                        <!-- Caustic: light passing through the drop gathers at its lower edge. -->
-                        <Border CornerRadius="{TemplateBinding CornerRadius}">
-                            <Border.Background>
-                                <RadialGradientBrush Center="0.5,1.08" GradientOrigin="0.5,1.08" RadiusX="0.62" RadiusY="0.6">
-                                    <GradientStop Color="#5CFFFFFF" Offset="0" />
-                                    <GradientStop Color="#14FFFFFF" Offset="0.5" />
-                                    <GradientStop Color="#00FFFFFF" Offset="1" />
-                                </RadialGradientBrush>
-                            </Border.Background>
-                        </Border>
-
-                        <!-- Specular: the bright pool of reflected light across the top. -->
-                        <Border CornerRadius="{TemplateBinding CornerRadius}">
-                            <Border.Background>
-                                <RadialGradientBrush Center="0.5,-0.18" GradientOrigin="0.5,-0.18" RadiusX="0.66" RadiusY="0.66">
-                                    <GradientStop Color="#99FFFFFF" Offset="0" />
-                                    <GradientStop Color="#2EFFFFFF" Offset="0.5" />
-                                    <GradientStop Color="#00FFFFFF" Offset="1" />
-                                </RadialGradientBrush>
-                            </Border.Background>
-                        </Border>
-
-                        <!-- Feedback: energizes on hover, glows from within on press. -->
-                        <Border x:Name="Energize" Opacity="0" Background="#1AFFFFFF" CornerRadius="{TemplateBinding CornerRadius}">
+                        <!-- Feedback: a little more light on hover, a soft inner glow on press. -->
+                        <Border x:Name="Energize" Opacity="0" Background="#0FFFFFFF" CornerRadius="{TemplateBinding CornerRadius}">
                             <Border.OpacityTransition>
-                                <ScalarTransition Duration="0:0:0.12" />
+                                <ScalarTransition Duration="0:0:0.16" />
                             </Border.OpacityTransition>
                         </Border>
                         <Border x:Name="Glow" Opacity="0" CornerRadius="{TemplateBinding CornerRadius}">
                             <Border.OpacityTransition>
-                                <ScalarTransition Duration="0:0:0.09" />
+                                <ScalarTransition Duration="0:0:0.1" />
                             </Border.OpacityTransition>
                             <Border.Background>
-                                <RadialGradientBrush Center="0.5,0.55" GradientOrigin="0.5,0.55" RadiusX="0.7" RadiusY="0.9">
-                                    <GradientStop Color="#55FFFFFF" Offset="0" />
+                                <RadialGradientBrush Center="0.5,0.6" GradientOrigin="0.5,0.6" RadiusX="0.65" RadiusY="0.85">
+                                    <GradientStop Color="#2EFFFFFF" Offset="0" />
                                     <GradientStop Color="#00FFFFFF" Offset="1" />
                                 </RadialGradientBrush>
                             </Border.Background>
                         </Border>
 
-                        <!-- Rim: bright where the light enters at the top, a fainter glint where it exits below. -->
+                        <!-- Rim: one thin edge, a touch brighter at the top, fainter round the sides. -->
                         <Border BorderThickness="1" CornerRadius="{TemplateBinding CornerRadius}">
                             <Border.BorderBrush>
                                 <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
-                                    <GradientStop Color="#99FFFFFF" Offset="0" />
-                                    <GradientStop Color="#1FFFFFFF" Offset="0.45" />
-                                    <GradientStop Color="#14FFFFFF" Offset="0.7" />
-                                    <GradientStop Color="#4DFFFFFF" Offset="1" />
+                                    <GradientStop Color="#47FFFFFF" Offset="0" />
+                                    <GradientStop Color="#17FFFFFF" Offset="0.5" />
+                                    <GradientStop Color="#24FFFFFF" Offset="1" />
                                 </LinearGradientBrush>
                             </Border.BorderBrush>
                         </Border>
+
+                        <!--
+                          The raindrop: a crisp 1px specular line just inside the top edge (the light the drop
+                          catches) and a faint dark 1px line just inside the bottom (its thickness). Thin lines, not
+                          glows: that's what makes glass read as glass.
+                        -->
+                        <Border Margin="1,1,1,0" CornerRadius="{TemplateBinding CornerRadius}" BorderThickness="0,1,0,0">
+                            <Border.BorderBrush>
+                                <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+                                    <GradientStop Color="#00FFFFFF" Offset="0" />
+                                    <GradientStop Color="#8CFFFFFF" Offset="0.3" />
+                                    <GradientStop Color="#8CFFFFFF" Offset="0.7" />
+                                    <GradientStop Color="#00FFFFFF" Offset="1" />
+                                </LinearGradientBrush>
+                            </Border.BorderBrush>
+                        </Border>
+                        <Border Margin="1,0,1,1" CornerRadius="{TemplateBinding CornerRadius}" BorderThickness="0,0,0,1" BorderBrush="#1F000000" />
 
                         <ContentPresenter x:Name="Content"
                                           Content="{TemplateBinding Content}"
@@ -170,7 +164,6 @@
     <!-- The primary action: the same drop, tinted with the accent (coloured glass, still see-through). -->
     <Style x:Key="LiquidGlassAccentButtonStyle" TargetType="Button" BasedOn="{StaticResource LiquidGlassButtonStyle}">
         <Setter Property="Background" Value="{ThemeResource GlassTintAccent}" />
-        <Setter Property="Foreground" Value="White" />
     </Style>
 
     <!-- Translucent card with a subtle directional rim. -->

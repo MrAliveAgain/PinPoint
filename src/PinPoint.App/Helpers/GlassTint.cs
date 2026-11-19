@@ -22,6 +22,9 @@ public static class GlassTint
         // Mostly the incoming light, with a little of where it's heading: richer than either alone.
         var tint = Mix(lead, trail, 0.35);
         if (settings.Gleam == GleamStyle.Off) tint = accent;
+        // Muted toward grey: coloured light in smoky glass, not a painted button.
+        byte grey = (byte)Math.Round(0.3 * tint.R + 0.59 * tint.G + 0.11 * tint.B);
+        tint = Mix(tint, Color.FromArgb(255, grey, grey, grey), 0.45);
 
         foreach (var dictionary in resources.MergedDictionaries.Prepend(resources))
         {
