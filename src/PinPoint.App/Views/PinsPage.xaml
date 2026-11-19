@@ -25,52 +25,54 @@
         <StackPanel MaxWidth="1000" Padding="36,8,36,36" HorizontalAlignment="Stretch">
             <TextBlock Text="Pins" Style="{StaticResource TitleTextBlockStyle}" Margin="0,0,0,20" />
 
-            <!-- Make something: the one accent button, then its quieter siblings. -->
-            <StackPanel Orientation="Horizontal" Spacing="8">
-                <StackPanel Orientation="Horizontal" Spacing="2">
-                    <Button Style="{StaticResource AccentButtonStyle}" Click="Snip_Click" CornerRadius="6,0,0,6" Padding="14,7">
+            <!-- Make something: Liquid Glass capsules. The one tinted drop is the primary action; the rest are clear glass. -->
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Button Style="{StaticResource LiquidGlassAccentButtonStyle}" Click="Snip_Click" Padding="16,8">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon Glyph="&#xE7A8;" FontSize="16" />
                             <TextBlock Text="Snip &amp; pin" FontWeight="SemiBold" />
-                            <TextBlock x:Name="SnipHotkeyText" Opacity="0.65" />
+                            <TextBlock x:Name="SnipHotkeyText" Opacity="0.7" />
                         </StackPanel>
                     </Button>
-                    <!-- Delay like Snipping Tool, joined to the Snip button (this button only; the shortcut snips straight away). -->
-                    <DropDownButton x:Name="DelayButton" Style="{StaticResource AccentButtonStyle}" CornerRadius="0,6,6,0" Padding="10,7"
-                                    ToolTipService.ToolTip="Delay before the screen is captured (this button only; the shortcut snips straight away)">
+                    <!-- Delay like Snipping Tool, joined to the Snip drop (this button only; the shortcut snips straight away). -->
+                    <Button x:Name="DelayButton" Style="{StaticResource LiquidGlassAccentButtonStyle}" Padding="13,8"
+                            ToolTipService.ToolTip="Delay before the screen is captured (this button only; the shortcut snips straight away)">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <FontIcon Glyph="&#xE916;" FontSize="14" />
                             <TextBlock x:Name="DelayText" Text="Now" />
+                            <FontIcon Glyph="&#xE70D;" FontSize="9" Opacity="0.8" />
                         </StackPanel>
-                        <DropDownButton.Flyout>
+                        <Button.Flyout>
                             <MenuFlyout Placement="BottomEdgeAlignedLeft">
                                 <RadioMenuFlyoutItem x:Name="Delay0" Text="No delay" GroupName="SnipDelay" Tag="0" Click="Delay_Click" />
                                 <RadioMenuFlyoutItem x:Name="Delay3" Text="3 seconds" GroupName="SnipDelay" Tag="3" Click="Delay_Click" />
                                 <RadioMenuFlyoutItem x:Name="Delay5" Text="5 seconds" GroupName="SnipDelay" Tag="5" Click="Delay_Click" />
                                 <RadioMenuFlyoutItem x:Name="Delay10" Text="10 seconds" GroupName="SnipDelay" Tag="10" Click="Delay_Click" />
                             </MenuFlyout>
-                        </DropDownButton.Flyout>
-                    </DropDownButton>
+                        </Button.Flyout>
+                    </Button>
                 </StackPanel>
 
-                <DropDownButton Padding="12,7">
+                <Button Style="{StaticResource LiquidGlassButtonStyle}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon Glyph="&#xE737;" FontSize="15" />
                         <TextBlock Text="Pin a window" />
+                        <FontIcon Glyph="&#xE70D;" FontSize="9" Opacity="0.7" />
                     </StackPanel>
-                    <DropDownButton.Flyout>
+                    <Button.Flyout>
                         <MenuFlyout x:Name="WindowMenu" Placement="BottomEdgeAlignedLeft" Opening="WindowMenu_Opening" />
-                    </DropDownButton.Flyout>
-                </DropDownButton>
+                    </Button.Flyout>
+                </Button>
 
-                <Button Click="NewNote_Click" Padding="12,7" ToolTipService.ToolTip="Open a note that floats on top">
+                <Button Style="{StaticResource LiquidGlassButtonStyle}" Click="NewNote_Click" ToolTipService.ToolTip="Open a note that floats on top">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon Glyph="&#xE70B;" FontSize="15" />
                         <TextBlock Text="Note" />
                     </StackPanel>
                 </Button>
 
-                <Button Click="NewTimer_Click" Padding="12,7" ToolTipService.ToolTip="Pin a countdown or stopwatch on top">
+                <Button Style="{StaticResource LiquidGlassButtonStyle}" Click="NewTimer_Click" ToolTipService.ToolTip="Pin a countdown or stopwatch on top">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon Glyph="&#xE916;" FontSize="15" />
                         <TextBlock Text="Timer" />

@@ -10,6 +10,8 @@
             <Color x:Key="NoteGlassHoverColor">#A6191D24</Color>
             <Color x:Key="NoteEditingColor">#FF191D24</Color>
             <SolidColorBrush x:Key="CardSurfaceBackground" Color="White" Opacity="0.05" />
+            <SolidColorBrush x:Key="GlassTintNeutral" Color="#14FFFFFF" />
+            <SolidColorBrush x:Key="GlassTintAccent" Color="{ThemeResource SystemAccentColor}" Opacity="0.40" />
             <LinearGradientBrush x:Key="CardSurfaceBorder" StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Color="#29FFFFFF" Offset="0" />
                 <GradientStop Color="#0AFFFFFF" Offset="1" />
@@ -20,6 +22,8 @@
             <Color x:Key="NoteGlassHoverColor">#A6F3F5F8</Color>
             <Color x:Key="NoteEditingColor">#FFF3F5F8</Color>
             <SolidColorBrush x:Key="CardSurfaceBackground" Color="Black" Opacity="0.03" />
+            <SolidColorBrush x:Key="GlassTintNeutral" Color="#0F000000" />
+            <SolidColorBrush x:Key="GlassTintAccent" Color="{ThemeResource SystemAccentColor}" Opacity="0.72" />
             <LinearGradientBrush x:Key="CardSurfaceBorder" StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Color="#1A000000" Offset="0" />
                 <GradientStop Color="#08000000" Offset="1" />
@@ -30,9 +34,144 @@
             <StaticResource x:Key="NoteGlassHoverColor" ResourceKey="SystemColorWindowColor" />
             <StaticResource x:Key="NoteEditingColor" ResourceKey="SystemColorWindowColor" />
             <SolidColorBrush x:Key="CardSurfaceBackground" Color="{ThemeResource SystemColorWindowColor}" />
+            <SolidColorBrush x:Key="GlassTintNeutral" Color="{ThemeResource SystemColorButtonFaceColor}" />
+            <SolidColorBrush x:Key="GlassTintAccent" Color="{ThemeResource SystemColorHighlightColor}" />
             <SolidColorBrush x:Key="CardSurfaceBorder" Color="{ThemeResource SystemColorWindowTextColor}" />
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
+
+    <!--
+      Liquid Glass button: a floating capsule of glass that bends light like a raindrop (after Apple's Liquid Glass).
+      Layers, back to front: the tint (glass, not paint: the backdrop shows through), curvature (lit top, deeper
+      bottom), a specular highlight pooled at the top, a caustic where light concentrates at the bottom, the rim, then
+      two feedback layers: it "energizes" on hover and glows from within on press. All static brushes; the only motion
+      is a quick opacity fade between states.
+    -->
+    <Style x:Key="LiquidGlassButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{ThemeResource GlassTintNeutral}" />
+        <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+        <Setter Property="Padding" Value="15,8" />
+        <Setter Property="CornerRadius" Value="18" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="UseSystemFocusVisuals" Value="True" />
+        <Setter Property="FocusVisualMargin" Value="-3" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid x:Name="Drop" CornerRadius="{TemplateBinding CornerRadius}">
+                        <Grid.OpacityTransition>
+                            <ScalarTransition Duration="0:0:0.12" />
+                        </Grid.OpacityTransition>
+
+                        <!-- Tint: the body of the glass. -->
+                        <Border Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}" />
+
+                        <!-- Curvature: a convex drop is lit on top and deepens toward the bottom. -->
+                        <Border CornerRadius="{TemplateBinding CornerRadius}">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                                    <GradientStop Color="#26FFFFFF" Offset="0" />
+                                    <GradientStop Color="#00FFFFFF" Offset="0.48" />
+                                    <GradientStop Color="#00000000" Offset="0.52" />
+                                    <GradientStop Color="#33000000" Offset="1" />
+                                </LinearGradientBrush>
+                            </Border.Background>
+                        </Border>
+
+                        <!-- Caustic: light passing through the drop gathers at its lower edge. -->
+                        <Border CornerRadius="{TemplateBinding CornerRadius}">
+                            <Border.Background>
+                                <RadialGradientBrush Center="0.5,1.08" GradientOrigin="0.5,1.08" RadiusX="0.62" RadiusY="0.6">
+                                    <GradientStop Color="#5CFFFFFF" Offset="0" />
+                                    <GradientStop Color="#14FFFFFF" Offset="0.5" />
+                                    <GradientStop Color="#00FFFFFF" Offset="1" />
+                                </RadialGradientBrush>
+                            </Border.Background>
+                        </Border>
+
+                        <!-- Specular: the bright pool of reflected light across the top. -->
+                        <Border CornerRadius="{TemplateBinding CornerRadius}">
+                            <Border.Background>
+                                <RadialGradientBrush Center="0.5,-0.18" GradientOrigin="0.5,-0.18" RadiusX="0.66" RadiusY="0.66">
+                                    <GradientStop Color="#99FFFFFF" Offset="0" />
+                                    <GradientStop Color="#2EFFFFFF" Offset="0.5" />
+                                    <GradientStop Color="#00FFFFFF" Offset="1" />
+                                </RadialGradientBrush>
+                            </Border.Background>
+                        </Border>
+
+                        <!-- Feedback: energizes on hover, glows from within on press. -->
+                        <Border x:Name="Energize" Opacity="0" Background="#1AFFFFFF" CornerRadius="{TemplateBinding CornerRadius}">
+                            <Border.OpacityTransition>
+                                <ScalarTransition Duration="0:0:0.12" />
+                            </Border.OpacityTransition>
+                        </Border>
+                        <Border x:Name="Glow" Opacity="0" CornerRadius="{TemplateBinding CornerRadius}">
+                            <Border.OpacityTransition>
+                                <ScalarTransition Duration="0:0:0.09" />
+                            </Border.OpacityTransition>
+                            <Border.Background>
+                                <RadialGradientBrush Center="0.5,0.55" GradientOrigin="0.5,0.55" RadiusX="0.7" RadiusY="0.9">
+                                    <GradientStop Color="#55FFFFFF" Offset="0" />
+                                    <GradientStop Color="#00FFFFFF" Offset="1" />
+                                </RadialGradientBrush>
+                            </Border.Background>
+                        </Border>
+
+                        <!-- Rim: bright where the light enters at the top, a fainter glint where it exits below. -->
+                        <Border BorderThickness="1" CornerRadius="{TemplateBinding CornerRadius}">
+                            <Border.BorderBrush>
+                                <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                                    <GradientStop Color="#99FFFFFF" Offset="0" />
+                                    <GradientStop Color="#1FFFFFFF" Offset="0.45" />
+                                    <GradientStop Color="#14FFFFFF" Offset="0.7" />
+                                    <GradientStop Color="#4DFFFFFF" Offset="1" />
+                                </LinearGradientBrush>
+                            </Border.BorderBrush>
+                        </Border>
+
+                        <ContentPresenter x:Name="Content"
+                                          Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          Padding="{TemplateBinding Padding}"
+                                          Foreground="{TemplateBinding Foreground}"
+                                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          AutomationProperties.AccessibilityView="Raw" />
+
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="Energize.Opacity" Value="1" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="Energize.Opacity" Value="1" />
+                                        <Setter Target="Glow.Opacity" Value="1" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="Drop.Opacity" Value="0.45" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- The primary action: the same drop, tinted with the accent (coloured glass, still see-through). -->
+    <Style x:Key="LiquidGlassAccentButtonStyle" TargetType="Button" BasedOn="{StaticResource LiquidGlassButtonStyle}">
+        <Setter Property="Background" Value="{ThemeResource GlassTintAccent}" />
+        <Setter Property="Foreground" Value="White" />
+    </Style>
 
     <!-- Translucent card with a subtle directional rim. -->
     <Style x:Key="CardStyle" TargetType="Border">

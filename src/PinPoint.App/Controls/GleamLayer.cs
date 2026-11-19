@@ -56,15 +56,7 @@ public sealed class GleamLayer : Grid
         }
         Visibility = Visibility.Visible;
         double k = (settings.GleamIntensity switch { <= 1 => 0.6, 2 => 1.0, _ => 1.4 }) * Strength;
-        var (lead, trail) = settings.Gleam switch
-        {
-            GleamStyle.Sky => (Rgb(119, 198, 255), Rgb(190, 160, 255)),
-            GleamStyle.Sunlight => (Rgb(255, 222, 155), Rgb(255, 154, 91)),
-            GleamStyle.Ember => (Rgb(255, 175, 98), Rgb(231, 82, 91)),
-            GleamStyle.Forest => (Rgb(173, 224, 148), Rgb(66, 187, 166)),
-            GleamStyle.Prism => (Rgb(152, 220, 255), Rgb(205, 150, 255)),
-            _ => (accent, accent),
-        };
+        var (lead, trail) = PresetColors(settings.Gleam, accent);
         bool dark = ActualTheme != ElementTheme.Light;
         if (!EdgeOnly)
         {
@@ -112,6 +104,17 @@ public sealed class GleamLayer : Grid
         foreach (var (offset, color) in stops) brush.GradientStops.Add(new() { Offset = offset, Color = color });
         return brush;
     }
+
+    /// <summary>The light each Gleam preset brings in (lead, top-left) and lets out (trail). Shared with the glass buttons' tint.</summary>
+    public static (Color Lead, Color Trail) PresetColors(GleamStyle style, Color accent) => style switch
+    {
+        GleamStyle.Sky => (Rgb(119, 198, 255), Rgb(190, 160, 255)),
+        GleamStyle.Sunlight => (Rgb(255, 222, 155), Rgb(255, 154, 91)),
+        GleamStyle.Ember => (Rgb(255, 175, 98), Rgb(231, 82, 91)),
+        GleamStyle.Forest => (Rgb(173, 224, 148), Rgb(66, 187, 166)),
+        GleamStyle.Prism => (Rgb(152, 220, 255), Rgb(205, 150, 255)),
+        _ => (accent, accent),
+    };
 
     private static Color Rgb(byte r, byte g, byte b) => Color.FromArgb(255, r, g, b);
     private static Color WithAlpha(Color c, double a) =>
