@@ -76,7 +76,8 @@ public sealed class QuickSlotTile : Window
         _root.PointerMoved += Root_PointerMoved;
         _root.PointerReleased += Root_PointerReleased;
         _root.PointerCaptureLost += (_, _) => EndPress(cancelled: true);
-        _root.SizeChanged += (_, _) => _icon.CenterPoint = new Vector3((float)_root.ActualWidth / 2, (float)_root.ActualHeight / 2, 0);
+        // Scale about the icon's own middle, so the press dips in place.
+        _icon.SizeChanged += (_, _) => _icon.CenterPoint = new Vector3((float)_icon.ActualWidth / 2, (float)_icon.ActualHeight / 2, 0);
         Content = _root;
 
         SetupGlass();
@@ -112,7 +113,7 @@ public sealed class QuickSlotTile : Window
 
     public void SetOn(bool isOn)
     {
-        _active.Opacity = isOn ? 0.85 : 0;
+        _active.Opacity = isOn ? 0.6 : 0; // tinted glass, not a solid block: on, but still unobtrusive
         _icon.Foreground = (Brush)Application.Current.Resources[isOn ? "TextOnAccentFillColorPrimaryBrush" : "TextFillColorPrimaryBrush"];
     }
 

@@ -42,7 +42,18 @@ public partial class App : Application
         _host.Start();
 
         // A second launch redirects here: show the window.
-        AppInstance.GetCurrent().Activated += (_, _) => _host.Dispatcher.TryEnqueue(() => _host.ShowManager());
+        // "PinPoint.exe --exit" asks the running copy to quit properly (pinned windows put back, everything saved).
+        AppInstance.GetCurrent().Activated += (_, e) =>
+        {
+            bool exit = e.Kind == ExtendedActivationKind.Launch &&
+                e.Data is Windows.ApplicationModel.Activation.ILaunchActivatedEventArgs launch &&
+                launch.Arguments.Contains("--exit", StringComparison.OrdinalIgnoreCase);
+            _host.Dispatcher.TryEnqueue(() =>
+            {
+                if (exit) _host.Exit();
+                else _host.ShowManager();
+            });
+        };
 
         bool background = Environment.GetCommandLineArgs().Contains(StartupRegistration.BackgroundArgument, StringComparer.OrdinalIgnoreCase);
         if (!background) _host.ShowManager();

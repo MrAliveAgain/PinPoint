@@ -19,7 +19,7 @@ namespace PinPoint.Services;
 /// </summary>
 public sealed class QuickSlots
 {
-    private const int GapDip = 6;
+    private const int GapDip = 5;
 
     private readonly DispatcherQueue _dispatcher;
     private readonly SettingsService _settings;
@@ -47,6 +47,7 @@ public sealed class QuickSlots
         pins.StateChanged += (_, _) => RefreshStates();
         pins.Raised += RaiseTiles;
         pins.CaptureHook = HideForCapture;
+        pins.ExtraTopmost = () => _tiles.Select(t => t.Handle); // a game covering just the slots brings them back up too
     }
 
     public const string ToggleCommandId = "toggleQuickSlots";

@@ -81,6 +81,8 @@ public sealed class AppHost : IDisposable
 
         Pins.RestoreNotes(); // notes that were open last time come back where they were
         QuickSlots.RestoreIfVisible();
+        // Developer check: PinPoint.exe --show-quick-slots opens them (and remembers it like the toggle).
+        if (Environment.GetCommandLineArgs().Contains("--show-quick-slots")) QuickSlots.Show();
         _ = Boards.RestoreLastAsync(); // and so does the board you were working on
 
         // Last line of defence: never leave other apps' windows topmost/transparent behind us.
@@ -266,7 +268,7 @@ public sealed class AppHost : IDisposable
             Title = "Peek past pins",
             Description = "Slide your snips, notes and timers out to the screen edges to get at what's under them. Tap to toggle; hold to peek just while held.",
             Glyph = "",
-            DefaultHotkey = "Ctrl+Alt+Space",
+            DefaultHotkey = "Ctrl+Alt+D", // D for desktop, like Win+D. (Space was taken by another app here; P is Pin window.)
             IsChecked = () => Pins.IsPeeking,
             CanExecute = () => Pins.HasPins,
             Execute = Pins.PeekFromShortcut,

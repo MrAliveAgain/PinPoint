@@ -928,6 +928,9 @@ public sealed class PinManager : IDisposable
     /// <summary>Called with true just before a screen capture and false after; returns whether it hid anything.</summary>
     public Func<bool, bool>? CaptureHook { get; set; }
 
+    /// <summary>Other always-on-top PinPoint windows (quick slots) that should be kept above other apps too.</summary>
+    public Func<IEnumerable<nint>>? ExtraTopmost { get; set; }
+
     /// <summary>Pins were just pushed back on top (other floating PinPoint UI follows them up).</summary>
     public event Action? Raised;
 
@@ -1000,7 +1003,8 @@ public sealed class PinManager : IDisposable
         // Windows you've pinned yourself don't count as covering a snip or note.
         var pinnedWindows = _windows.Pins.Select(p => p.Handle).ToHashSet();
         bool covered = _windows.AnyCovered() ||
-            Surfaces.Any(s => !IsSurfaceHidden(s) && WindowEnumerator.IsCoveredByAnotherApp(s.Handle, pinnedWindows));
+            Surfaces.Any(s => !IsSurfaceHidden(s) && WindowEnumerator.IsCoveredByAnotherApp(s.Handle, pinnedWindows)) ||
+            (ExtraTopmost?.Invoke() ?? []).Any(h => WindowEnumerator.IsCoveredByAnotherApp(h, pinnedWindows));
         if (!covered) return;
 
         _windows.RaiseAll();
