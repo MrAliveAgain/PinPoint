@@ -165,7 +165,11 @@ public sealed partial class ManagerWindow : Window
         if (AppWindow.Presenter is OverlappedPresenter { State: OverlappedPresenterState.Minimized } presenter) presenter.Restore();
         if (!AppWindow.IsVisible) AppWindow.Show(activateWindow: true); // was tucked into the tray
         Activate();
-        Win32.SetForegroundWindow(_hwnd);
+        // A plain SetForegroundWindow is often refused (Windows' foreground lock, e.g. coming from a game or the
+        // tray), which left the window behind your pins. Force it, and lift it above the pins right away rather
+        // than waiting for an activation that may never come.
+        KeepAbovePins(true);
+        Win32.ForceForeground(_hwnd);
     }
 
     public void Navigate(string tag)
