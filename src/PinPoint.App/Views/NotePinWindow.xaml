@@ -101,13 +101,16 @@
         <TextBox x:Name="Editor" Grid.Row="1"
                  AcceptsReturn="True" TextWrapping="Wrap" IsSpellCheckEnabled="False"
                  ScrollViewer.VerticalScrollBarVisibility="Auto"
-                 PlaceholderText="Type a note…" Padding="12,10"
-                 BorderThickness="0" Background="Transparent"
+                 PlaceholderText="Type a note…" Padding="12,10" Margin="3,0,3,3" CornerRadius="0,0,5,5"
+                 BorderThickness="0" Background="{ThemeResource NoteGlassBodyBrush}"
+                 Foreground="{ThemeResource TextFillColorPrimaryBrush}"
                  TextChanged="Editor_TextChanged">
-            <!-- Plain paper look: no text-box background or focus underline. -->
+            <!-- Focus remains opaque for sharp text and a reliable caret; idle notes reveal the glass. -->
             <TextBox.Resources>
-                <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="Transparent" />
-                <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="Transparent" />
+                <SolidColorBrush x:Key="TextControlForegroundFocused" Color="{ThemeResource TextFillColorPrimary}" />
+                <SolidColorBrush x:Key="TextControlForegroundPointerOver" Color="{ThemeResource TextFillColorPrimary}" />
+                <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="{ThemeResource NoteGlassHoverColor}" />
+                <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="{ThemeResource NoteEditingColor}" />
                 <SolidColorBrush x:Key="TextControlBorderBrush" Color="Transparent" />
                 <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="Transparent" />
                 <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="Transparent" />

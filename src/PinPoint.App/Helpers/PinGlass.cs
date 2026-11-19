@@ -26,7 +26,7 @@ public sealed class PinGlass : IDisposable
         _window = window;
         _themeSource = themeSource;
         _applySurface = applySurface;
-        themeSource.ActualThemeChanged += (_, _) => UpdateTheme();
+        themeSource.ActualThemeChanged += OnThemeChanged;
         AppHost.Current.Settings.Changed += OnSettingsChanged;
     }
 
@@ -45,8 +45,8 @@ public sealed class PinGlass : IDisposable
         if (want)
         {
             _config = new SystemBackdropConfiguration { IsInputActive = true }; // glass even when not focused
+            _acrylic = new DesktopAcrylicController { Kind = DesktopAcrylicKind.Base };
             UpdateTheme();
-            _acrylic = new DesktopAcrylicController { Kind = DesktopAcrylicKind.Base }; // the denser glass: text stays easy to read
             _acrylic.AddSystemBackdropTarget(_window.As<ICompositionSupportsSystemBackdrop>());
             _acrylic.SetSystemBackdropConfiguration(_config);
         }
@@ -63,15 +63,23 @@ public sealed class PinGlass : IDisposable
     private void OnSettingsChanged(object? sender, EventArgs e) =>
         _window.DispatcherQueue.TryEnqueue(() => Update(_fadedOrThrough));
 
+    private void OnThemeChanged(FrameworkElement sender, object args) => UpdateTheme();
+
     private void UpdateTheme()
     {
-        if (_config is null) return;
-        _config.Theme = _themeSource.ActualTheme == ElementTheme.Dark ? SystemBackdropTheme.Dark : SystemBackdropTheme.Light;
+        if (_config is null || _acrylic is null) return;
+        bool dark = _themeSource.ActualTheme == ElementTheme.Dark;
+        _config.Theme = dark ? SystemBackdropTheme.Dark : SystemBackdropTheme.Light;
+        _acrylic.TintColor = dark ? Windows.UI.Color.FromArgb(255, 25, 29, 36)
+            : Windows.UI.Color.FromArgb(255, 243, 245, 248);
+        _acrylic.TintOpacity = 0.65f;
+        _acrylic.LuminosityOpacity = 0.85f;
     }
 
     public void Dispose()
     {
         AppHost.Current.Settings.Changed -= OnSettingsChanged;
+        _themeSource.ActualThemeChanged -= OnThemeChanged;
         _acrylic?.Dispose();
         _acrylic = null;
     }

@@ -255,17 +255,22 @@ public sealed class QuickSlotTile : Window
 
         // Driven by hand so it stays "active" glass even though the tile never gets focus.
         _backdropConfig = new SystemBackdropConfiguration { IsInputActive = true };
-        UpdateTheme();
         _root.ActualThemeChanged += (_, _) => UpdateTheme();
 
-        _acrylic = new DesktopAcrylicController { Kind = DesktopAcrylicKind.Thin }; // the lighter, clearer glass
+        _acrylic = new DesktopAcrylicController { Kind = DesktopAcrylicKind.Base };
+        UpdateTheme();
         _acrylic.AddSystemBackdropTarget(this.As<ICompositionSupportsSystemBackdrop>());
         _acrylic.SetSystemBackdropConfiguration(_backdropConfig);
     }
 
     private void UpdateTheme()
     {
-        if (_backdropConfig is null) return;
-        _backdropConfig.Theme = _root.ActualTheme == ElementTheme.Dark ? SystemBackdropTheme.Dark : SystemBackdropTheme.Light;
+        if (_backdropConfig is null || _acrylic is null) return;
+        bool dark = _root.ActualTheme == ElementTheme.Dark;
+        _backdropConfig.Theme = dark ? SystemBackdropTheme.Dark : SystemBackdropTheme.Light;
+        _acrylic.TintColor = dark ? Windows.UI.Color.FromArgb(255, 25, 29, 36)
+            : Windows.UI.Color.FromArgb(255, 243, 245, 248);
+        _acrylic.TintOpacity = 0.65f;
+        _acrylic.LuminosityOpacity = 0.85f;
     }
 }

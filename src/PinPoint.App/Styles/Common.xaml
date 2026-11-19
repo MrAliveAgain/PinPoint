@@ -6,6 +6,9 @@
 
     <ResourceDictionary.ThemeDictionaries>
         <ResourceDictionary x:Key="Default">
+            <SolidColorBrush x:Key="NoteGlassBodyBrush" Color="#80191D24" />
+            <Color x:Key="NoteGlassHoverColor">#A6191D24</Color>
+            <Color x:Key="NoteEditingColor">#FF191D24</Color>
             <SolidColorBrush x:Key="CardSurfaceBackground" Color="White" Opacity="0.05" />
             <LinearGradientBrush x:Key="CardSurfaceBorder" StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Color="#29FFFFFF" Offset="0" />
@@ -13,6 +16,9 @@
             </LinearGradientBrush>
         </ResourceDictionary>
         <ResourceDictionary x:Key="Light">
+            <SolidColorBrush x:Key="NoteGlassBodyBrush" Color="#80F3F5F8" />
+            <Color x:Key="NoteGlassHoverColor">#A6F3F5F8</Color>
+            <Color x:Key="NoteEditingColor">#FFF3F5F8</Color>
             <SolidColorBrush x:Key="CardSurfaceBackground" Color="Black" Opacity="0.03" />
             <LinearGradientBrush x:Key="CardSurfaceBorder" StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Color="#1A000000" Offset="0" />
@@ -20,6 +26,9 @@
             </LinearGradientBrush>
         </ResourceDictionary>
         <ResourceDictionary x:Key="HighContrast">
+            <SolidColorBrush x:Key="NoteGlassBodyBrush" Color="{ThemeResource SystemColorWindowColor}" />
+            <StaticResource x:Key="NoteGlassHoverColor" ResourceKey="SystemColorWindowColor" />
+            <StaticResource x:Key="NoteEditingColor" ResourceKey="SystemColorWindowColor" />
             <SolidColorBrush x:Key="CardSurfaceBackground" Color="{ThemeResource SystemColorWindowColor}" />
             <SolidColorBrush x:Key="CardSurfaceBorder" Color="{ThemeResource SystemColorWindowTextColor}" />
         </ResourceDictionary>

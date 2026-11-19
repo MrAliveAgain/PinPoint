@@ -3,6 +3,7 @@
     x:Class="PinPoint.Views.ManagerWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:PinPoint.Controls"
     Title="PinPoint">
 
     <!-- The backdrop (glass / Mica / none) is set from code, following Settings > Appearance. -->
@@ -18,6 +19,7 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
+            <controls:GleamLayer Grid.ColumnSpan="2" Strength="0.5" Radius="7" Margin="-16,0,0,0" />
             <Image x:Name="TitleBarIcon" Width="16" Height="16" VerticalAlignment="Center" />
             <TextBlock Grid.Column="1" Text="PinPoint" VerticalAlignment="Center"
                        Style="{StaticResource CaptionTextBlockStyle}" />

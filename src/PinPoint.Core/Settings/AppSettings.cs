@@ -106,6 +106,9 @@ public enum GleamStyle
 
     /// <summary>Warm sunlight: gold into white.</summary>
     Sunlight,
+
+    Ember,
+    Forest,
 }
 
 public enum AppearanceStyle

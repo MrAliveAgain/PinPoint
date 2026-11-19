@@ -72,6 +72,8 @@
         </FlyoutBase.AttachedFlyout>
 
         <Image x:Name="PinImage" Stretch="Fill" />
+        <!-- Edge-only glass: preserve image pixels, OCR and drawing coordinate mapping. -->
+        <controls:GleamLayer EdgeOnly="True" Radius="7" />
 
         <!--
           Drawing: strokes live in snip pixels on a canvas the size of the snip, scaled with the image by

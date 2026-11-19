@@ -32,6 +32,7 @@ public sealed partial class NotePinWindow : Window, IPinSurface
     private bool _clickThrough;
     private bool _shown;
     private string? _exportPath;
+    private Task _pendingSave = Task.CompletedTask;
 
     public NotePinWindow(StoredNote note, NoteStore? store)
     {
@@ -51,12 +52,12 @@ public sealed partial class NotePinWindow : Window, IPinSurface
         presenter.PreferredMinimumWidth = (int)(MinWidth * scale);
         presenter.PreferredMinimumHeight = (int)(MinHeight * scale);
 
-        Editor.Text = note.Text;
 
         _saveTimer = DispatcherQueue.CreateTimer();
         _saveTimer.IsRepeating = false;
         _saveTimer.Interval = TimeSpan.FromMilliseconds(500);
-        _saveTimer.Tick += (_, _) => SaveText();
+        _saveTimer.Tick += (_, _) => QueueTextSave();
+        Editor.Text = note.Text;
 
         _layoutTimer = DispatcherQueue.CreateTimer();
         _layoutTimer.IsRepeating = false;
@@ -246,6 +247,7 @@ public sealed partial class NotePinWindow : Window, IPinSurface
         _saveTimer.Stop();
         _layoutTimer.Stop();
         _headerTimer.Stop();
+        _pendingSave.GetAwaiter().GetResult();
         _store?.SaveText(Id, Editor.Text);
         _store?.Close(Id);
         Close();
@@ -259,6 +261,7 @@ public sealed partial class NotePinWindow : Window, IPinSurface
         _headerTimer.Stop();
         if (string.IsNullOrWhiteSpace(Editor.Text))
         {
+            _pendingSave.GetAwaiter().GetResult();
             _store?.SaveText(Id, string.Empty);
             _store?.Close(Id);
         }
@@ -275,8 +278,23 @@ public sealed partial class NotePinWindow : Window, IPinSurface
 
     private void Editor_TextChanged(object sender, TextChangedEventArgs e) => RestartTimer(_saveTimer);
 
+    private void QueueTextSave()
+    {
+        // Capture XAML state here; serialize disk writes away from the input thread.
+        var store = _store;
+        string text = Editor.Text;
+        Task previous = _pendingSave;
+        _pendingSave = Task.Run(async () =>
+        {
+            await previous.ConfigureAwait(false);
+            store?.SaveText(Id, text);
+        });
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+
     private void SaveText()
     {
+        _pendingSave.GetAwaiter().GetResult();
         _store?.SaveText(Id, Editor.Text);
         Changed?.Invoke(this, EventArgs.Empty); // title in the Pins list follows the first line
     }
@@ -311,6 +329,7 @@ public sealed partial class NotePinWindow : Window, IPinSurface
         if (_store is null) return;
         _saveTimer.Stop();
         _layoutTimer.Stop();
+        _pendingSave.GetAwaiter().GetResult();
         _store.SaveText(Id, Editor.Text);
         _store.Close(Id);
         _store = null;
@@ -479,16 +498,17 @@ public sealed partial class NotePinWindow : Window, IPinSurface
         {
             _gleam = new Controls.GleamLayer { Enabled = false, Strength = 0.85 };
             Grid.SetRowSpan(_gleam, 2);
-            Root.Children.Add(_gleam);
+            Root.Children.Insert(0, _gleam);
         }
 
         _glass ??= new PinGlass(this, Root, glass =>
         {
-            _gleam.Enabled = glass; // light on the glass only while it is glass
+            _gleam.Enabled = glass; // Always behind text and controls.
             // Glass: the body is the material itself; the header a light layer on it. Solid: the classic paper.
             var res = Application.Current.Resources;
             Root.Background = glass ? null : (Microsoft.UI.Xaml.Media.Brush)res["SolidBackgroundFillColorBaseBrush"];
-            Header.Background = (Microsoft.UI.Xaml.Media.Brush)res[glass ? "LayerOnAcrylicFillColorDefaultBrush" : "SolidBackgroundFillColorSecondaryBrush"];
+            Header.Background = glass ? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent)
+                : (Microsoft.UI.Xaml.Media.Brush)res["SolidBackgroundFillColorSecondaryBrush"];
         });
 
         // Glass and Windows' whole-window fade can't coexist: drop the glass before fading, add it after un-fading.

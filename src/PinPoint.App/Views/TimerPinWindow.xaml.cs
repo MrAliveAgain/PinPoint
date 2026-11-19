@@ -403,7 +403,7 @@ public sealed partial class TimerPinWindow : Window, IPinSurface
         {
             _gleam = new Controls.GleamLayer { Enabled = false, Strength = 0.85 };
             Grid.SetRowSpan(_gleam, 2);
-            Root.Children.Add(_gleam);
+            Root.Children.Insert(0, _gleam);
         }
 
         _glass ??= new PinGlass(this, Root, glass =>

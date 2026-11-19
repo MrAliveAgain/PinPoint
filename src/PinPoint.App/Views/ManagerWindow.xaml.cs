@@ -153,8 +153,8 @@ public sealed partial class ManagerWindow : Window
         bool dark = Root.ActualTheme == ElementTheme.Dark;
         _backdropConfig.Theme = dark ? SystemBackdropTheme.Dark : SystemBackdropTheme.Light;
         _acrylic.TintColor = dark
-            ? Windows.UI.Color.FromArgb(255, 0x20, 0x22, 0x26)
-            : Windows.UI.Color.FromArgb(255, 0xF3, 0xF3, 0xF3);
+            ? Windows.UI.Color.FromArgb(255, 25, 29, 36)
+            : Windows.UI.Color.FromArgb(255, 243, 245, 248);
         _acrylic.TintOpacity = 0.65f;
         _acrylic.LuminosityOpacity = 0.85f;
     }

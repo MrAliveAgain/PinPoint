@@ -8,19 +8,12 @@ using Windows.UI;
 
 namespace PinPoint.Controls;
 
-/// <summary>
-/// Light on glass. Three stacked, click-through layers that make an acrylic surface read as a physical pane:
-/// <list type="bullet">
-/// <item>a <b>rim</b>: a 1px edge that's bright where the light comes from (top-left) and tinted where it leaves,</item>
-/// <item>a <b>sheen</b>: a soft white falloff across the top, like a reflection,</item>
-/// <item>the <b>light</b> itself, a diagonal wash in the chosen colour: accent shades, a prism's spectral band,
-/// sky (cool blue into warm peach) or sunlight (gold).</item>
-/// </list>
-/// Follows Settings > Gleam live. The host turns it on only while the surface is actually glass.
-/// </summary>
+/// <summary>Static, input-transparent light catches. Never animate or sample the desktop.</summary>
 public sealed class GleamLayer : Grid
 {
     private bool _enabled = true;
+    private (bool Enabled, GleamStyle Style, int Intensity, ElementTheme Theme, double Radius,
+        double Strength, bool EdgeOnly, AppearanceStyle Appearance, Color Accent)? _last;
 
     public GleamLayer()
     {
@@ -34,138 +27,93 @@ public sealed class GleamLayer : Grid
         ActualThemeChanged += (_, _) => Rebuild();
     }
 
-    /// <summary>Corner radius of the rim (match the window's rounded corners).</summary>
     public double Radius { get; set; } = 8;
-
-    /// <summary>Overall strength multiplier for this surface (e.g. lower on the big main window).</summary>
     public double Strength { get; set; } = 1;
-
-    /// <summary>Off while the surface isn't glass (faded pins, Solid appearance).</summary>
+    /// <summary>Snips get a narrow frame only: never colour the captured content.</summary>
+    public bool EdgeOnly { get; set; }
     public bool Enabled
     {
         get => _enabled;
-        set
-        {
-            if (_enabled == value) return;
-            _enabled = value;
-            Rebuild();
-        }
+        set { if (_enabled == value) return; _enabled = value; Rebuild(); }
     }
 
     private void OnSettingsChanged(object? sender, EventArgs e) => DispatcherQueue.TryEnqueue(Rebuild);
 
     private void Rebuild()
     {
-        Children.Clear();
         var settings = AppHost.Current.Settings.Current;
-        if (!_enabled || settings.Gleam == GleamStyle.Off)
+        var accent = Application.Current.Resources.TryGetValue("SystemAccentColor", out var value)
+            && value is Color color ? color : Color.FromArgb(255, 90, 180, 255);
+        var state = (_enabled, settings.Gleam, settings.GleamIntensity, ActualTheme, Radius,
+            Strength, EdgeOnly, settings.Appearance, accent);
+        if (_last == state) return; // Unrelated settings must not allocate new brushes.
+        _last = state;
+        Children.Clear();
+        if (!_enabled || settings.Gleam == GleamStyle.Off || settings.Appearance != AppearanceStyle.Glass)
         {
             Visibility = Visibility.Collapsed;
             return;
         }
-
         Visibility = Visibility.Visible;
-        // k scales everything; white highlights are halved on dark glass (they read twice as strong there).
-        double k = settings.GleamIntensity switch { <= 1 => 0.6, 2 => 1.0, _ => 1.5 } * Strength;
+        double k = (settings.GleamIntensity switch { <= 1 => 0.6, 2 => 1.0, _ => 1.4 }) * Strength;
+        var (lead, trail) = settings.Gleam switch
+        {
+            GleamStyle.Sky => (Rgb(119, 198, 255), Rgb(190, 160, 255)),
+            GleamStyle.Sunlight => (Rgb(255, 222, 155), Rgb(255, 154, 91)),
+            GleamStyle.Ember => (Rgb(255, 175, 98), Rgb(231, 82, 91)),
+            GleamStyle.Forest => (Rgb(173, 224, 148), Rgb(66, 187, 166)),
+            GleamStyle.Prism => (Rgb(152, 220, 255), Rgb(205, 150, 255)),
+            _ => (accent, accent),
+        };
         bool dark = ActualTheme != ElementTheme.Light;
-        double white = dark ? 1.0 : 1.3; // tuned on dark glass; a touch more on light
-        var (lead, trail) = LightColors(settings.Gleam);
-
-        // Rules that keep light from turning into dirt (the "dark streak"):
-        //  - every fade goes to the SAME colour at zero alpha, never to "transparent" (which is transparent black);
-        //  - washes fall off in ONE direction and keep a small floor, so no unlit gap sits between two lit areas.
-
-        // Codex's art direction, adopted: "a quiet translucent body with one crisp light-catching edge".
-        // 1. Light: a flat whisper of the chosen colour (prism: its narrow spectral leak instead).
-        Children.Add(new Border { CornerRadius = new CornerRadius(Radius), Background = Light(settings.Gleam, lead, k, dark) });
-
-        // 2. Sheen: a soft elliptical highlight near the top-left, not a diagonal wash.
-        var sheen = new RadialGradientBrush
+        if (!EdgeOnly)
         {
-            Center = new Point(0.25, 0),
-            GradientOrigin = new Point(0.25, 0),
-            RadiusX = 0.8,
-            RadiusY = 0.45,
-        };
-        sheen.GradientStops.Add(new GradientStop { Offset = 0, Color = WithAlpha(Colors.White, 0.09 * k) });
-        sheen.GradientStops.Add(new GradientStop { Offset = 0.35, Color = WithAlpha(Colors.White, 0.03 * k) });
-        sheen.GradientStops.Add(new GradientStop { Offset = 0.7, Color = WithAlpha(Colors.White, 0) });
-        Children.Add(new Border { CornerRadius = new CornerRadius(Radius), Background = sheen });
-
-        // 3. Rim: ONE directional 1px edge, bright where light enters, gone by the far side, a faint bounce.
-        Children.Add(new Border
-        {
-            CornerRadius = new CornerRadius(Radius),
-            BorderThickness = new Thickness(1),
-            BorderBrush = Gradient(new Point(0, 0), new Point(1, 1),
-                (0, WithAlpha(Colors.White, Math.Min(1, 0.32 * k * white))),
-                (0.30, WithAlpha(Colors.White, 0.12 * k * white)),
-                (0.65, WithAlpha(Colors.White, 0.03 * k * white)),
-                (1, WithAlpha(Colors.White, 0.07 * k * white))),
-        });
-    }
-    private static Brush Light(GleamStyle style, Color lead, double k, bool dark)
-    {
-        double tint = dark ? 0.16 : 0.12;
-        if (style == GleamStyle.Prism)
-        {
-            // A clean pane with one narrow, soft-edged band of dispersed light tucked toward the corner (a light leak).
-            // Neighbouring stops share their colour, so nothing between them can go muddy.
-            double p = 0.16 * k * (dark ? 1.0 : 0.85);
-            return Gradient(new Point(0, 0), new Point(1, 1),
-                (0.00, WithAlpha(Colors.White, 0.06 * k)),
-                (0.60, WithAlpha(Colors.White, 0.01 * k)),
-                (0.69, WithAlpha(Hsv(350, 0.7, 1), 0)),
-                (0.72, WithAlpha(Hsv(350, 0.7, 1), p * 0.55)), // red
-                (0.745, WithAlpha(Hsv(32, 0.75, 1), p * 0.85)), // orange
-                (0.77, WithAlpha(Hsv(55, 0.7, 1), p)),          // yellow
-                (0.795, WithAlpha(Hsv(140, 0.55, 1), p)),       // green
-                (0.82, WithAlpha(Hsv(205, 0.65, 1), p * 0.85)), // blue
-                (0.845, WithAlpha(Hsv(265, 0.55, 1), p * 0.55)), // violet
-                (0.88, WithAlpha(Hsv(265, 0.55, 1), 0)));
+            // Two localized light pools, with an unlit centre. No full-surface coloured veil.
+            Children.Add(new Border { CornerRadius = new(Radius),
+                Background = Pool(lead, new(0.12, 0), 0.85, 0.75, 0.15 * k) });
+            Children.Add(new Border { CornerRadius = new(Radius),
+                Background = Pool(trail, new(1, 0.95), 0.6, 0.6, 0.07 * k) });
         }
+        // A smoked inner bevel separates screenshots from similarly coloured windows behind them.
+        if (EdgeOnly)
+            Children.Add(new Border { CornerRadius = new(Radius), BorderThickness = new(3),
+                BorderBrush = new SolidColorBrush(WithAlpha(Colors.Black, 0.32)) });
 
-        // A flat whisper of colour (2-3%): tint, not paint.
-        return new SolidColorBrush(WithAlpha(lead, 0.025 * k));
+        Brush edge = settings.Gleam == GleamStyle.Prism
+            ? Gradient((0, WithAlpha(Colors.White, 0.40 * k)),
+                (0.22, WithAlpha(lead, 0.28 * k)),
+                (0.42, WithAlpha(lead, 0.05 * k)),
+                (0.64, WithAlpha(Rgb(155, 157, 255), 0.14 * k)),
+                (0.76, WithAlpha(Rgb(119, 219, 211), 0.28 * k)),
+                (0.86, WithAlpha(Rgb(247, 218, 151), 0.30 * k)),
+                (0.94, WithAlpha(Rgb(244, 153, 180), 0.26 * k)),
+                (1, WithAlpha(trail, 0.12 * k)))
+            : Gradient((0, WithAlpha(dark ? Colors.White : lead, 0.38 * k)),
+                (0.24, WithAlpha(lead, 0.32 * k)),
+                (0.52, WithAlpha(lead, 0.05 * k)),
+                (0.78, WithAlpha(trail, 0.08 * k)),
+                (1, WithAlpha(trail, 0.25 * k)));
+        Children.Add(new Border { CornerRadius = new(Radius),
+            BorderThickness = new(EdgeOnly ? 2 : 1), BorderBrush = edge });
     }
 
-    /// <summary>The colour light comes in with (top-left) and leaves with (bottom-right).</summary>
-    private static (Color Lead, Color Trail) LightColors(GleamStyle style)
+    private static RadialGradientBrush Pool(Color color, Point centre, double x, double y, double alpha)
     {
-        var res = Application.Current.Resources;
-        Color accent = res.TryGetValue("SystemAccentColorLight2", out var l) && l is Color light ? light : Color.FromArgb(255, 96, 205, 255);
-        Color accentDeep = res.TryGetValue("SystemAccentColor", out var d) && d is Color deep ? deep : Color.FromArgb(255, 0, 120, 212);
-        return style switch
-        {
-            GleamStyle.Sky => (Color.FromArgb(255, 150, 210, 255), Color.FromArgb(255, 255, 196, 150)),
-            GleamStyle.Sunlight => (Color.FromArgb(255, 255, 228, 160), Color.FromArgb(255, 255, 170, 90)),
-            GleamStyle.Prism => (Color.FromArgb(255, 200, 225, 255), Hsv(265, 0.5, 1)),
-            _ => (accent, accentDeep),
-        };
-    }
-
-    private static LinearGradientBrush Gradient(Point start, Point end, params (double Offset, Color Color)[] stops)
-    {
-        var brush = new LinearGradientBrush { StartPoint = start, EndPoint = end };
-        foreach (var (offset, color) in stops) brush.GradientStops.Add(new GradientStop { Offset = offset, Color = color });
+        var brush = new RadialGradientBrush { Center = centre, GradientOrigin = centre, RadiusX = x, RadiusY = y };
+        brush.GradientStops.Add(new() { Offset = 0, Color = WithAlpha(color, alpha) });
+        brush.GradientStops.Add(new() { Offset = 0.35, Color = WithAlpha(color, alpha * 0.35) });
+        brush.GradientStops.Add(new() { Offset = 1, Color = WithAlpha(color, 0) });
         return brush;
     }
 
-    private static Color WithAlpha(Color c, double alpha) => Color.FromArgb((byte)Math.Round(Math.Clamp(alpha, 0, 1) * 255), c.R, c.G, c.B);
-
-    private static Color Hsv(double h, double s, double v)
+    private static LinearGradientBrush Gradient(params (double Offset, Color Color)[] stops)
     {
-        h = ((h % 360) + 360) % 360;
-        double c = v * s, x = c * (1 - Math.Abs(h / 60 % 2 - 1)), m = v - c;
-        var (r, g, b) = h switch
-        {
-            < 60 => (c, x, 0d),
-            < 120 => (x, c, 0d),
-            < 180 => (0d, c, x),
-            < 240 => (0d, x, c),
-            < 300 => (x, 0d, c),
-            _ => (c, 0d, x),
-        };
-        return Color.FromArgb(255, (byte)((r + m) * 255), (byte)((g + m) * 255), (byte)((b + m) * 255));
+        var brush = new LinearGradientBrush { StartPoint = new(0, 0), EndPoint = new(1, 1) };
+        foreach (var (offset, color) in stops) brush.GradientStops.Add(new() { Offset = offset, Color = color });
+        return brush;
     }
+
+    private static Color Rgb(byte r, byte g, byte b) => Color.FromArgb(255, r, g, b);
+    private static Color WithAlpha(Color c, double a) =>
+        Color.FromArgb((byte)Math.Round(Math.Clamp(a, 0, 1) * 255), c.R, c.G, c.B);
 }

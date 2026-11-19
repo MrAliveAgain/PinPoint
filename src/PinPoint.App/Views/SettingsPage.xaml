@@ -67,6 +67,8 @@
                         <ComboBoxItem Content="Prism" Tag="Prism" />
                         <ComboBoxItem Content="Sky" Tag="Sky" />
                         <ComboBoxItem Content="Sunlight" Tag="Sunlight" />
+                        <ComboBoxItem Content="Ember" Tag="Ember" />
+                        <ComboBoxItem Content="Forest" Tag="Forest" />
                     </ComboBox>
                     <ComboBox x:Name="GleamStrengthBox" MinWidth="110" SelectionChanged="Gleam_Changed">
                         <ComboBoxItem Content="Subtle" Tag="1" />
