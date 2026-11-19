@@ -65,44 +65,77 @@ public sealed class GleamLayer : Grid
         }
 
         Visibility = Visibility.Visible;
-        double a = settings.GleamIntensity switch { <= 1 => 0.09, 2 => 0.16, _ => 0.26 } * Strength;
+        // k scales everything; white highlights are halved on dark glass (they read twice as strong there).
+        double k = settings.GleamIntensity switch { <= 1 => 0.6, 2 => 1.0, _ => 1.5 } * Strength;
         bool dark = ActualTheme != ElementTheme.Light;
+        double white = dark ? 0.55 : 1.0;
         var (lead, trail) = LightColors(settings.Gleam);
 
-        // 1. The light: a diagonal wash (or, for the prism, a thin spectral band).
-        Children.Add(new Border { CornerRadius = new CornerRadius(Radius), Background = Light(settings.Gleam, a, dark) });
+        // Rules that keep light from turning into dirt (the "dark streak"):
+        //  - every fade goes to the SAME colour at zero alpha, never to "transparent" (which is transparent black);
+        //  - washes fall off in ONE direction and keep a small floor, so no unlit gap sits between two lit areas.
 
-        // 2. Sheen: a reflection fading down from the top edge.
+        // 1. Light: a soft wash of the chosen light from the lit corner (prism: plus a narrow spectral leak).
+        Children.Add(new Border { CornerRadius = new CornerRadius(Radius), Background = Light(settings.Gleam, lead, k, dark) });
+
+        // 2. Sheen: white reflection falling from the top edge.
         Children.Add(new Border
         {
             CornerRadius = new CornerRadius(Radius),
-            Background = Gradient(new Point(0.5, 0), new Point(0.5, 0.45),
-                (0, WithAlpha(Colors.White, a * (dark ? 0.9 : 1.4))), (1, WithAlpha(Colors.White, 0))),
+            Background = Gradient(new Point(0.5, 0), new Point(0.5, 0.5),
+                (0, WithAlpha(Colors.White, 0.10 * k * white)),
+                (1, WithAlpha(Colors.White, 0.01 * k * white))),
         });
 
-        // 3. Rim: bright where the light enters (top-left), tinted where it leaves (bottom-right).
+        // 3. Rim: a white specular edge, strong top-left, near-invisible mid, faint bounce bottom-right.
         Children.Add(new Border
         {
             CornerRadius = new CornerRadius(Radius),
             BorderThickness = new Thickness(1),
             BorderBrush = Gradient(new Point(0, 0), new Point(1, 1),
-                (0, WithAlpha(Colors.White, Math.Min(1, a * 3.2))),
-                (0.45, WithAlpha(lead, a * 0.8)),
-                (0.7, WithAlpha(Colors.White, 0)),
-                (1, WithAlpha(trail, Math.Min(1, a * 2.4)))),
+                (0, WithAlpha(Colors.White, Math.Min(1, 0.60 * k * white))),
+                (0.5, WithAlpha(Colors.White, 0.06 * k * white)),
+                (1, WithAlpha(Colors.White, 0.22 * k * white))),
+        });
+
+        // 4. Dispersion: light splitting at the edge, a faint tint just inside the rim (lead colour in, trail colour out).
+        Children.Add(new Border
+        {
+            Margin = new Thickness(1),
+            CornerRadius = new CornerRadius(Math.Max(0, Radius - 1)),
+            BorderThickness = new Thickness(1),
+            BorderBrush = Gradient(new Point(0, 0), new Point(1, 1),
+                (0, WithAlpha(lead, 0.30 * k)),
+                (0.5, WithAlpha(lead, 0.03 * k)),
+                (0.5, WithAlpha(trail, 0.03 * k)),
+                (1, WithAlpha(trail, 0.26 * k))),
+        });
+
+        // 5. Specular catch: a 1px highlight right along the top, brightest in the middle third.
+        Children.Add(new Border
+        {
+            Height = 1,
+            Margin = new Thickness(Radius, 1, Radius, 0),
+            VerticalAlignment = VerticalAlignment.Top,
+            Background = Gradient(new Point(0, 0.5), new Point(1, 0.5),
+                (0, WithAlpha(Colors.White, 0)),
+                (0.35, WithAlpha(Colors.White, 0.55 * k * white)),
+                (0.65, WithAlpha(Colors.White, 0.55 * k * white)),
+                (1, WithAlpha(Colors.White, 0))),
         });
     }
 
-    private static Brush Light(GleamStyle style, double a, bool dark)
+    private static Brush Light(GleamStyle style, Color lead, double k, bool dark)
     {
+        double tint = dark ? 0.16 : 0.12;
         if (style == GleamStyle.Prism)
         {
-            // A clean surface with one narrow band of dispersed light across the lower-right, like sun through a prism.
-            // Narrow and soft-edged (a light leak, not a stripe), tucked toward the corner; peaks in the middle colours.
-            double p = a * (dark ? 1.15 : 0.95);
+            // A clean pane with one narrow, soft-edged band of dispersed light tucked toward the corner (a light leak).
+            // Neighbouring stops share their colour, so nothing between them can go muddy.
+            double p = 0.16 * k * (dark ? 1.0 : 0.85);
             return Gradient(new Point(0, 0), new Point(1, 1),
-                (0.00, WithAlpha(Colors.White, a * 0.45)),
-                (0.45, WithAlpha(Colors.White, 0)),
+                (0.00, WithAlpha(Colors.White, 0.06 * k)),
+                (0.60, WithAlpha(Colors.White, 0.01 * k)),
                 (0.69, WithAlpha(Hsv(350, 0.7, 1), 0)),
                 (0.72, WithAlpha(Hsv(350, 0.7, 1), p * 0.55)), // red
                 (0.745, WithAlpha(Hsv(32, 0.75, 1), p * 0.85)), // orange
@@ -113,11 +146,11 @@ public sealed class GleamLayer : Grid
                 (0.88, WithAlpha(Hsv(265, 0.55, 1), 0)));
         }
 
-        var (lead, trail) = LightColors(style);
+        // One-directional: lit corner fades to a faint floor of the same colour across the pane.
         return Gradient(new Point(0, 0), new Point(1, 1),
-            (0, WithAlpha(lead, a * 1.3)),
-            (0.5, WithAlpha(lead, 0)),
-            (1, WithAlpha(trail, a * 1.1)));
+            (0, WithAlpha(lead, tint * k)),
+            (0.6, WithAlpha(lead, tint * k * 0.18)),
+            (1, WithAlpha(lead, tint * k * 0.10)));
     }
 
     /// <summary>The colour light comes in with (top-left) and leaves with (bottom-right).</summary>
