@@ -48,6 +48,7 @@ public static class CommandIds
     public const string HidePinUnderMouse = "hidePinUnderMouse";
     public const string PeekPins = "peekPins";
     public const string NextPin = "nextPin";
+    public const string LiftUnderMouse = "liftUnderMouse";
     public const string PreviousPin = "previousPin";
     public const string PinsToFront = "pinsToFront";
     public const string FadeAllPins = "fadeAllPins";

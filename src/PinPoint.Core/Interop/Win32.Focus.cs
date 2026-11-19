@@ -15,6 +15,9 @@ public static unsafe partial class Win32
     public static partial uint GetCurrentThreadId();
 
     [LibraryImport("user32.dll")]
+    public static partial nint WindowFromPoint(POINT point);
+
+    [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool BringWindowToTop(nint hWnd);
 

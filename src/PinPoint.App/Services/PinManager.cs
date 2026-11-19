@@ -891,6 +891,28 @@ public sealed class PinManager : IDisposable
         _notifier.Show("", $"Pin {_cycle + 1} of {all.Count}", Win32.GetWindowText(all[_cycle]));
     }
 
+    /// <summary>
+    /// Lifts the app window under the mouse on top of everything (pinned, with the coloured highlight border so you
+    /// can tell it's lifted); pressed again over it, puts it back. Never a snip, note or other PinPoint window.
+    /// </summary>
+    public void ToggleLiftUnderMouse()
+    {
+        Win32.GetCursorPos(out var cursor);
+        nint hwnd = Win32.WindowFromPoint(cursor);
+        nint root = hwnd != 0 ? Win32.GetAncestor(hwnd, Win32.GA_ROOT) : 0;
+        if (root == 0 || Win32.GetProcessId(root) == Environment.ProcessId || WindowEnumerator.IsShell(root))
+        {
+            _notifier.Show("", "Point at an app window to lift it");
+            return;
+        }
+
+        bool wasLifted = IsWindowPinned(root);
+        if (wasLifted) UnpinWindow(root);
+        else PinWindow(root);
+        _notifier.Show("", wasLifted ? "Put back" : "Lifted to the front",
+            wasLifted ? null : "Press the shortcut again over it to put it back.");
+    }
+
     /// <summary>Lifts every pin back to the front: for pins buried under other pins or windows.</summary>
     public void BringAllToFront()
     {

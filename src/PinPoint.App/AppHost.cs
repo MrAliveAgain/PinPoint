@@ -305,6 +305,18 @@ public sealed class AppHost : IDisposable
 
         Commands.Add(new AppCommand
         {
+            Id = CommandIds.LiftUnderMouse,
+            Title = "Lift window under mouse",
+            Description = "Bring the app window your mouse is over to the very front (marked with a coloured border); press again over it to put it back.",
+            Glyph = "",
+            BadgeGlyph = "",
+            DefaultHotkey = "Ctrl+Alt+L",
+            ShowInTray = false,
+            Execute = Pins.ToggleLiftUnderMouse,
+        });
+
+        Commands.Add(new AppCommand
+        {
             Id = CommandIds.NextPin,
             Title = "Next pin",
             Description = "Bring the next pin to the front, cycling through them (like Alt+Tab, just for pins).",

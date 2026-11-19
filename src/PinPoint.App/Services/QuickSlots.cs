@@ -162,8 +162,7 @@ public sealed class QuickSlots
     /// "Hide all" means a clear screen, slots included, except a slot that is itself Hide all: that one stays,
     /// so you can bring everything back with the mouse. During a screen capture none show.
     /// </summary>
-    private bool ShouldShow(QuickSlotTile tile) =>
-        !_capturing && (!_pins.IsHidden || CommandAt(tile.Index)?.Id == CommandIds.ToggleHideAll);
+    private bool ShouldShow(QuickSlotTile tile) => !_capturing; // the slots are the controls: they stay even when pins hide
 
     private bool _capturing;
 
