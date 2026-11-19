@@ -1176,7 +1176,13 @@ public sealed class PinManager : IDisposable
     private void RaiseAll()
     {
         // Re-ordering windows closes open menus and can cover a note being typed in, so hold off then.
-        if (IsHidden || _raiseSuspensions > 0 || Surfaces.Any(s => s.IsInteracting)) return;
+        if (_raiseSuspensions > 0 || Surfaces.Any(s => s.IsInteracting)) return;
+        if (IsHidden)
+        {
+            // Pins are hidden, but the quick slots stay: keep them over a game that covers them.
+            if ((ExtraTopmost?.Invoke() ?? []).Any(h => WindowEnumerator.IsCoveredByAnotherApp(h))) Raised?.Invoke();
+            return;
+        }
 
         // You're using a PinPoint window (the main window, a dialog): it comes first; don't push pins over it.
         nint foreground = Win32.GetForegroundWindow();
