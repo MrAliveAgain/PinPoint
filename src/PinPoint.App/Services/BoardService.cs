@@ -181,6 +181,7 @@ public sealed partial class BoardService
     /// <summary>Blocking flush for app exit (the writes don't need the UI thread, so this can't deadlock).</summary>
     public void FlushForExit()
     {
+        _pins.EndPeekNow(); // save where pins really live, not the screen edge
         SaveIfChanged();
         _stopped = true; // pins are about to close; that must not be saved as "nothing pinned"
         _autosave.Stop();
@@ -265,6 +266,7 @@ public sealed partial class BoardService
     private void SaveIfChanged()
     {
         if (_busy > 0 || _stopped || !_writing.IsCompleted) return; // next tick will catch up
+        if (_pins.IsPeeking) return; // pins are only slid aside for a moment; save once they're back
 
         var (store, id, board) = CurrentTarget();
         string json = BoardStore.ToJson(board);
@@ -313,7 +315,13 @@ public sealed partial class BoardService
         [.. _pins.Snips.Where(s => !File.Exists(store.ImagePath(id, s.Id))).Select(s => (s.Id, s.Frame))];
 
     /// <summary>The pinned snips and notes as board data (must run on the UI thread).</summary>
-    private Board Snapshot(string name) => new()
+    private Board Snapshot(string name)
+    {
+        _pins.EndPeekNow(); // board positions are where pins live, never the peek spot at the edge
+        return SnapshotCore(name);
+    }
+
+    private Board SnapshotCore(string name) => new()
     {
         Name = name,
         Snips =

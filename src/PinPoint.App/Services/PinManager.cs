@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using Microsoft.UI.Dispatching;
 using PinPoint.Core;
 using PinPoint.Core.Capture;
+using PinPoint.Core.Geometry;
 using PinPoint.Core.Interop;
 using PinPoint.Core.Notes;
 using PinPoint.Core.Windows;
@@ -123,6 +124,7 @@ public sealed class PinManager : IDisposable
     /// <summary>Pins a small stopwatch / countdown near the mouse. Timers hide only with "hide all".</summary>
     public void CreateTimer()
     {
+        EndPeekNow();
         var window = new TimerPinWindow();
         window.Closed += (_, _) =>
         {
@@ -406,6 +408,188 @@ public sealed class PinManager : IDisposable
 
     private bool IsOpen(IPinSurface pin) => pin is ImagePinWindow s ? _snips.Contains(s) : pin is NotePinWindow n && _notes.Contains(n);
 
+    // ---- Peek: slide every pin out to the screen edges and back ----------------------------------
+
+    private const double PeekSeconds = 0.14; // snappy: it's a quick look, not a show
+
+    private sealed class PeekMove(nint hwnd, PixelRect home, PixelRect away)
+    {
+        public nint Hwnd { get; } = hwnd;
+        public PixelRect Home { get; } = home;
+        public PixelRect Away { get; } = away;
+        public PixelRect From { get; set; } = home;
+        public PixelRect To { get; set; } = away;
+    }
+
+    private List<PeekMove>? _peek;          // set while pins are out (or sliding)
+    private bool _peekReturning;
+    private readonly System.Diagnostics.Stopwatch _peekClock = new();
+    private bool _peekAnimating;
+
+    /// <summary>Pins are slid out to the edges (or on their way out or back).</summary>
+    public bool IsPeeking => _peek is not null;
+
+    /// <summary>
+    /// Like "show desktop" for your pins: snips, notes and timers slide out past the nearest screen edge (a thin
+    /// sliver stays visible) so you can work on what's under them; press again and they slide right back.
+    /// </summary>
+    public void TogglePeek()
+    {
+        if (_peek is null || _peekReturning) PeekOut();
+        else PeekBack();
+    }
+
+    /// <summary>The Peek shortcut's key (virtual-key code), for telling a tap from a hold. Set by AppHost.</summary>
+    public Func<int?>? PeekKey { get; set; }
+
+    private const double HoldSeconds = 0.3;
+    private DispatcherQueueTimer? _holdWatch;
+    private int _holdKey;
+    private readonly System.Diagnostics.Stopwatch _heldFor = new();
+
+    /// <summary>
+    /// The Peek shortcut. A tap slides the pins out and leaves them there until the next tap; holding it peeks
+    /// only while held (like Aero Peek): let go and they snap back.
+    /// </summary>
+    public void PeekFromShortcut()
+    {
+        bool goingOut = _peek is null || _peekReturning;
+        TogglePeek();
+        if (!goingOut || _peek is null || PeekKey?.Invoke() is not { } key) return;
+
+        _heldFor.Restart();
+        _holdKey = key;
+        _holdWatch ??= CreateHoldWatch();
+        _holdWatch.Start();
+    }
+
+    private DispatcherQueueTimer CreateHoldWatch()
+    {
+        var timer = DispatcherQueue.GetForCurrentThread().CreateTimer();
+        timer.Interval = TimeSpan.FromMilliseconds(25);
+        timer.Tick += (t, _) =>
+        {
+            if (Win32.IsKeyDown(_holdKey)) return; // still held
+            t.Stop();
+            // Released after a proper hold: that was a peek, put them back. A quick tap leaves them out.
+            if (_heldFor.Elapsed.TotalSeconds >= HoldSeconds && _peek is not null && !_peekReturning) PeekBack();
+        };
+        return timer;
+    }
+
+    private void PeekOut()
+    {
+        if (_peek is not null && _peekReturning)
+        {
+            // Pressed again while sliding back: turn round from where they are.
+            foreach (var move in _peek)
+            {
+                move.From = CurrentRect(move);
+                move.To = move.Away;
+            }
+
+            _peekReturning = false;
+            StartPeekAnimation();
+            OnStateChanged();
+            return;
+        }
+
+        var monitors = WindowEnumerator.GetMonitors();
+        var moves = new List<PeekMove>();
+        foreach (var surface in Surfaces.Where(s => !IsSurfaceHidden(s)))
+        {
+            Win32.GetWindowRect(surface.Handle, out var r);
+            var rect = PixelRect.FromRect(r);
+            var (monitor, _) = WindowEnumerator.GetMonitorAt(rect.X + rect.Width / 2, rect.Y + rect.Height / 2);
+            int sliver = (int)Math.Round(18 * WindowHelpers.GetScale(surface.Handle));
+            moves.Add(new PeekMove(surface.Handle, rect, PeekLayout.Target(rect, monitor, monitors, sliver)));
+        }
+
+        if (moves.Count == 0)
+        {
+            _notifier.Show("", "No pins to move aside");
+            return;
+        }
+
+        _peek = moves;
+        _peekReturning = false;
+        foreach (var note in _notes) note.HoldLayout = true; // don't save the "away" spot as the note's place
+        StartPeekAnimation();
+        OnStateChanged();
+    }
+
+    private void PeekBack()
+    {
+        if (_peek is null) return;
+        foreach (var move in _peek)
+        {
+            move.From = CurrentRect(move);
+            move.To = move.Home;
+        }
+
+        _peekReturning = true;
+        StartPeekAnimation();
+        OnStateChanged();
+    }
+
+    /// <summary>Puts peeked pins straight back (no animation): before saving a board, pinning something new, exiting.</summary>
+    public void EndPeekNow()
+    {
+        if (_peek is null) return;
+        Win32.MoveWindowsTogether([.. _peek.Where(m => Win32.IsWindow(m.Hwnd)).Select(m => (m.Hwnd, m.Home.X, m.Home.Y))]);
+        FinishPeek();
+    }
+
+    private void FinishPeek()
+    {
+        StopPeekAnimation();
+        _peek = null;
+        _peekReturning = false;
+        foreach (var note in _notes) note.HoldLayout = false;
+        OnStateChanged();
+    }
+
+    private static PixelRect CurrentRect(PeekMove move)
+    {
+        if (!Win32.IsWindow(move.Hwnd)) return move.Home;
+        Win32.GetWindowRect(move.Hwnd, out var r);
+        return PixelRect.FromRect(r);
+    }
+
+    private void StartPeekAnimation()
+    {
+        _peekClock.Restart();
+        if (_peekAnimating) return;
+        _peekAnimating = true;
+        Microsoft.UI.Xaml.Media.CompositionTarget.Rendering += OnPeekFrame; // once per display frame
+    }
+
+    private void StopPeekAnimation()
+    {
+        if (!_peekAnimating) return;
+        _peekAnimating = false;
+        Microsoft.UI.Xaml.Media.CompositionTarget.Rendering -= OnPeekFrame;
+    }
+
+    private void OnPeekFrame(object? sender, object e)
+    {
+        if (_peek is null)
+        {
+            StopPeekAnimation();
+            return;
+        }
+
+        double t = PeekLayout.EaseOut(_peekClock.Elapsed.TotalSeconds / PeekSeconds);
+        var frame = _peek.Where(m => Win32.IsWindow(m.Hwnd))
+            .Select(m => PeekLayout.Lerp(m.From, m.To, t) is var r ? (m.Hwnd, r.X, r.Y) : default)
+            .ToList();
+        Win32.MoveWindowsTogether(frame);
+
+        if (t < 1) return;
+        StopPeekAnimation();
+        if (_peekReturning) FinishPeek(); // back home: done
+    }
+
     // ---- Hide the pin under the mouse ------------------------------------------------------------
 
     /// <summary>Pins hidden one at a time (on top of the per-kind hiding).</summary>
@@ -465,6 +649,7 @@ public sealed class PinManager : IDisposable
     /// </summary>
     public void CloseSnipsAndNotes()
     {
+        EndPeekNow();
         foreach (var snip in _snips.ToArray()) snip.Close();
         foreach (var note in _notes.ToArray()) note.CloseNote();
     }
@@ -768,6 +953,8 @@ public sealed class PinManager : IDisposable
 
     public void Dispose()
     {
+        EndPeekNow(); // notes save their real spot, not the edge
+        _holdWatch?.Stop();
         _maintenance.Stop();
         _raiseAgain.Stop();
         _foreground.Dispose();
@@ -783,6 +970,7 @@ public sealed class PinManager : IDisposable
     /// </summary>
     private void ShowAll(bool windows = false, bool notes = false, bool snips = false)
     {
+        EndPeekNow(); // a new pin: everything comes back from the edges first
         if (!(windows && _windowsHidden) && !(notes && _notesHidden) && !(snips && _snipsHidden)) return;
         SetHiddenState(windows: !windows && _windowsHidden, notes: !notes && _notesHidden, snips: !snips && _snipsHidden);
     }

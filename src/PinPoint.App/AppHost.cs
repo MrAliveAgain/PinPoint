@@ -247,6 +247,19 @@ public sealed class AppHost : IDisposable
 
         Commands.Add(new AppCommand
         {
+            Id = CommandIds.PeekPins,
+            Title = "Peek past pins",
+            Description = "Slide your snips, notes and timers out to the screen edges to get at what's under them. Tap to toggle; hold to peek just while held.",
+            Glyph = "",
+            DefaultHotkey = "Ctrl+Alt+Space",
+            IsChecked = () => Pins.IsPeeking,
+            CanExecute = () => Pins.HasPins,
+            Execute = Pins.PeekFromShortcut,
+        });
+        Pins.PeekKey = () => Settings.GetHotkey(Commands.Get(CommandIds.PeekPins))?.Key;
+
+        Commands.Add(new AppCommand
+        {
             Id = CommandIds.HidePinUnderMouse,
             Title = "Hide pin under mouse",
             Description = "Hide the snip, note or timer your mouse is over. Press it with the mouse off your pins to bring the hidden ones back.",

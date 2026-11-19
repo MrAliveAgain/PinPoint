@@ -72,6 +72,8 @@ public sealed partial class PinsPage : Page
         HideSnipsToggle.IsEnabled = pins.HasSnips;
         HideNotesToggle.IsChecked = pins.HasNotesOpen && pins.AreNotesHidden;
         HideSnipsToggle.IsChecked = pins.HasSnips && pins.AreSnipsHidden;
+        PeekToggle.IsEnabled = pins.HasPins;
+        PeekToggle.IsChecked = pins.IsPeeking;
         HideWindowsToggle.IsEnabled = pins.HasWindowPins;
         HideWindowsToggle.IsChecked = pins.HasWindowPins && pins.AreWindowsHidden;
         ClickThroughToggle.IsChecked = pins.IsClickThrough;
@@ -262,6 +264,8 @@ public sealed partial class PinsPage : Page
     private void HideSnips_Click(object sender, RoutedEventArgs e) => _host.Pins.ToggleSnipsHidden();
 
     private void HideWindows_Click(object sender, RoutedEventArgs e) => _host.Pins.ToggleWindowsHidden();
+
+    private void Peek_Click(object sender, RoutedEventArgs e) => _host.Pins.TogglePeek();
 
     private void ClickThrough_Click(object sender, RoutedEventArgs e) => _host.Pins.ToggleClickThrough();
 

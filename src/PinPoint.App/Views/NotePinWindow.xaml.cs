@@ -274,8 +274,12 @@ public sealed partial class NotePinWindow : Window, IPinSurface
         Changed?.Invoke(this, EventArgs.Empty); // title in the Pins list follows the first line
     }
 
+    /// <summary>While pins are slid aside for a peek: don't save the edge spot as where this note lives.</summary>
+    public bool HoldLayout { get; set; }
+
     private void SaveLayout()
     {
+        if (HoldLayout) return;
         var pos = AppWindow.Position;
         var size = AppWindow.Size;
         _store?.SaveLayout(Id, new NoteLayout(pos.X, pos.Y, size.Width, size.Height, _opacity, _exportPath));

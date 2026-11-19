@@ -1,0 +1,41 @@
+using System.Runtime.InteropServices;
+
+namespace PinPoint.Core.Interop;
+
+public static unsafe partial class Win32
+{
+    [LibraryImport("user32.dll")]
+    public static partial nint BeginDeferWindowPos(int nNumWindows);
+
+    [LibraryImport("user32.dll")]
+    public static partial nint DeferWindowPos(nint hWinPosInfo, nint hWnd, nint hWndInsertAfter, int x, int y, int cx, int cy, uint uFlags);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool EndDeferWindowPos(nint hWinPosInfo);
+
+    /// <summary>Moves several windows in one go (one redraw for all of them), keeping size and z-order.</summary>
+    public static void MoveWindowsTogether(IReadOnlyList<(nint Hwnd, int X, int Y)> moves)
+    {
+        if (moves.Count == 0) return;
+        const uint flags = SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOOWNERZORDER;
+        nint batch = BeginDeferWindowPos(moves.Count);
+        foreach (var (hwnd, x, y) in moves)
+        {
+            if (batch == 0) break;
+            batch = DeferWindowPos(batch, hwnd, 0, x, y, 0, 0, flags);
+        }
+
+        if (batch != 0)
+        {
+            EndDeferWindowPos(batch);
+            return;
+        }
+
+        // A window went away mid-batch: fall back to moving them one by one.
+        foreach (var (hwnd, x, y) in moves)
+        {
+            if (IsWindow(hwnd)) SetWindowPos(hwnd, 0, x, y, 0, 0, flags);
+        }
+    }
+}

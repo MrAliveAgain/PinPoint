@@ -64,6 +64,13 @@
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Spacing="4">
+                    <ToggleButton x:Name="PeekToggle" Click="Peek_Click" Margin="0,0,8,0"
+                                  ToolTipService.ToolTip="Peek: slide pins out to the screen edges to get at what's under them, then back (the shortcut: tap to toggle, hold to peek while held)">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon Glyph="&#xE7B3;" FontSize="14" />
+                            <TextBlock Text="Peek" />
+                        </StackPanel>
+                    </ToggleButton>
                     <ToggleButton x:Name="HideNotesToggle" Click="HideNotes_Click"
                                   ToolTipService.ToolTip="Hide all notes (click again to show them)">
                         <StackPanel Orientation="Horizontal" Spacing="6">
