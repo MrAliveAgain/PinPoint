@@ -47,6 +47,11 @@ public static class CommandIds
     public const string ToggleHideWindows = "toggleHideWindows";
     public const string HidePinUnderMouse = "hidePinUnderMouse";
     public const string PeekPins = "peekPins";
+    public const string NextPin = "nextPin";
+    public const string PreviousPin = "previousPin";
+    public const string PinsToFront = "pinsToFront";
+    public const string FadeAllPins = "fadeAllPins";
+    public const string UnfadeAllPins = "unfadeAllPins";
     public const string UndoClose = "undoClosePin";
     public const string RedoClose = "redoClosePin";
     public const string ToggleClickThrough = "toggleClickThrough";

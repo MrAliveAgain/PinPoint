@@ -870,6 +870,58 @@ public sealed class PinManager : IDisposable
             hide ? "Bring them back from the tray menu, the Pins page or your shortcut." : null);
     }
 
+    // ---- Finding buried pins, and fading everything -----------------------------------------------
+
+    private int _cycle = -1;
+
+    /// <summary>Brings the next (+1) or previous (-1) visible pin to the front, cycling, like Alt+Tab just for pins.</summary>
+    public void CyclePins(int direction)
+    {
+        var all = Surfaces.Where(s => !IsSurfaceHidden(s)).Select(s => s.Handle)
+            .Concat(_windows.Pins.Select(p => p.Handle)).Where(Win32.IsWindowVisible).ToList();
+        if (all.Count == 0)
+        {
+            _notifier.Show("", "No pins showing");
+            return;
+        }
+
+        _cycle = ((_cycle + direction) % all.Count + all.Count) % all.Count;
+        WindowStyler.RaiseTopmost(all[_cycle]);
+        Raised?.Invoke();
+        _notifier.Show("", $"Pin {_cycle + 1} of {all.Count}", Win32.GetWindowText(all[_cycle]));
+    }
+
+    /// <summary>Lifts every pin back to the front: for pins buried under other pins or windows.</summary>
+    public void BringAllToFront()
+    {
+        if (!HasPins)
+        {
+            _notifier.Show("", "Nothing pinned yet");
+            return;
+        }
+
+        _windows.RaiseAll();
+        foreach (var surface in Surfaces) surface.RaiseTopmost();
+        Raised?.Invoke();
+        _notifier.Show("", "Pins brought to front");
+    }
+
+    /// <summary>Fades (-1) or unfades (+1) every pin one step at once, wherever the mouse is.</summary>
+    public void NudgeAllOpacity(int direction)
+    {
+        if (!HasPins)
+        {
+            _notifier.Show("", "Nothing pinned yet");
+            return;
+        }
+
+        foreach (var s in Surfaces) s.PinOpacity += direction * 0.1;
+        foreach (var p in _windows.Pins) _windows.SetOpacity(p, p.Opacity + direction * 0.1);
+        foreach (var item in Items) item.Refresh();
+        double shown = Surfaces.FirstOrDefault()?.PinOpacity ?? _windows.Pins.FirstOrDefault()?.Opacity ?? 1;
+        _notifier.Show("", $"All pins · opacity {shown:P0}");
+    }
+
     /// <summary>Applies a new hidden state, showing/hiding only the kinds of pin whose visibility changed.</summary>
     private void SetHiddenState(bool windows, bool notes, bool snips)
     {

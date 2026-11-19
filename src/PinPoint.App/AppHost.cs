@@ -294,6 +294,61 @@ public sealed class AppHost : IDisposable
 
         Commands.Add(new AppCommand
         {
+            Id = CommandIds.PinsToFront,
+            Title = "Bring pins to front",
+            Description = "Lift every pin back on top, for pins buried under other pins or windows.",
+            Glyph = "",
+            BadgeGlyph = "",
+            CanExecute = () => Pins.HasPins,
+            Execute = Pins.BringAllToFront,
+        });
+
+        Commands.Add(new AppCommand
+        {
+            Id = CommandIds.NextPin,
+            Title = "Next pin",
+            Description = "Bring the next pin to the front, cycling through them (like Alt+Tab, just for pins).",
+            Glyph = "",
+            DefaultHotkey = "Ctrl+Alt+Right",
+            ShowInTray = false,
+            Execute = () => Pins.CyclePins(+1),
+        });
+
+        Commands.Add(new AppCommand
+        {
+            Id = CommandIds.PreviousPin,
+            Title = "Previous pin",
+            Description = "Bring the previous pin to the front, cycling backwards.",
+            Glyph = "",
+            DefaultHotkey = "Ctrl+Alt+Left",
+            ShowInTray = false,
+            Execute = () => Pins.CyclePins(-1),
+        });
+
+        Commands.Add(new AppCommand
+        {
+            Id = CommandIds.FadeAllPins,
+            Title = "Fade all pins",
+            Description = "Make every pin a step more see-through at once.",
+            Glyph = "",
+            BadgeGlyph = "",
+            CanExecute = () => Pins.HasPins,
+            Execute = () => Pins.NudgeAllOpacity(-1),
+        });
+
+        Commands.Add(new AppCommand
+        {
+            Id = CommandIds.UnfadeAllPins,
+            Title = "Unfade all pins",
+            Description = "Make every pin a step more solid at once.",
+            Glyph = "",
+            BadgeGlyph = "",
+            CanExecute = () => Pins.HasPins,
+            Execute = () => Pins.NudgeAllOpacity(+1),
+        });
+
+        Commands.Add(new AppCommand
+        {
             Id = CommandIds.HidePinUnderMouse,
             Title = "Hide pin under mouse",
             Description = "Hide the snip, note or timer your mouse is over. Press it with the mouse off your pins to bring the hidden ones back.",
