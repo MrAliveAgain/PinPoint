@@ -10,8 +10,7 @@
             <Color x:Key="NoteGlassHoverColor">#A6191D24</Color>
             <Color x:Key="NoteEditingColor">#FF191D24</Color>
             <SolidColorBrush x:Key="CardSurfaceBackground" Color="White" Opacity="0.05" />
-            <SolidColorBrush x:Key="GlassTintNeutral" Color="#0DFFFFFF" />
-            <SolidColorBrush x:Key="GlassTintAccent" Color="{ThemeResource SystemAccentColor}" Opacity="0.24" />
+            <SolidColorBrush x:Key="GlassTintNeutral" Color="Transparent" />
             <LinearGradientBrush x:Key="CardSurfaceBorder" StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Color="#29FFFFFF" Offset="0" />
                 <GradientStop Color="#0AFFFFFF" Offset="1" />
@@ -22,8 +21,7 @@
             <Color x:Key="NoteGlassHoverColor">#A6F3F5F8</Color>
             <Color x:Key="NoteEditingColor">#FFF3F5F8</Color>
             <SolidColorBrush x:Key="CardSurfaceBackground" Color="Black" Opacity="0.03" />
-            <SolidColorBrush x:Key="GlassTintNeutral" Color="#0F000000" />
-            <SolidColorBrush x:Key="GlassTintAccent" Color="{ThemeResource SystemAccentColor}" Opacity="0.32" />
+            <SolidColorBrush x:Key="GlassTintNeutral" Color="Transparent" />
             <LinearGradientBrush x:Key="CardSurfaceBorder" StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Color="#1A000000" Offset="0" />
                 <GradientStop Color="#08000000" Offset="1" />
@@ -35,13 +33,12 @@
             <StaticResource x:Key="NoteEditingColor" ResourceKey="SystemColorWindowColor" />
             <SolidColorBrush x:Key="CardSurfaceBackground" Color="{ThemeResource SystemColorWindowColor}" />
             <SolidColorBrush x:Key="GlassTintNeutral" Color="{ThemeResource SystemColorButtonFaceColor}" />
-            <SolidColorBrush x:Key="GlassTintAccent" Color="{ThemeResource SystemColorHighlightColor}" />
             <SolidColorBrush x:Key="CardSurfaceBorder" Color="{ThemeResource SystemColorWindowTextColor}" />
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
 
     <!--
-      Liquid Glass button: a floating capsule of glass that bends light like a raindrop (after Apple's Liquid Glass).
+      Liquid Glass button: a drop of water resting on the window glass, lit by the same Gleam light as the container (after Apple's Liquid Glass).
       Layers, back to front: the tint (glass, not paint: the backdrop shows through), curvature (lit top, deeper
       bottom), a specular highlight pooled at the top, a caustic where light concentrates at the bottom, the rim, then
       two feedback layers: it "energizes" on hover and glows from within on press. All static brushes; the only motion
@@ -64,20 +61,8 @@
                             <ScalarTransition Duration="0:0:0.12" />
                         </Grid.OpacityTransition>
 
-                        <!-- Body: a nearly clear pane (the acrylic behind does the blurring); tinted only on the primary drop. -->
+                        <!-- Body: clear. The window's acrylic behind is the transparency; the drop adds no paint. -->
                         <Border Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}" />
-
-                        <!-- Depth: barely-there light falling from the top half, a faint deepening at the very bottom. -->
-                        <Border CornerRadius="{TemplateBinding CornerRadius}">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
-                                    <GradientStop Color="#12FFFFFF" Offset="0" />
-                                    <GradientStop Color="#00FFFFFF" Offset="0.5" />
-                                    <GradientStop Color="#00000000" Offset="0.75" />
-                                    <GradientStop Color="#14000000" Offset="1" />
-                                </LinearGradientBrush>
-                            </Border.Background>
-                        </Border>
 
                         <!-- Feedback: a little more light on hover, a soft inner glow on press. -->
                         <Border x:Name="Energize" Opacity="0" Background="#0FFFFFFF" CornerRadius="{TemplateBinding CornerRadius}">
@@ -97,33 +82,11 @@
                             </Border.Background>
                         </Border>
 
-                        <!-- Rim: one thin edge, a touch brighter at the top, fainter round the sides. -->
-                        <Border BorderThickness="1" CornerRadius="{TemplateBinding CornerRadius}">
-                            <Border.BorderBrush>
-                                <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
-                                    <GradientStop Color="#47FFFFFF" Offset="0" />
-                                    <GradientStop Color="#17FFFFFF" Offset="0.5" />
-                                    <GradientStop Color="#24FFFFFF" Offset="1" />
-                                </LinearGradientBrush>
-                            </Border.BorderBrush>
-                        </Border>
-
                         <!--
-                          The raindrop: a crisp 1px specular line just inside the top edge (the light the drop
-                          catches) and a faint dark 1px line just inside the bottom (its thickness). Thin lines, not
-                          glows: that's what makes glass read as glass.
+                          The drop: lit by the container's own Gleam light (lead top-left, trail bottom-right), with
+                          a dark meniscus seating it on the surface, a specular point and a caustic on the far side.
                         -->
-                        <Border Margin="1,1,1,0" CornerRadius="{TemplateBinding CornerRadius}" BorderThickness="0,1,0,0">
-                            <Border.BorderBrush>
-                                <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
-                                    <GradientStop Color="#00FFFFFF" Offset="0" />
-                                    <GradientStop Color="#8CFFFFFF" Offset="0.3" />
-                                    <GradientStop Color="#8CFFFFFF" Offset="0.7" />
-                                    <GradientStop Color="#00FFFFFF" Offset="1" />
-                                </LinearGradientBrush>
-                            </Border.BorderBrush>
-                        </Border>
-                        <Border Margin="1,0,1,1" CornerRadius="{TemplateBinding CornerRadius}" BorderThickness="0,0,0,1" BorderBrush="#1F000000" />
+                        <controls:GlassDropLayer Radius="{TemplateBinding CornerRadius}" />
 
                         <ContentPresenter x:Name="Content"
                                           Content="{TemplateBinding Content}"
@@ -163,7 +126,7 @@
 
     <!-- The primary action: the same drop, tinted with the accent (coloured glass, still see-through). -->
     <Style x:Key="LiquidGlassAccentButtonStyle" TargetType="Button" BasedOn="{StaticResource LiquidGlassButtonStyle}">
-        <Setter Property="Background" Value="{ThemeResource GlassTintAccent}" />
+        <Setter Property="controls:GlassDropLayer.Primary" Value="True" />
     </Style>
 
     <!-- Translucent card with a subtle directional rim. -->

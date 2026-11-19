@@ -38,8 +38,6 @@ public sealed class AppHost : IDisposable
         QuickSlots = new QuickSlots(dispatcher, Settings, Commands, Pins);
 
         // The primary glass drop takes its colour from the chosen Gleam light, live.
-        GlassTint.Apply(Settings.Current);
-        Settings.Changed += (_, _) => dispatcher.TryEnqueue(() => GlassTint.Apply(Settings.Current));
     }
 
     public QuickSlots QuickSlots { get; }
