@@ -473,8 +473,18 @@ public sealed class AppHost : IDisposable
 
     private void OnManagerClosed(object sender, WindowEventArgs args)
     {
+        bool toTray = _manager?.ClosedToTray == true;
         _manager = null;
-        if (_disposed || Settings.Current.HasShownTrayHint) return;
+
+        // Give the closed window's memory back now rather than whenever the runtime next gets round to it.
+        Dispatcher.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+        });
+
+        if (_disposed || toTray || Settings.Current.HasShownTrayHint) return;
 
         Notifier.Show("", "PinPoint is still running", "It lives in the system tray. Right-click the icon to exit.", force: true);
         Settings.Update(s => s.HasShownTrayHint = true);

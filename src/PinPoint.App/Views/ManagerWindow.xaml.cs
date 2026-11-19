@@ -69,12 +69,18 @@ public sealed partial class ManagerWindow : Window
         };
         Activated += (_, e) => KeepAbovePins(e.WindowActivationState != WindowActivationState.Deactivated);
 
-        // Minimize to the tray: a minimized window is hidden, so it's out of the taskbar and Alt+Tab.
+        // Minimize to the tray: out of the taskbar and Alt+Tab. The window is closed, not just hidden: its pages,
+        // thumbnails and glass would otherwise sit in memory the whole time PinPoint lives in the tray. The tray
+        // rebuilds it in a moment when you open it again.
         AppWindow.Changed += (_, e) =>
         {
-            if (!AppHost.Current.Settings.Current.MinimizeToTray) return;
+            if (!AppHost.Current.Settings.Current.MinimizeToTray || _closingToTray) return;
             if (AppWindow.IsVisible && AppWindow.Presenter is OverlappedPresenter { State: OverlappedPresenterState.Minimized })
+            {
+                _closingToTray = true;
                 AppWindow.Hide();
+                DispatcherQueue.TryEnqueue(Close);
+            }
         };
     }
 
@@ -99,6 +105,11 @@ public sealed partial class ManagerWindow : Window
                 Win32.SWP_NOMOVE | Win32.SWP_NOSIZE | Win32.SWP_NOACTIVATE | Win32.SWP_NOOWNERZORDER);
         }
     }
+
+    private bool _closingToTray;
+
+    /// <summary>Closed because it was minimized to the tray (no "still running" hint needed).</summary>
+    public bool ClosedToTray => _closingToTray;
 
     private Core.Settings.AppearanceStyle? _appliedAppearance;
     private DesktopAcrylicController? _acrylic;
