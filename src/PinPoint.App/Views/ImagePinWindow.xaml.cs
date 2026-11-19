@@ -54,6 +54,8 @@ public sealed partial class ImagePinWindow : Window, IPinSurface
     public ImagePinWindow(CapturedFrame frame, SnipStorage storage, OcrService ocr, SettingsService settings, string? id = null)
     {
         InitializeComponent();
+        // Clicking a pin brings it in front of the other pins (without taking focus from whatever you're in).
+        Root.AddHandler(UIElement.PointerPressedEvent, new PointerEventHandler((_, _) => RaiseTopmost()), handledEventsToo: true);
         Id = id ?? $"snip-{Guid.NewGuid():N}";
         Frame = frame;
         _storage = storage;

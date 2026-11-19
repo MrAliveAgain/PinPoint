@@ -36,6 +36,8 @@ public sealed partial class NotePinWindow : Window, IPinSurface
     public NotePinWindow(StoredNote note, NoteStore? store)
     {
         InitializeComponent();
+        // Clicking a pin brings it in front of the other pins (without taking focus from whatever you're in).
+        Root.AddHandler(UIElement.PointerPressedEvent, new PointerEventHandler((_, _) => RaiseTopmost()), handledEventsToo: true);
         Id = note.Id;
         _store = store;
         _hwnd = this.GetHandle();

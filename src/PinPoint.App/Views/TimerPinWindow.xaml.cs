@@ -45,6 +45,8 @@ public sealed partial class TimerPinWindow : Window, IPinSurface
     public TimerPinWindow()
     {
         InitializeComponent();
+        // Clicking a pin brings it in front of the other pins (without taking focus from whatever you're in).
+        Root.AddHandler(UIElement.PointerPressedEvent, new PointerEventHandler((_, _) => RaiseTopmost()), handledEventsToo: true);
         _hwnd = this.GetHandle();
         _drag = new WindowDragger(AppWindow);
         _solidBackground = Root.Background;
