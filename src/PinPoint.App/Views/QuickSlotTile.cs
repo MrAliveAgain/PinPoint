@@ -184,7 +184,7 @@ public sealed class QuickSlotTile : Window
     }
 
     public void ShowMenu(MenuFlyout menu, Windows.Foundation.Point at) =>
-        menu.ShowAt(_root, new FlyoutShowOptions { Position = at });
+        FlyoutFocus.ShowAt(this, menu, _root, new FlyoutShowOptions { Position = at });
 
     // ---- Click vs drag -----------------------------------------------------------------------
 

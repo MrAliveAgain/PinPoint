@@ -386,7 +386,7 @@ public sealed partial class TimerPinWindow : Window, IPinSurface
         var point = e.GetCurrentPoint(Root);
         if (point.Properties.PointerUpdateKind == PointerUpdateKind.RightButtonReleased)
         {
-            Menu.ShowAt(Root, new FlyoutShowOptions { Position = point.Position });
+            FlyoutFocus.ShowAt(this, Menu, Root, new FlyoutShowOptions { Position = point.Position });
             e.Handled = true;
             return;
         }

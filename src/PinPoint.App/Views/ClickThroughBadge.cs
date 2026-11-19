@@ -59,7 +59,7 @@ public sealed class ClickThroughBadge : Window
         var surface = new Grid
         {
             Background = (Brush)Application.Current.Resources["SolidBackgroundFillColorSecondaryBrush"],
-            ContextFlyout = new MenuFlyout { Items = { allPins, thisNote } },
+
             Children =
             {
                 new Grid
@@ -77,6 +77,12 @@ public sealed class ClickThroughBadge : Window
             },
         };
         surface.Tapped += (_, _) => TurnOffAllRequested?.Invoke(this, EventArgs.Empty);
+        var menu = new MenuFlyout { ShouldConstrainToRootBounds = false, Items = { allPins, thisNote } };
+        surface.RightTapped += (_, e) =>
+        {
+            FlyoutFocus.ShowAt(this, menu, surface, new Microsoft.UI.Xaml.Controls.Primitives.FlyoutShowOptions { Position = e.GetPosition(surface) });
+            e.Handled = true;
+        };
         surface.Loaded += (_, _) => DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
         {
             _rendered = true;

@@ -264,7 +264,7 @@ public sealed partial class ImagePinWindow : Window, IPinSurface
         {
             bool showMenu = _rightHeld && !_scrolledWhileRightHeld && !RightPressWasErase;
             _rightHeld = false;
-            if (showMenu) Menu.ShowAt(Root, new FlyoutShowOptions { Position = point.Position });
+            if (showMenu) FlyoutFocus.ShowAt(this, Menu, Root, new FlyoutShowOptions { Position = point.Position });
             e.Handled = true;
             return;
         }
