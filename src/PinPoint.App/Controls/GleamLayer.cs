@@ -68,63 +68,42 @@ public sealed class GleamLayer : Grid
         // k scales everything; white highlights are halved on dark glass (they read twice as strong there).
         double k = settings.GleamIntensity switch { <= 1 => 0.6, 2 => 1.0, _ => 1.5 } * Strength;
         bool dark = ActualTheme != ElementTheme.Light;
-        double white = dark ? 0.55 : 1.0;
+        double white = dark ? 1.0 : 1.3; // tuned on dark glass; a touch more on light
         var (lead, trail) = LightColors(settings.Gleam);
 
         // Rules that keep light from turning into dirt (the "dark streak"):
         //  - every fade goes to the SAME colour at zero alpha, never to "transparent" (which is transparent black);
         //  - washes fall off in ONE direction and keep a small floor, so no unlit gap sits between two lit areas.
 
-        // 1. Light: a soft wash of the chosen light from the lit corner (prism: plus a narrow spectral leak).
+        // Codex's art direction, adopted: "a quiet translucent body with one crisp light-catching edge".
+        // 1. Light: a flat whisper of the chosen colour (prism: its narrow spectral leak instead).
         Children.Add(new Border { CornerRadius = new CornerRadius(Radius), Background = Light(settings.Gleam, lead, k, dark) });
 
-        // 2. Sheen: white reflection falling from the top edge.
-        Children.Add(new Border
+        // 2. Sheen: a soft elliptical highlight near the top-left, not a diagonal wash.
+        var sheen = new RadialGradientBrush
         {
-            CornerRadius = new CornerRadius(Radius),
-            Background = Gradient(new Point(0.5, 0), new Point(0.5, 0.5),
-                (0, WithAlpha(Colors.White, 0.10 * k * white)),
-                (1, WithAlpha(Colors.White, 0.01 * k * white))),
-        });
+            Center = new Point(0.25, 0),
+            GradientOrigin = new Point(0.25, 0),
+            RadiusX = 0.8,
+            RadiusY = 0.45,
+        };
+        sheen.GradientStops.Add(new GradientStop { Offset = 0, Color = WithAlpha(Colors.White, 0.09 * k) });
+        sheen.GradientStops.Add(new GradientStop { Offset = 0.35, Color = WithAlpha(Colors.White, 0.03 * k) });
+        sheen.GradientStops.Add(new GradientStop { Offset = 0.7, Color = WithAlpha(Colors.White, 0) });
+        Children.Add(new Border { CornerRadius = new CornerRadius(Radius), Background = sheen });
 
-        // 3. Rim: a white specular edge, strong top-left, near-invisible mid, faint bounce bottom-right.
+        // 3. Rim: ONE directional 1px edge, bright where light enters, gone by the far side, a faint bounce.
         Children.Add(new Border
         {
             CornerRadius = new CornerRadius(Radius),
             BorderThickness = new Thickness(1),
             BorderBrush = Gradient(new Point(0, 0), new Point(1, 1),
-                (0, WithAlpha(Colors.White, Math.Min(1, 0.60 * k * white))),
-                (0.5, WithAlpha(Colors.White, 0.06 * k * white)),
-                (1, WithAlpha(Colors.White, 0.22 * k * white))),
-        });
-
-        // 4. Dispersion: light splitting at the edge, a faint tint just inside the rim (lead colour in, trail colour out).
-        Children.Add(new Border
-        {
-            Margin = new Thickness(1),
-            CornerRadius = new CornerRadius(Math.Max(0, Radius - 1)),
-            BorderThickness = new Thickness(1),
-            BorderBrush = Gradient(new Point(0, 0), new Point(1, 1),
-                (0, WithAlpha(lead, 0.30 * k)),
-                (0.5, WithAlpha(lead, 0.03 * k)),
-                (0.5, WithAlpha(trail, 0.03 * k)),
-                (1, WithAlpha(trail, 0.26 * k))),
-        });
-
-        // 5. Specular catch: a 1px highlight right along the top, brightest in the middle third.
-        Children.Add(new Border
-        {
-            Height = 1,
-            Margin = new Thickness(Radius, 1, Radius, 0),
-            VerticalAlignment = VerticalAlignment.Top,
-            Background = Gradient(new Point(0, 0.5), new Point(1, 0.5),
-                (0, WithAlpha(Colors.White, 0)),
-                (0.35, WithAlpha(Colors.White, 0.55 * k * white)),
-                (0.65, WithAlpha(Colors.White, 0.55 * k * white)),
-                (1, WithAlpha(Colors.White, 0))),
+                (0, WithAlpha(Colors.White, Math.Min(1, 0.32 * k * white))),
+                (0.30, WithAlpha(Colors.White, 0.12 * k * white)),
+                (0.65, WithAlpha(Colors.White, 0.03 * k * white)),
+                (1, WithAlpha(Colors.White, 0.07 * k * white))),
         });
     }
-
     private static Brush Light(GleamStyle style, Color lead, double k, bool dark)
     {
         double tint = dark ? 0.16 : 0.12;
@@ -146,11 +125,8 @@ public sealed class GleamLayer : Grid
                 (0.88, WithAlpha(Hsv(265, 0.55, 1), 0)));
         }
 
-        // One-directional: lit corner fades to a faint floor of the same colour across the pane.
-        return Gradient(new Point(0, 0), new Point(1, 1),
-            (0, WithAlpha(lead, tint * k)),
-            (0.6, WithAlpha(lead, tint * k * 0.18)),
-            (1, WithAlpha(lead, tint * k * 0.10)));
+        // A flat whisper of colour (2-3%): tint, not paint.
+        return new SolidColorBrush(WithAlpha(lead, 0.025 * k));
     }
 
     /// <summary>The colour light comes in with (top-left) and leaves with (bottom-right).</summary>
