@@ -72,7 +72,11 @@ public sealed partial class NotePinWindow : Window, IPinSurface
             RestartTimer(_layoutTimer);
             if (_badge?.IsShown == true) ShowBadge(); // keep it on the header
         };
-        Closed += (_, _) => _badge?.Close();
+        Closed += (_, _) =>
+        {
+            _badge?.Close();
+            _glass?.Dispose();
+        };
 
         UpdateHeader();
     }
@@ -461,11 +465,29 @@ public sealed partial class NotePinWindow : Window, IPinSurface
 
     private void ApplyLayering()
     {
-        if (_opacity < 0.999 || _clickThrough)
+        bool layered = _opacity < 0.999 || _clickThrough;
+        _glass ??= new PinGlass(this, Root, glass =>
+        {
+            // Glass: the body is the material itself; the header a light layer on it. Solid: the classic paper.
+            var res = Application.Current.Resources;
+            Root.Background = glass ? null : (Microsoft.UI.Xaml.Media.Brush)res["SolidBackgroundFillColorBaseBrush"];
+            Header.Background = (Microsoft.UI.Xaml.Media.Brush)res[glass ? "LayerOnAcrylicFillColorDefaultBrush" : "SolidBackgroundFillColorSecondaryBrush"];
+        });
+
+        // Glass and Windows' whole-window fade can't coexist: drop the glass before fading, add it after un-fading.
+        if (layered)
+        {
+            _glass.Update(fadedOrClickThrough: true);
             WindowStyler.SetAlpha(_hwnd, (byte)Math.Round(_opacity * 255));
+        }
         else
+        {
             WindowStyler.ClearLayered(_hwnd);
+            _glass.Update(fadedOrClickThrough: false);
+        }
     }
+
+    private PinGlass? _glass;
 
     private static bool IsOnScreen(NoteLayout? layout)
     {

@@ -47,7 +47,7 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <Grid Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
+        <Grid x:Name="Header" Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
             <StackPanel Orientation="Horizontal" Spacing="6" Margin="10,0" VerticalAlignment="Center" IsHitTestVisible="False">
                 <FontIcon Glyph="&#xE916;" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 <TextBlock x:Name="ModeText" Text="Stopwatch" Style="{StaticResource CaptionTextBlockStyle}"

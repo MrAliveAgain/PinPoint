@@ -36,7 +36,7 @@ public sealed partial class TimerPinWindow : Window, IPinSurface
     private readonly WindowDragger _drag;
     private readonly DispatcherQueueTimer _tick;
     private readonly DispatcherQueueTimer _flash;
-    private readonly Brush _normalBackground;
+    private readonly Brush _solidBackground;
     private readonly SolidColorBrush _alarmBackground = new(ColorHelper.FromArgb(255, 196, 43, 28));
     private double _opacity = 1.0;
     private bool _clickThrough;
@@ -47,7 +47,7 @@ public sealed partial class TimerPinWindow : Window, IPinSurface
         InitializeComponent();
         _hwnd = this.GetHandle();
         _drag = new WindowDragger(AppWindow);
-        _normalBackground = Root.Background;
+        _solidBackground = Root.Background;
 
         WindowHelpers.MakeToolSurface(AppWindow, alwaysOnTop: true);
         WindowStyler.SetExStyleFlag(_hwnd, Win32.WS_EX_TOOLWINDOW, true);
@@ -140,6 +140,7 @@ public sealed partial class TimerPinWindow : Window, IPinSurface
         WindowHelpers.SetClientScreenRect(_hwnd, AppWindow, new PixelRect(x, y, width, height));
         AppWindow.Show(activateWindow: false);
         WindowStyler.RaiseTopmost(_hwnd);
+        ApplyLayering(); // glass (or solid) from the start
     }
 
     public void NudgeOpacity(int direction) => PinOpacity += direction * 0.1;
@@ -164,6 +165,7 @@ public sealed partial class TimerPinWindow : Window, IPinSurface
     {
         _tick.Stop();
         _flash.Stop();
+        _glass?.Dispose();
         Close();
     }
 
@@ -288,7 +290,7 @@ public sealed partial class TimerPinWindow : Window, IPinSurface
     private void OnFlash()
     {
         _flashesLeft--;
-        Root.Background = _flashesLeft % 2 == 1 ? _alarmBackground : _normalBackground;
+        Root.Background = _flashesLeft % 2 == 1 ? _alarmBackground : NormalBackground;
         if (!IsSilent && _flashesLeft % 4 == 0 && _flashesLeft >= 6) Win32.MessageBeep(Win32.MB_ICONEXCLAMATION);
         if (_flashesLeft <= 0) StopAlarm();
     }
@@ -297,7 +299,7 @@ public sealed partial class TimerPinWindow : Window, IPinSurface
     {
         _flash.Stop();
         _flashesLeft = 0;
-        Root.Background = _normalBackground;
+        Root.Background = NormalBackground;
     }
 
     // ---- Menu --------------------------------------------------------------------------------------
@@ -383,9 +385,31 @@ public sealed partial class TimerPinWindow : Window, IPinSurface
 
     private void ApplyLayering()
     {
-        if (_opacity < 0.999 || _clickThrough)
+        bool layered = _opacity < 0.999 || _clickThrough;
+        _glass ??= new PinGlass(this, Root, glass =>
+        {
+            var res = Application.Current.Resources;
+            _isGlass = glass;
+            if (_flashesLeft == 0) Root.Background = NormalBackground;
+            Header.Background = (Brush)res[glass ? "LayerOnAcrylicFillColorDefaultBrush" : "SolidBackgroundFillColorSecondaryBrush"];
+        });
+
+        // Glass and Windows' whole-window fade can't coexist: drop the glass before fading, add it after un-fading.
+        if (layered)
+        {
+            _glass.Update(fadedOrClickThrough: true);
             WindowStyler.SetAlpha(_hwnd, (byte)Math.Round(_opacity * 255));
+        }
         else
+        {
             WindowStyler.ClearLayered(_hwnd);
+            _glass.Update(fadedOrClickThrough: false);
+        }
     }
+
+    private PinGlass? _glass;
+    private bool _isGlass;
+
+    /// <summary>The body when not flashing: the glass itself, or the solid surface.</summary>
+    private Brush? NormalBackground => _isGlass ? null : _solidBackground;
 }
