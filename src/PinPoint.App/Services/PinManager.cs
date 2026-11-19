@@ -85,7 +85,7 @@ public sealed class PinManager : IDisposable
 
     public bool HasNotesOpen => _notes.Count > 0;
 
-    private bool IsSurfaceHidden(IPinSurface surface) => surface switch
+    private bool IsSurfaceHidden(IPinSurface surface) => _singleHidden.Contains(surface) || surface switch
     {
         NotePinWindow => _notesHidden,
         TimerPinWindow => IsHidden,
@@ -127,6 +127,7 @@ public sealed class PinManager : IDisposable
         window.Closed += (_, _) =>
         {
             _timers.Remove(window);
+            _singleHidden.Remove(window);
             if (Items.OfType<TimerPinItem>().FirstOrDefault(i => i.Window == window) is { } item) Items.Remove(item);
             OnStateChanged();
         };
@@ -200,7 +201,7 @@ public sealed class PinManager : IDisposable
     {
         ShowAll(snips: true);
         var window = new ImagePinWindow(frame, _storage, _ocr, _settings);
-        window.Closed += (_, _) => OnSnipClosed(window);
+        WireSnip(window);
         _snips.Add(window);
         Items.Add(new SnipPinItem(window));
         window.ShowAt(frame.Bounds);
@@ -208,14 +209,22 @@ public sealed class PinManager : IDisposable
         return window;
     }
 
+    /// <summary>"Close all snips": each can be brought back with undo.</summary>
     public void CloseAllSnips()
     {
-        foreach (var snip in _snips.ToArray()) snip.Close();
+        foreach (var snip in _snips.ToArray()) snip.CloseByUser();
+    }
+
+    private void WireSnip(ImagePinWindow window)
+    {
+        window.Closed += (_, _) => OnSnipClosed(window);
+        window.UserClosing += (_, _) => RememberClosed(window);
     }
 
     private void OnSnipClosed(ImagePinWindow window)
     {
         _snips.Remove(window);
+        _singleHidden.Remove(window);
         if (Items.OfType<SnipPinItem>().FirstOrDefault(i => i.Window == window) is { } item) Items.Remove(item);
         OnStateChanged();
     }
@@ -281,16 +290,164 @@ public sealed class PinManager : IDisposable
     public IReadOnlyList<PinnedWindow> PinnedWindows => _windows.Pins;
 
     /// <summary>Re-pins a snip from a board where it was, with its zoom, opacity and drawing.</summary>
-    public void RestoreSnip(CapturedFrame frame, Core.Boards.BoardSnip saved)
+    public ImagePinWindow RestoreSnip(CapturedFrame frame, Core.Boards.BoardSnip saved)
     {
         var window = new ImagePinWindow(frame, _storage, _ocr, _settings, saved.Id);
-        window.Closed += (_, _) => OnSnipClosed(window);
+        WireSnip(window);
         _snips.Add(window);
         Items.Add(new SnipPinItem(window));
         var b = saved.Bounds;
         window.ShowAt(new Core.Geometry.PixelRect(b.X, b.Y, b.Width, b.Height));
         window.RestoreBoardState(saved.ZoomStep, saved.Opacity, saved.Strokes, saved.Locked);
         if (AreSnipsHidden) window.SetHidden(true);
+        OnStateChanged();
+        return window;
+    }
+
+    // ---- Undo closing a pin (Ctrl+Alt+Z) / redo (Ctrl+Alt+Y) ------------------------------------
+
+    private abstract record ClosedPin;
+
+    private sealed record ClosedSnip(CapturedFrame Frame, Core.Boards.BoardSnip State, string? SavedPath) : ClosedPin;
+
+    private sealed record ClosedNote(Core.Boards.BoardNote State) : ClosedPin;
+
+    private const int UndoDepth = 20;
+    private readonly List<ClosedPin> _closed = [];
+    private readonly List<IPinSurface> _reopened = [];
+    private bool _redoing;
+
+    /// <summary>The Undo-close shortcut as text ("Ctrl+Alt+Z"), for the "closed" notice. Set by AppHost.</summary>
+    public Func<string?>? UndoShortcut { get; set; }
+
+    public bool CanUndoClose => _closed.Count > 0;
+
+    public bool CanRedoClose => _reopened.Any(IsOpen);
+
+    private void RememberClosed(ImagePinWindow snip)
+    {
+        var r = snip.ScreenBounds;
+        var state = new Core.Boards.BoardSnip(snip.Id, new Core.Boards.BoardRect(r.X, r.Y, r.Width, r.Height),
+            snip.CurrentZoomStep, snip.PinOpacity, snip.GetStrokePoints()) { Locked = snip.IsLocked };
+        Remember(new ClosedSnip(snip.Frame, state, snip.SavedPath), "Snip closed");
+    }
+
+    private void RememberClosed(NotePinWindow note) => Remember(new ClosedNote(note.ToBoardNote()), "Note closed");
+
+    private void Remember(ClosedPin pin, string what)
+    {
+        _closed.Add(pin);
+        if (_closed.Count > UndoDepth) _closed.RemoveAt(0);
+        if (!_redoing) _reopened.Clear(); // a fresh close starts a new history, like any undo
+
+        string? key = UndoShortcut?.Invoke();
+        _notifier.Show("", what, key is null ? "Undo it from the tray menu." : $"{key} brings it back.");
+        OnStateChanged();
+    }
+
+    /// <summary>Undo: reopens the pin you closed last, where it was, with its zoom, opacity and drawing.</summary>
+    public void UndoClose()
+    {
+        if (_closed.Count == 0)
+        {
+            _notifier.Show("", "Nothing to bring back");
+            return;
+        }
+
+        var pin = _closed[^1];
+        _closed.RemoveAt(_closed.Count - 1);
+        IPinSurface reopened;
+        if (pin is ClosedSnip snip)
+        {
+            ShowAll(snips: true);
+            var window = RestoreSnip(snip.Frame, snip.State);
+            window.SavedPath = snip.SavedPath;
+            reopened = window;
+        }
+        else
+        {
+            var note = ((ClosedNote)pin).State;
+            ShowAll(notes: true);
+            var b = note.Bounds;
+            var layout = new NoteLayout(b.X, b.Y, b.Width, b.Height, note.Opacity, note.ExportPath);
+            reopened = AddNote(new StoredNote(note.Id, note.Text, layout), activate: false, BoardMode ? null : _noteStore);
+        }
+
+        _reopened.Add(reopened);
+        _notifier.Show("", pin is ClosedSnip ? "Snip reopened" : "Note reopened");
+        OnStateChanged();
+    }
+
+    /// <summary>Redo: closes again the pin you last brought back with undo.</summary>
+    public void RedoClose()
+    {
+        while (_reopened.Count > 0)
+        {
+            var pin = _reopened[^1];
+            _reopened.RemoveAt(_reopened.Count - 1);
+            if (!IsOpen(pin)) continue;
+
+            _redoing = true;
+            try
+            {
+                if (pin is ImagePinWindow snip) snip.CloseByUser();
+                else if (pin is NotePinWindow note) note.CloseNoteByUser();
+            }
+            finally
+            {
+                _redoing = false;
+            }
+
+            return;
+        }
+
+        _notifier.Show("", "Nothing to redo");
+    }
+
+    private bool IsOpen(IPinSurface pin) => pin is ImagePinWindow s ? _snips.Contains(s) : pin is NotePinWindow n && _notes.Contains(n);
+
+    // ---- Hide the pin under the mouse ------------------------------------------------------------
+
+    /// <summary>Pins hidden one at a time (on top of the per-kind hiding).</summary>
+    private readonly HashSet<IPinSurface> _singleHidden = [];
+
+    /// <summary>
+    /// Hides the snip, note or timer under the mouse. Pressed with the mouse over no pin, it brings back the
+    /// ones hidden this way. "Hide all" off brings them back too.
+    /// </summary>
+    public void HidePinUnderMouse()
+    {
+        Win32.GetCursorPos(out var cursor);
+        var visible = Surfaces.Where(s => !IsSurfaceHidden(s)).ToDictionary(s => s.Handle);
+        // Topmost first, by real z-order (bounds alone can't tell overlapping pins apart).
+        var target = WindowEnumerator.TopLevelInZOrder()
+            .Select(h => visible.GetValueOrDefault(h))
+            .FirstOrDefault(s => s is not null && s.ScreenBounds.Contains(cursor.X, cursor.Y));
+
+        if (target is not null)
+        {
+            _singleHidden.Add(target);
+            target.SetHidden(true);
+            _notifier.Show("", "Pin hidden", "Press again with the mouse off your pins to bring hidden ones back.");
+            OnStateChanged();
+            return;
+        }
+
+        if (_singleHidden.Count == 0)
+        {
+            _notifier.Show("", "No pin under the mouse");
+            return;
+        }
+
+        ShowSingles();
+        _notifier.Show("", "Hidden pins shown");
+    }
+
+    private void ShowSingles()
+    {
+        var shown = _singleHidden.ToList();
+        _singleHidden.Clear();
+        foreach (var surface in shown) surface.SetHidden(IsSurfaceHidden(surface));
         OnStateChanged();
     }
 
@@ -312,10 +469,11 @@ public sealed class PinManager : IDisposable
         foreach (var note in _notes.ToArray()) note.CloseNote();
     }
 
-    private void AddNote(StoredNote note, bool activate, NoteStore? store)
+    private NotePinWindow AddNote(StoredNote note, bool activate, NoteStore? store)
     {
         var window = new NotePinWindow(note, store);
         window.Closed += (_, _) => OnNoteClosed(window);
+        window.UserClosing += (_, _) => RememberClosed(window);
         window.NewNoteRequested += (_, _) => CreateNoteBeside(window);
         window.DuplicateRequested += (_, _) => DuplicateNote(window);
         window.HideNotesRequested += (_, _) => ToggleNotesHidden();
@@ -327,11 +485,13 @@ public sealed class PinManager : IDisposable
         window.ShowAt(note.Layout, activate);
         if (AreNotesHidden) window.SetHidden(true);
         OnStateChanged();
+        return window;
     }
 
     private void OnNoteClosed(NotePinWindow window)
     {
         _notes.Remove(window);
+        _singleHidden.Remove(window);
         if (Items.OfType<NotePinItem>().FirstOrDefault(i => i.Window == window) is { } item) Items.Remove(item);
         OnStateChanged();
     }
@@ -349,6 +509,7 @@ public sealed class PinManager : IDisposable
         // Showing them again brings everything back, including notes or snips hidden on their own.
         bool hide = !IsHidden;
         SetHiddenState(windows: hide, notes: hide, snips: hide);
+        if (!hide && _singleHidden.Count > 0) ShowSingles(); // "show all" means all
         _notifier.Show(IsHidden ? "" : "", IsHidden ? "Pins hidden" : "Pins shown");
         OnStateChanged();
     }
@@ -424,9 +585,10 @@ public sealed class PinManager : IDisposable
         _snipsHidden = snips;
 
         if (windowsWere != windows) _windows.SetHidden(windows);
-        if (notesWere != notes) foreach (var note in _notes) note.SetHidden(notes);
-        if (snipsWere != snips) foreach (var snip in _snips) snip.SetHidden(snips);
-        if (allWere != IsHidden) foreach (var timer in _timers) timer.SetHidden(IsHidden);
+        // IsSurfaceHidden: a pin hidden on its own (hide pin under mouse) stays hidden when its kind comes back.
+        if (notesWere != notes) foreach (var note in _notes) note.SetHidden(IsSurfaceHidden(note));
+        if (snipsWere != snips) foreach (var snip in _snips) snip.SetHidden(IsSurfaceHidden(snip));
+        if (allWere != IsHidden) foreach (var timer in _timers) timer.SetHidden(IsSurfaceHidden(timer));
         OnStateChanged();
     }
 

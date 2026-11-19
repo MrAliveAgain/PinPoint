@@ -217,7 +217,7 @@ public sealed partial class ImagePinWindow : Window, IPinSurface
         var properties = e.GetCurrentPoint(Root).Properties;
         if (properties.IsMiddleButtonPressed)
         {
-            Close();
+            CloseByUser();
             e.Handled = true;
             return;
         }
@@ -453,11 +453,20 @@ public sealed partial class ImagePinWindow : Window, IPinSurface
 
     private void ResetZoom_Click(object sender, RoutedEventArgs e) => ResetZoom();
 
-    private void Close_Click(object sender, RoutedEventArgs e) => Close();
+    private void Close_Click(object sender, RoutedEventArgs e) => CloseByUser();
 
     private void Close_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
     {
         args.Handled = true;
+        CloseByUser();
+    }
+
+    /// <summary>The user is closing this snip (middle-click, X, menu, Esc, Pins list): PinManager remembers it for undo.</summary>
+    public event EventHandler? UserClosing;
+
+    public void CloseByUser()
+    {
+        UserClosing?.Invoke(this, EventArgs.Empty);
         Close();
     }
 }

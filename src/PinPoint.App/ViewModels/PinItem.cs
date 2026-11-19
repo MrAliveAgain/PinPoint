@@ -115,7 +115,7 @@ public sealed class SnipPinItem : PinItem
 
     public override string RemoveLabel => "Close";
 
-    public override void Remove() => Window.Close();
+    public override void Remove() => Window.CloseByUser();
 
     public override bool CanCopyText => Window.HasText;
 
@@ -198,5 +198,5 @@ public sealed class NotePinItem : PinItem
 
     public override string RemoveLabel => "Close";
 
-    public override void Remove() => Window.CloseNote();
+    public override void Remove() => Window.CloseNoteByUser();
 }

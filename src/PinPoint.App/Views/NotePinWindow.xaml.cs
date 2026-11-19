@@ -407,7 +407,16 @@ public sealed partial class NotePinWindow : Window, IPinSurface
 
     private void Header_PointerCaptureLost(object sender, PointerRoutedEventArgs e) => _drag.Cancel();
 
-    private void CloseButton_Click(object sender, RoutedEventArgs e) => CloseNote();
+    private void CloseButton_Click(object sender, RoutedEventArgs e) => CloseNoteByUser();
+
+    /// <summary>The user is closing this note (X, menu, Pins list): PinManager remembers it for undo.</summary>
+    public event EventHandler? UserClosing;
+
+    public void CloseNoteByUser()
+    {
+        UserClosing?.Invoke(this, EventArgs.Empty);
+        CloseNote();
+    }
 
     /// <summary>The + button: PinManager opens an empty note beside this one.</summary>
     public event EventHandler? NewNoteRequested;

@@ -247,6 +247,41 @@ public sealed class AppHost : IDisposable
 
         Commands.Add(new AppCommand
         {
+            Id = CommandIds.HidePinUnderMouse,
+            Title = "Hide pin under mouse",
+            Description = "Hide the snip, note or timer your mouse is over. Press it with the mouse off your pins to bring the hidden ones back.",
+            Glyph = "",
+            ShowInTray = false,
+            Execute = Pins.HidePinUnderMouse,
+        });
+
+        Commands.Add(new AppCommand
+        {
+            Id = CommandIds.UndoClose,
+            Title = "Undo close",
+            Description = "Bring back the snip or note you closed last (middle-click happens), right where it was. Press again for the one before.",
+            Glyph = "",
+            DefaultHotkey = "Ctrl+Alt+Z",
+            CanExecute = () => Pins.CanUndoClose,
+            Execute = Pins.UndoClose,
+        });
+
+        Commands.Add(new AppCommand
+        {
+            Id = CommandIds.RedoClose,
+            Title = "Redo close",
+            Description = "Close again the pin you just brought back with Undo close.",
+            Glyph = "",
+            DefaultHotkey = "Ctrl+Alt+Y",
+            ShowInTray = false,
+            CanExecute = () => Pins.CanRedoClose,
+            Execute = Pins.RedoClose,
+        });
+
+        Pins.UndoShortcut = () => Settings.GetHotkey(Commands.Get(CommandIds.UndoClose))?.ToDisplayString();
+
+        Commands.Add(new AppCommand
+        {
             Id = CommandIds.ToggleClickThrough,
             Title = "Click-through pins",
             Description = "Let clicks pass through pins to the game underneath.",
