@@ -127,13 +127,13 @@ public static unsafe class WindowEnumerator
     /// Raising a window that's already on top still makes it and the desktop recompose, which flickers over
     /// videos and games, so pins are only raised when this says so.
     /// </summary>
-    public static bool IsCoveredByAnotherApp(nint hwnd)
+    public static bool IsCoveredByAnotherApp(nint hwnd, IReadOnlySet<nint>? ignore = null)
     {
         var bounds = GetBounds(hwnd);
         uint ownApp = Win32.GetProcessId(hwnd), pinPoint = (uint)Environment.ProcessId;
         for (nint above = Win32.GetWindow(hwnd, Win32.GW_HWNDPREV); above != 0; above = Win32.GetWindow(above, Win32.GW_HWNDPREV))
         {
-            if (!IsVisibleOnScreen(above)) continue;
+            if (!IsVisibleOnScreen(above) || ignore?.Contains(above) == true) continue;
             uint app = Win32.GetProcessId(above);
             if (app == ownApp || app == pinPoint) continue;
             if (!GetBounds(above).Intersect(bounds).IsEmpty) return true;
