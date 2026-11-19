@@ -31,6 +31,8 @@ public sealed class QuickSlotTile : Window
     private readonly Border _hover;
     private readonly Border _active;
     private readonly FontIcon _icon;
+    private readonly Border _badge;
+    private readonly FontIcon _badgeIcon;
     private DesktopAcrylicController? _acrylic;
     private SystemBackdropConfiguration? _backdropConfig;
 
@@ -65,7 +67,21 @@ public sealed class QuickSlotTile : Window
             ScaleTransition = new Vector3Transition { Duration = TimeSpan.FromMilliseconds(80) },
         };
 
-        _root = new Grid { Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent), Children = { _active, _hover, _icon } };
+        // The corner badge: a small second glyph (e.g. a crossed-out eye on "Hide notes") on a glass-dark dot.
+        _badgeIcon = new FontIcon { HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+        _badge = new Border
+        {
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Bottom,
+            CornerRadius = new CornerRadius(99),
+            Background = (Brush)res["SolidBackgroundFillColorBaseBrush"],
+            BorderBrush = (Brush)res["CardStrokeColorDefaultBrush"],
+            BorderThickness = new Thickness(1),
+            Visibility = Visibility.Collapsed,
+            Child = _badgeIcon,
+        };
+
+        _root = new Grid { Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent), Children = { _active, _hover, _icon, _badge } };
         _root.PointerEntered += (_, _) => _hover.Opacity = 0.07;
         _root.PointerExited += (_, _) =>
         {
@@ -102,11 +118,21 @@ public sealed class QuickSlotTile : Window
     public event Action<QuickSlotTile>? DragEnded;
 
     /// <summary>Shows an action: its icon, tooltip, and whether it's switched on (lit with the accent colour).</summary>
-    public void SetAction(string glyph, string? tooltip, bool isOn, bool isEmpty, double iconSize)
+    public void SetAction(string glyph, string? badgeGlyph, string? tooltip, bool isOn, bool isEmpty, double iconSize)
     {
         _icon.Glyph = glyph;
         _icon.FontSize = iconSize;
         _icon.Opacity = isEmpty ? 0.45 : 1;
+
+        _badge.Visibility = badgeGlyph is null ? Visibility.Collapsed : Visibility.Visible;
+        if (badgeGlyph is not null)
+        {
+            double size = Math.Round(iconSize * 0.95);
+            _badgeIcon.Glyph = badgeGlyph;
+            _badgeIcon.FontSize = Math.Round(size * 0.55);
+            _badge.Width = _badge.Height = size;
+            _badge.Margin = new Thickness(0, 0, size * 0.18, size * 0.18);
+        }
         ToolTipService.SetToolTip(_root, tooltip);
         SetOn(isOn);
     }

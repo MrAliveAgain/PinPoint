@@ -27,6 +27,11 @@ public static class Program
         if (args is ["--board-selftest", var board, var boardImage, .. var rest])
             return Services.BoardService.RunSelfTest(board, boardImage, rest.FirstOrDefault());
 
+        // Developer check, no UI: PinPoint.exe --shot out.png x y width height — an HDR-correct screenshot of a
+        // screen area (the same capture snips use), for reviewing how PinPoint's own windows look.
+        if (args is ["--shot", var shotPath, var sx, var sy, var sw, var sh])
+            return Shot(shotPath, int.Parse(sx), int.Parse(sy), int.Parse(sw), int.Parse(sh));
+
         if (RedirectToRunningInstance()) return 0;
 
         Application.Start(static _ =>
@@ -37,6 +42,23 @@ public static class Program
         });
 
         return 0;
+    }
+
+    private static int Shot(string path, int x, int y, int width, int height)
+    {
+        try
+        {
+            var capture = new Services.HdrAwareScreenCapture();
+            Thread.Sleep(300); // let the borderless-capture request settle
+            var frame = capture.Capture(new PinPoint.Core.Geometry.PixelRect(x, y, width, height));
+            File.WriteAllBytes(path, Services.SnipStorage.EncodePngAsync(frame).GetAwaiter().GetResult());
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            File.WriteAllText(path + ".error.txt", ex.ToString());
+            return 1;
+        }
     }
 
     private static bool RedirectToRunningInstance()

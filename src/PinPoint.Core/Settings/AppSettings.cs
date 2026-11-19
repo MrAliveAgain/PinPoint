@@ -35,6 +35,10 @@ public sealed class AppSettings
     /// <summary>The floating glass quick-slot buttons.</summary>
     public QuickSlotSettings QuickSlots { get; set; } = new();
 
+    /// <summary>How PinPoint's own windows look: real glass (default), subtle Mica, or solid.</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter<AppearanceStyle>))]
+    public AppearanceStyle Appearance { get; set; } = AppearanceStyle.Glass;
+
     public bool HighlightPinnedWindows { get; set; } = true;
 
     /// <summary>#RRGGBB border colour for pinned windows.</summary>
@@ -78,6 +82,18 @@ public sealed class AppSettings
 
     /// <summary>How many times a snip has pointed out "text found, click T". Stops after a few.</summary>
     public int TextHintsShown { get; set; }
+}
+
+public enum AppearanceStyle
+{
+    /// <summary>Desktop acrylic: what's behind the window shows through, blurred.</summary>
+    Glass,
+
+    /// <summary>Mica Alt: a quiet tint from the wallpaper.</summary>
+    Subtle,
+
+    /// <summary>No material, plain theme colours.</summary>
+    Solid,
 }
 
 /// <summary>The floating glass quick-slot buttons: which actions, how they're laid out, where.</summary>

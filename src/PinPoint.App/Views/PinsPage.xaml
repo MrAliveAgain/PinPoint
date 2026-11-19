@@ -5,126 +5,152 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:vm="using:PinPoint.ViewModels">
 
+    <Page.Resources>
+        <!--
+          Quiet toggles for the view strip: no fill until hovered, and "on" is a soft accent tint with accent text,
+          so a switched-on toggle never looks like the main Snip & pin button.
+        -->
+        <SolidColorBrush x:Key="StripOnFill" Color="{ThemeResource SystemAccentColor}" Opacity="0.16" />
+        <SolidColorBrush x:Key="StripOnFillHover" Color="{ThemeResource SystemAccentColor}" Opacity="0.24" />
+        <Style x:Key="StripToggleStyle" TargetType="ToggleButton" BasedOn="{StaticResource DefaultToggleButtonStyle}">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="CornerRadius" Value="6" />
+        </Style>
+    </Page.Resources>
+
     <!-- Background so the whole page (not just its text) accepts dropped image files. -->
     <ScrollViewer AllowDrop="True" Background="Transparent" DragOver="Page_DragOver" Drop="Page_Drop">
         <StackPanel MaxWidth="1000" Padding="36,8,36,36" HorizontalAlignment="Stretch">
             <TextBlock Text="Pins" Style="{StaticResource TitleTextBlockStyle}" Margin="0,0,0,20" />
 
-            <!-- Primary actions, then the toggles on their own line, so nothing gets cut off at the default size. -->
-            <StackPanel Spacing="8">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <StackPanel Orientation="Horizontal" Spacing="4">
-                        <Button Style="{StaticResource AccentButtonStyle}" Click="Snip_Click">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <FontIcon Glyph="&#xE7A8;" FontSize="16" />
-                                <TextBlock Text="Snip &amp; pin" />
-                                <TextBlock x:Name="SnipHotkeyText" Opacity="0.7" />
-                            </StackPanel>
-                        </Button>
-                        <!-- Delay like Snipping Tool: for this button (the shortcut always snips straight away). -->
-                        <DropDownButton x:Name="DelayButton" ToolTipService.ToolTip="Delay before the screen is captured (this button only; the shortcut snips straight away)">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <FontIcon Glyph="&#xE916;" FontSize="14" />
-                                <TextBlock x:Name="DelayText" Text="No delay" />
-                            </StackPanel>
-                            <DropDownButton.Flyout>
-                                <MenuFlyout Placement="BottomEdgeAlignedLeft">
-                                    <RadioMenuFlyoutItem x:Name="Delay0" Text="No delay" GroupName="SnipDelay" Tag="0" Click="Delay_Click" />
-                                    <RadioMenuFlyoutItem x:Name="Delay3" Text="3 seconds" GroupName="SnipDelay" Tag="3" Click="Delay_Click" />
-                                    <RadioMenuFlyoutItem x:Name="Delay5" Text="5 seconds" GroupName="SnipDelay" Tag="5" Click="Delay_Click" />
-                                    <RadioMenuFlyoutItem x:Name="Delay10" Text="10 seconds" GroupName="SnipDelay" Tag="10" Click="Delay_Click" />
-                                </MenuFlyout>
-                            </DropDownButton.Flyout>
-                        </DropDownButton>
-                    </StackPanel>
-
-                    <DropDownButton>
+            <!-- Make something: the one accent button, then its quieter siblings. -->
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <StackPanel Orientation="Horizontal" Spacing="2">
+                    <Button Style="{StaticResource AccentButtonStyle}" Click="Snip_Click" CornerRadius="6,0,0,6" Padding="14,7">
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon Glyph="&#xE737;" FontSize="16" />
-                            <TextBlock Text="Pin a window" />
+                            <FontIcon Glyph="&#xE7A8;" FontSize="16" />
+                            <TextBlock Text="Snip &amp; pin" FontWeight="SemiBold" />
+                            <TextBlock x:Name="SnipHotkeyText" Opacity="0.65" />
+                        </StackPanel>
+                    </Button>
+                    <!-- Delay like Snipping Tool, joined to the Snip button (this button only; the shortcut snips straight away). -->
+                    <DropDownButton x:Name="DelayButton" Style="{StaticResource AccentButtonStyle}" CornerRadius="0,6,6,0" Padding="10,7"
+                                    ToolTipService.ToolTip="Delay before the screen is captured (this button only; the shortcut snips straight away)">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon Glyph="&#xE916;" FontSize="14" />
+                            <TextBlock x:Name="DelayText" Text="Now" />
                         </StackPanel>
                         <DropDownButton.Flyout>
-                            <MenuFlyout x:Name="WindowMenu" Placement="BottomEdgeAlignedLeft" Opening="WindowMenu_Opening" />
+                            <MenuFlyout Placement="BottomEdgeAlignedLeft">
+                                <RadioMenuFlyoutItem x:Name="Delay0" Text="No delay" GroupName="SnipDelay" Tag="0" Click="Delay_Click" />
+                                <RadioMenuFlyoutItem x:Name="Delay3" Text="3 seconds" GroupName="SnipDelay" Tag="3" Click="Delay_Click" />
+                                <RadioMenuFlyoutItem x:Name="Delay5" Text="5 seconds" GroupName="SnipDelay" Tag="5" Click="Delay_Click" />
+                                <RadioMenuFlyoutItem x:Name="Delay10" Text="10 seconds" GroupName="SnipDelay" Tag="10" Click="Delay_Click" />
+                            </MenuFlyout>
                         </DropDownButton.Flyout>
                     </DropDownButton>
-
-                    <Button Click="NewNote_Click" ToolTipService.ToolTip="Open a note that floats on top">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon Glyph="&#xE70B;" FontSize="16" />
-                            <TextBlock Text="New note" />
-                        </StackPanel>
-                    </Button>
-
-                    <Button Click="NewTimer_Click" ToolTipService.ToolTip="Pin a stopwatch or countdown on top">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon Glyph="&#xE916;" FontSize="16" />
-                            <TextBlock Text="Timer" />
-                        </StackPanel>
-                    </Button>
                 </StackPanel>
 
-                <!-- Out of the way: peek past pins, or hide some/all of them. -->
-                <StackPanel Orientation="Horizontal" Spacing="4">
-                    <ToggleButton x:Name="PeekToggle" Click="Peek_Click" Margin="0,0,8,0"
-                                  ToolTipService.ToolTip="Peek: slide pins out to the screen edges to get at what's under them, then back (the shortcut: tap to toggle, hold to peek while held)">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <FontIcon Glyph="&#xE7B3;" FontSize="14" />
+                <DropDownButton Padding="12,7">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE737;" FontSize="15" />
+                        <TextBlock Text="Pin a window" />
+                    </StackPanel>
+                    <DropDownButton.Flyout>
+                        <MenuFlyout x:Name="WindowMenu" Placement="BottomEdgeAlignedLeft" Opening="WindowMenu_Opening" />
+                    </DropDownButton.Flyout>
+                </DropDownButton>
+
+                <Button Click="NewNote_Click" Padding="12,7" ToolTipService.ToolTip="Open a note that floats on top">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE70B;" FontSize="15" />
+                        <TextBlock Text="Note" />
+                    </StackPanel>
+                </Button>
+
+                <Button Click="NewTimer_Click" Padding="12,7" ToolTipService.ToolTip="Pin a countdown or stopwatch on top">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE916;" FontSize="15" />
+                        <TextBlock Text="Timer" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+
+            <!--
+              The view strip: one calm glass bar for everything about seeing past or controlling pins.
+              Peek | Hide (notes, snips, windows, all) | click-through, quick slots.
+            -->
+            <Border Margin="0,12,0,0" Padding="4" HorizontalAlignment="Left" CornerRadius="10"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                <Border.Resources>
+                    <StaticResource x:Key="ToggleButtonBackgroundChecked" ResourceKey="StripOnFill" />
+                    <StaticResource x:Key="ToggleButtonBackgroundCheckedPointerOver" ResourceKey="StripOnFillHover" />
+                    <StaticResource x:Key="ToggleButtonBackgroundCheckedPressed" ResourceKey="StripOnFill" />
+                    <StaticResource x:Key="ToggleButtonForegroundChecked" ResourceKey="AccentTextFillColorPrimaryBrush" />
+                    <StaticResource x:Key="ToggleButtonForegroundCheckedPointerOver" ResourceKey="AccentTextFillColorPrimaryBrush" />
+                    <StaticResource x:Key="ToggleButtonForegroundCheckedPressed" ResourceKey="AccentTextFillColorSecondaryBrush" />
+                    <StaticResource x:Key="ToggleButtonBorderBrushChecked" ResourceKey="StripOnFill" />
+                    <StaticResource x:Key="ToggleButtonBackgroundPointerOver" ResourceKey="SubtleFillColorSecondaryBrush" />
+                    <StaticResource x:Key="ToggleButtonBackgroundPressed" ResourceKey="SubtleFillColorTertiaryBrush" />
+                    <StaticResource x:Key="ToggleButtonBackgroundDisabled" ResourceKey="SubtleFillColorTransparentBrush" />
+                </Border.Resources>
+
+                <StackPanel Orientation="Horizontal" Spacing="2">
+                    <ToggleButton x:Name="PeekToggle" Click="Peek_Click" Style="{StaticResource StripToggleStyle}"
+                                  ToolTipService.ToolTip="Peek: slide pins out to the screen edges to get at what's under them, then back (shortcut: tap to toggle, hold to peek while held)">
+                        <StackPanel Orientation="Horizontal" Spacing="7">
+                            <FontIcon Glyph="&#xE7C4;" FontSize="14" />
                             <TextBlock Text="Peek" />
                         </StackPanel>
                     </ToggleButton>
-                    <ToggleButton x:Name="HideNotesToggle" Click="HideNotes_Click"
-                                  ToolTipService.ToolTip="Hide all notes (click again to show them)">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <FontIcon Glyph="&#xED1A;" FontSize="14" />
-                            <TextBlock Text="Hide notes" />
-                        </StackPanel>
-                    </ToggleButton>
-                    <ToggleButton x:Name="HideSnipsToggle" Click="HideSnips_Click"
-                                  ToolTipService.ToolTip="Hide all snips (click again to show them)">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <FontIcon Glyph="&#xED1A;" FontSize="14" />
-                            <TextBlock Text="Hide snips" />
-                        </StackPanel>
-                    </ToggleButton>
-                    <ToggleButton x:Name="HideWindowsToggle" Click="HideWindows_Click"
-                                  ToolTipService.ToolTip="Hide all pinned windows (click again to show them)">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <FontIcon Glyph="&#xED1A;" FontSize="14" />
-                            <TextBlock Text="Hide windows" />
-                        </StackPanel>
-                    </ToggleButton>
-                    <ToggleButton x:Name="HideAllToggle" Click="HideAll_Click"
-                                  ToolTipService.ToolTip="Hide all pins (click again to show them)">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <FontIcon Glyph="&#xED1A;" FontSize="14" />
-                            <TextBlock Text="Hide all" />
-                        </StackPanel>
-                    </ToggleButton>
-                </StackPanel>
 
-                <!-- How pins behave: clicks pass through; the floating quick-slot buttons. -->
-                <StackPanel Orientation="Horizontal" Spacing="4">
-                    <ToggleButton x:Name="QuickSlotsToggle" Click="QuickSlots_Click"
-                                  ToolTipService.ToolTip="Quick slots: floating glass buttons for any action, one click each (right-click a slot to choose its action, drag to move)">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <FontIcon Glyph="&#xF0E2;" FontSize="14" />
-                            <TextBlock Text="Quick slots" />
-                        </StackPanel>
+                    <Rectangle Width="1" Margin="6,8" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
+                    <FontIcon Glyph="&#xED1A;" FontSize="13" Margin="6,0,2,0" Opacity="0.6"
+                              ToolTipService.ToolTip="Hide (click again to show)" />
+                    <ToggleButton x:Name="HideNotesToggle" Click="HideNotes_Click" Style="{StaticResource StripToggleStyle}"
+                                  ToolTipService.ToolTip="Hide every note (click again to show them)">
+                        <TextBlock Text="Notes" />
                     </ToggleButton>
-                    <ToggleButton x:Name="ClickThroughToggle" Click="ClickThrough_Click"
+                    <ToggleButton x:Name="HideSnipsToggle" Click="HideSnips_Click" Style="{StaticResource StripToggleStyle}"
+                                  ToolTipService.ToolTip="Hide every snip (click again to show them)">
+                        <TextBlock Text="Snips" />
+                    </ToggleButton>
+                    <ToggleButton x:Name="HideWindowsToggle" Click="HideWindows_Click" Style="{StaticResource StripToggleStyle}"
+                                  ToolTipService.ToolTip="Hide every pinned app window (click again to show them)">
+                        <TextBlock Text="Windows" />
+                    </ToggleButton>
+                    <ToggleButton x:Name="HideAllToggle" Click="HideAll_Click" Style="{StaticResource StripToggleStyle}"
+                                  ToolTipService.ToolTip="Hide all pins (click again to show them)">
+                        <TextBlock Text="All" />
+                    </ToggleButton>
+
+                    <Rectangle Width="1" Margin="6,8" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
+                    <ToggleButton x:Name="ClickThroughToggle" Click="ClickThrough_Click" Style="{StaticResource StripToggleStyle}"
                                   ToolTipService.ToolTip="Click-through: clicks pass through every pin">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
+                        <StackPanel Orientation="Horizontal" Spacing="7">
                             <FontIcon Glyph="&#xE8B0;" FontSize="14" />
                             <TextBlock Text="Click-through" />
                         </StackPanel>
                     </ToggleButton>
+                    <ToggleButton x:Name="QuickSlotsToggle" Click="QuickSlots_Click" Style="{StaticResource StripToggleStyle}"
+                                  ToolTipService.ToolTip="Quick slots: floating glass buttons for any action, one click each (right-click a slot to choose its action, drag to move)">
+                        <StackPanel Orientation="Horizontal" Spacing="7">
+                            <FontIcon Glyph="&#xF0E2;" FontSize="14" />
+                            <TextBlock Text="Quick slots" />
+                        </StackPanel>
+                    </ToggleButton>
                 </StackPanel>
-            </StackPanel>
+            </Border>
 
             <TextBlock Text="Pinned now" Style="{StaticResource SectionHeaderStyle}" />
             <TextBlock x:Name="MultiSelectHint" Style="{StaticResource CardDescriptionStyle}" Margin="2,-4,0,8"
                        TextWrapping="Wrap" Visibility="Collapsed"
-                       Text="Shift- or Ctrl-click pins to select several (Ctrl+A for all), then drag any selected slider to fade them together." />
+                       Text="Shift- or Ctrl-click to select several (Ctrl+A for all), then drag any selected slider to fade them together." />
 
             <!-- Extended selection: click, Shift-click, Ctrl-click, Ctrl+A. A selected row's slider fades every selected pin. -->
             <ListView x:Name="PinList" SelectionMode="Extended"
@@ -139,46 +165,50 @@
                 </ListView.ItemContainerStyle>
                 <ListView.ItemTemplate>
                     <DataTemplate x:DataType="vm:PinItem">
-                        <Border Style="{StaticResource CardStyle}" Padding="12,10">
+                        <Border Style="{StaticResource CardStyle}" Padding="10,8" MinHeight="0">
                             <Grid ColumnSpacing="14">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="64" />
-                                    <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
 
-                                <Border Width="64" Height="42" CornerRadius="4"
+                                <!-- Thumbnail: rounded, hairline-framed, like a photo on glass. -->
+                                <Border Width="76" Height="48" CornerRadius="6" BorderThickness="1"
+                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                         Background="{ThemeResource ControlFillColorSecondaryBrush}">
                                     <Grid>
-                                        <FontIcon Glyph="{x:Bind Glyph}" FontSize="18" Visibility="{x:Bind IsGlyphVisible}" />
+                                        <FontIcon Glyph="{x:Bind Glyph}" FontSize="18" Opacity="0.8" Visibility="{x:Bind IsGlyphVisible}" />
                                         <Image Source="{x:Bind Thumbnail}" Stretch="UniformToFill" />
                                     </Grid>
                                 </Border>
 
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
                                     <TextBlock Text="{x:Bind Title, Mode=OneWay}" Style="{StaticResource CardTitleStyle}" />
                                     <TextBlock Text="{x:Bind Subtitle, Mode=OneWay}" Style="{StaticResource CardDescriptionStyle}" />
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
                                             Visibility="{x:Bind SupportsOpacity}">
-                                    <FontIcon Glyph="&#xE706;" FontSize="14" Opacity="0.7"
+                                    <FontIcon Glyph="&#xE706;" FontSize="13" Opacity="0.55"
                                               ToolTipService.ToolTip="Opacity" />
-                                    <Slider Width="140" Minimum="10" Maximum="100" StepFrequency="5"
+                                    <Slider Width="120" Minimum="10" Maximum="100" StepFrequency="5"
                                             Value="{x:Bind OpacityPercent, Mode=TwoWay}" />
                                 </StackPanel>
 
-                                <Button Grid.Column="3" Click="CopyText_Click" Visibility="{x:Bind CanCopyText, Mode=OneWay}"
-                                        ToolTipService.ToolTip="Copy all the text in this snip">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <FontIcon Glyph="&#xE8D2;" FontSize="14" />
-                                        <TextBlock Text="Copy text" />
-                                    </StackPanel>
-                                </Button>
-
-                                <Button Grid.Column="4" Content="{x:Bind RemoveLabel}" Click="Remove_Click" MinWidth="80" />
+                                <!-- Row actions: quiet icon buttons, so the slider and the picture lead. -->
+                                <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                                    <Button Click="CopyText_Click" Visibility="{x:Bind CanCopyText, Mode=OneWay}"
+                                            Style="{StaticResource SubtleButtonStyle}" Padding="9,8"
+                                            ToolTipService.ToolTip="Copy all the text in this snip">
+                                        <FontIcon Glyph="&#xE8D2;" FontSize="15" />
+                                    </Button>
+                                    <Button Click="Remove_Click" Style="{StaticResource SubtleButtonStyle}" Padding="9,8"
+                                            ToolTipService.ToolTip="{x:Bind RemoveLabel}">
+                                        <FontIcon Glyph="&#xE711;" FontSize="14" />
+                                    </Button>
+                                </StackPanel>
                             </Grid>
                         </Border>
                     </DataTemplate>

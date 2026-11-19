@@ -93,7 +93,7 @@ public sealed class SnipPinItem : PinItem
 
     public override string Title => Window.SavedPath is { } path ? Path.GetFileNameWithoutExtension(path) : "Snip";
 
-    public override string Subtitle => $"Snip · {Window.Frame.Width} × {Window.Frame.Height}";
+    public override string Subtitle => $"{Window.Frame.Width} × {Window.Frame.Height}";
 
     public override string Glyph => ""; // crop
 

@@ -53,6 +53,8 @@ public sealed partial class SettingsPage : Page
             KeepFocusToggle.IsOn = !settings.PinsTakeFocus;
             HighlightToggle.IsOn = settings.HighlightPinnedWindows;
             NotificationsToggle.IsOn = settings.ShowNotifications;
+            AppearanceBox.SelectedItem = AppearanceBox.Items.OfType<ComboBoxItem>()
+                .FirstOrDefault(i => (string)i.Tag == settings.Appearance.ToString());
             MinimizeToTrayToggle.IsOn = settings.MinimizeToTray;
             StartupToggle.IsOn = StartupRegistration.IsEnabled;
             FolderCard.Description = _host.Settings.SnipFolder;
@@ -165,6 +167,12 @@ public sealed partial class SettingsPage : Page
     private void Clipboard_Toggled(object sender, RoutedEventArgs e) => Set(s => s.CopySnipsToClipboard = ClipboardToggle.IsOn);
 
     private void MinimizeToTray_Toggled(object sender, RoutedEventArgs e) => Set(s => s.MinimizeToTray = MinimizeToTrayToggle.IsOn);
+
+    private void Appearance_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (AppearanceBox.SelectedItem is ComboBoxItem { Tag: string tag } && Enum.TryParse<Core.Settings.AppearanceStyle>(tag, out var style))
+            Set(s => s.Appearance = style);
+    }
 
     private void KeepFocus_Toggled(object sender, RoutedEventArgs e) => Set(s => s.PinsTakeFocus = !KeepFocusToggle.IsOn);
 

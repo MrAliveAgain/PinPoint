@@ -38,6 +38,25 @@ public sealed partial class ManagerWindow : Window
 
         CenterOnCursorMonitor(width: 960, height: 700);
         Navigate(PinsPageTag);
+
+        ApplyAppearance();
+        var settings = AppHost.Current.Settings;
+        settings.Changed += OnSettingsChanged;
+        Closed += (_, _) => settings.Changed -= OnSettingsChanged;
+
+        // The selected nav item would otherwise open wearing the keyboard focus rectangle (a hard white box).
+        Activated += (_, e) =>
+        {
+            if (e.WindowActivationState == WindowActivationState.Deactivated) return;
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                // Activation parks keyboard focus on the nav item (the white box). Hand it to the page's first control
+                // as if clicked instead: nothing shows a focus rectangle until you actually use the keyboard.
+                if (Content?.XamlRoot is { } root && Microsoft.UI.Xaml.Input.FocusManager.GetFocusedElement(root) is not NavigationViewItem) return;
+                if (Microsoft.UI.Xaml.Input.FocusManager.FindFirstFocusableElement(ContentFrame) is UIElement first)
+                    _ = Microsoft.UI.Xaml.Input.FocusManager.TryFocusAsync(first, FocusState.Pointer);
+            });
+        };
         Activated += (_, e) => KeepAbovePins(e.WindowActivationState != WindowActivationState.Deactivated);
 
         // Minimize to the tray: a minimized window is hidden, so it's out of the taskbar and Alt+Tab.
@@ -69,6 +88,30 @@ public sealed partial class ManagerWindow : Window
             Win32.SetWindowPos(_hwnd, foreground, 0, 0, 0, 0,
                 Win32.SWP_NOMOVE | Win32.SWP_NOSIZE | Win32.SWP_NOACTIVATE | Win32.SWP_NOOWNERZORDER);
         }
+    }
+
+    private Core.Settings.AppearanceStyle? _appliedAppearance;
+
+    private void OnSettingsChanged(object? sender, EventArgs e) => DispatcherQueue.TryEnqueue(ApplyAppearance);
+
+    /// <summary>Glass: desktop acrylic (what's behind shows through, blurred). Subtle: Mica Alt. Solid: none.</summary>
+    private void ApplyAppearance()
+    {
+        var style = AppHost.Current.Settings.Current.Appearance;
+        if (style == _appliedAppearance) return;
+        _appliedAppearance = style;
+
+        SystemBackdrop = style switch
+        {
+            Core.Settings.AppearanceStyle.Glass => new Microsoft.UI.Xaml.Media.DesktopAcrylicBackdrop(),
+            Core.Settings.AppearanceStyle.Subtle => new Microsoft.UI.Xaml.Media.MicaBackdrop { Kind = Microsoft.UI.Composition.SystemBackdrops.MicaKind.BaseAlt },
+            _ => null,
+        };
+
+        // Solid needs an actual surface under everything; the materials want it clear.
+        Root.Background = style == Core.Settings.AppearanceStyle.Solid
+            ? (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["SolidBackgroundFillColorBaseBrush"]
+            : null;
     }
 
     public void ShowAndActivate(string? page)

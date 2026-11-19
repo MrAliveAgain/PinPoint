@@ -219,7 +219,8 @@ public sealed partial class PinsPage : Page
     private void ShowDelay()
     {
         int seconds = _host.Settings.Current.SnipDelaySeconds;
-        DelayText.Text = seconds > 0 ? $"{seconds} s" : "No delay";
+        DelayText.Text = seconds > 0 ? $"{seconds}s" : string.Empty; // just the clock when there's no delay
+        DelayText.Visibility = seconds > 0 ? Visibility.Visible : Visibility.Collapsed;
         foreach (var item in new[] { Delay0, Delay3, Delay5, Delay10 })
             item.IsChecked = (string)item.Tag == seconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
     }

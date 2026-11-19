@@ -5,11 +5,9 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Title="PinPoint">
 
-    <Window.SystemBackdrop>
-        <MicaBackdrop />
-    </Window.SystemBackdrop>
+    <!-- The backdrop (glass / Mica / none) is set from code, following Settings > Appearance. -->
 
-    <Grid>
+    <Grid x:Name="Root">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -32,6 +30,15 @@
                         IsSettingsVisible="True"
                         OpenPaneLength="150"
                         SelectionChanged="Nav_SelectionChanged">
+            <!--
+              Let the window's material show: the pane is fully clear, and the page sits on a light translucent
+              layer (the theme's own layer colour) that keeps text crisp over whatever is behind the glass.
+            -->
+            <NavigationView.Resources>
+                <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="Transparent" />
+                <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="Transparent" />
+            </NavigationView.Resources>
+
             <NavigationView.MenuItems>
                 <NavigationViewItem Content="Pins" Tag="pins" IsSelected="True">
                     <NavigationViewItem.Icon>

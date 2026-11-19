@@ -50,6 +50,14 @@
             </controls:SettingsCard>
 
             <TextBlock Text="General" Style="{StaticResource SectionHeaderStyle}" />
+            <controls:SettingsCard Glyph="&#xE790;" Header="Appearance"
+                                   Description="Glass lets what's behind the window show through, softly blurred. Subtle takes a quiet tint from your wallpaper.">
+                <ComboBox x:Name="AppearanceBox" MinWidth="130" SelectionChanged="Appearance_Changed">
+                    <ComboBoxItem Content="Glass" Tag="Glass" />
+                    <ComboBoxItem Content="Subtle" Tag="Subtle" />
+                    <ComboBoxItem Content="Solid" Tag="Solid" />
+                </ComboBox>
+            </controls:SettingsCard>
             <controls:SettingsCard Glyph="&#xE921;" Header="Minimize to the tray"
                                    Description="Minimizing this window tucks it into the tray icon, out of the taskbar and Alt+Tab.">
                 <ToggleSwitch x:Name="MinimizeToTrayToggle" OnContent="" OffContent="" MinWidth="0" Toggled="MinimizeToTray_Toggled" />

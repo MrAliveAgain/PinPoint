@@ -188,13 +188,13 @@ public sealed class QuickSlots
             var command = CommandAt(tile.Index);
             if (command is null)
             {
-                tile.SetAction("", "Empty slot · right-click to choose an action", isOn: false, isEmpty: true, iconSize);
+                tile.SetAction("\uE710", null, "Empty slot · right-click to choose an action", isOn: false, isEmpty: true, iconSize);
                 continue;
             }
 
             string? key = _settings.GetHotkey(command)?.ToDisplayString();
             string tip = key is null ? command.Title : $"{command.Title}   {key}";
-            tile.SetAction(command.Glyph, $"{tip}\nRight-click to change · drag to move", command.IsChecked?.Invoke() ?? false, isEmpty: false, iconSize);
+            tile.SetAction(command.Glyph, command.BadgeGlyph, $"{tip}\nRight-click to change · drag to move", command.IsChecked?.Invoke() ?? false, isEmpty: false, iconSize);
         }
     }
 

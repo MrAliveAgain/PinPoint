@@ -16,6 +16,12 @@ public sealed class AppCommand
     /// <summary>Segoe Fluent Icons glyph.</summary>
     public string Glyph { get; init; } = "";
 
+    /// <summary>
+    /// Optional small glyph drawn in the icon's corner, so variants of one thing read apart at a glance
+    /// (New note vs Hide notes: the note icon, plus a little crossed-out eye).
+    /// </summary>
+    public string? BadgeGlyph { get; init; }
+
     public string? DefaultHotkey { get; init; }
 
     public bool ShowInTray { get; init; } = true;
