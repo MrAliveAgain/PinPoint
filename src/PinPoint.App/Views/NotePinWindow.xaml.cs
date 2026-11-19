@@ -72,6 +72,7 @@ public sealed partial class NotePinWindow : Window, IPinSurface
         {
             if (!_shown || !(e.DidPositionChange || e.DidSizeChange)) return;
             RestartTimer(_layoutTimer);
+            LayoutChanged?.Invoke(this, EventArgs.Empty);
             if (_badge?.IsShown == true) ShowBadge(); // keep it on the header
         };
         Closed += (_, _) =>
@@ -279,6 +280,12 @@ public sealed partial class NotePinWindow : Window, IPinSurface
         _store?.SaveText(Id, Editor.Text);
         Changed?.Invoke(this, EventArgs.Empty); // title in the Pins list follows the first line
     }
+
+    public PinLayout Layout => new(PinLayouts.WindowRect(_hwnd), 0);
+
+    public void ApplyLayout(PinLayout layout) => PinLayouts.MoveWindow(_hwnd, layout.Window);
+
+    public event EventHandler? LayoutChanged;
 
     /// <summary>While pins are slid aside for a peek: don't save the edge spot as where this note lives.</summary>
     public bool HoldLayout { get; set; }

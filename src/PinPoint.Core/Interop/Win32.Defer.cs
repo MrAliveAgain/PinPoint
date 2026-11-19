@@ -8,6 +8,9 @@ public static unsafe partial class Win32
     [LibraryImport("shcore.dll")]
     public static partial int GetDpiForMonitor(nint hmonitor, int dpiType, out uint dpiX, out uint dpiY);
 
+    /// <summary>The largest window size Windows allows (about the virtual screen plus frame).</summary>
+    public const int SM_CXMAXTRACK = 59, SM_CYMAXTRACK = 60;
+
     /// <summary>Asks for 1 ms timer resolution while an animation runs (pair with timeEndPeriod).</summary>
     [LibraryImport("winmm.dll")]
     public static partial uint timeBeginPeriod(uint uPeriod);

@@ -45,7 +45,7 @@ It sits in the tray and doesn't do anything until you press a shortcut.
 - **Stays over games.** Anything in borderless or windowed mode. If a game puts itself back on top, PinPoint puts your pins back over it.
 - **Peek past your pins.** <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>D</kbd> slides every snip, note and timer out to the screen edges so you can get at what's under them, and slides them back when you press it again. Hold it instead and they're only out of the way while you hold.
 - **Quick slots.** Four little glass buttons that float wherever you put them, each running any PinPoint action in one click, so you don't have to remember shortcuts. Right-click a slot to choose what it does, or switch to a row or column of up to eight.
-- **Undo.** Closed a pin by accident (middle-click happens)? <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Z</kbd> brings it back where it was, drawing and all.
+- **Undo.** Moved, resized or closed a pin by accident (middle-click happens)? <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Z</kbd> steps back, like in Photoshop: pins return to where they were, drawing and all. <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Y</kbd> steps forward again.
 - **Easy to get out of the way.** Hide every pin at once (or just the notes, the snips, the pinned windows, or the one under your mouse), fade them, or make them click-through so your clicks go straight to the game. To fade several at once, Shift- or Ctrl-click them in the Pins list and drag any of their sliders.
 - **Small and quick.** No installer, no account, no internet connection. Just an exe in a folder.
 
@@ -77,7 +77,7 @@ All of these can be changed in Settings.
 | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>I</kbd> | Pin the image you copied |
 | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>D</kbd> | Peek: slide pins out to the edges and back (hold to peek while held) |
 | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>H</kbd> | Hide / show all pins |
-| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Z</kbd> / <kbd>Y</kbd> | Bring back the pin you just closed / close it again |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Z</kbd> / <kbd>Y</kbd> | Undo / redo moving, resizing or closing a pin |
 | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>G</kbd> | Click-through on / off |
 | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>↓</kbd> / <kbd>↑</kbd> | Fade / unfade the pin under your mouse |
 

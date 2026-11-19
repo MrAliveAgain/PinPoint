@@ -130,6 +130,7 @@ public sealed class PinManager : IDisposable
         {
             _timers.Remove(window);
             _singleHidden.Remove(window);
+            ForgetLayout(window);
             if (Items.OfType<TimerPinItem>().FirstOrDefault(i => i.Window == window) is { } item) Items.Remove(item);
             OnStateChanged();
         };
@@ -141,6 +142,7 @@ public sealed class PinManager : IDisposable
         Items.Add(new TimerPinItem(window));
         window.ShowNearCursor();
         if (IsHidden) window.SetHidden(true);
+        Track(window);
         OnStateChanged();
     }
 
@@ -207,6 +209,7 @@ public sealed class PinManager : IDisposable
         _snips.Add(window);
         Items.Add(new SnipPinItem(window));
         window.ShowAt(frame.Bounds);
+        Track(window);
         OnStateChanged();
         return window;
     }
@@ -227,6 +230,7 @@ public sealed class PinManager : IDisposable
     {
         _snips.Remove(window);
         _singleHidden.Remove(window);
+        ForgetLayout(window);
         if (Items.OfType<SnipPinItem>().FirstOrDefault(i => i.Window == window) is { } item) Items.Remove(item);
         OnStateChanged();
     }
@@ -299,114 +303,196 @@ public sealed class PinManager : IDisposable
         _snips.Add(window);
         Items.Add(new SnipPinItem(window));
         var b = saved.Bounds;
-        window.ShowAt(new Core.Geometry.PixelRect(b.X, b.Y, b.Width, b.Height));
+        // A snip saved off-screen (a zoom that went too far, a monitor that's gone) comes back where you can see it.
+        var spot = ScreenFit.BringOnScreen(new PixelRect(b.X, b.Y, b.Width, b.Height), WindowEnumerator.GetMonitors(), minVisible: 120);
+        window.ShowAt(spot);
         window.RestoreBoardState(saved.ZoomStep, saved.Opacity, saved.Strokes, saved.Locked);
         if (AreSnipsHidden) window.SetHidden(true);
+        Track(window);
         OnStateChanged();
         return window;
     }
 
-    // ---- Undo closing a pin (Ctrl+Alt+Z) / redo (Ctrl+Alt+Y) ------------------------------------
+    // ---- Undo / redo (Ctrl+Alt+Z / Ctrl+Alt+Y): closing pins, and moving or resizing them ---------------
 
-    private abstract record ClosedPin;
+    private abstract record UndoEntry;
 
-    private sealed record ClosedSnip(CapturedFrame Frame, Core.Boards.BoardSnip State, string? SavedPath) : ClosedPin;
+    private sealed record ClosedSnip(CapturedFrame Frame, Core.Boards.BoardSnip State, string? SavedPath) : UndoEntry;
 
-    private sealed record ClosedNote(Core.Boards.BoardNote State) : ClosedPin;
+    private sealed record ClosedNote(Core.Boards.BoardNote State) : UndoEntry;
 
-    private const int UndoDepth = 20;
-    private readonly List<ClosedPin> _closed = [];
-    private readonly List<IPinSurface> _reopened = [];
-    private bool _redoing;
+    /// <summary>A pin that was moved/resized/zoomed: where it was before (or, on the redo side, after).</summary>
+    private sealed record Moved(IPinSurface Surface, PinLayout Layout) : UndoEntry;
 
-    /// <summary>The Undo-close shortcut as text ("Ctrl+Alt+Z"), for the "closed" notice. Set by AppHost.</summary>
+    /// <summary>Redo side of an undone close: the reopened pin, to close again.</summary>
+    private sealed record Reopened(IPinSurface Surface) : UndoEntry;
+
+    private const int UndoDepth = 50;
+    private readonly List<UndoEntry> _undo = [];
+    private readonly List<UndoEntry> _redo = [];
+    private bool _replaying; // undo/redo is moving or closing things itself: don't record that as new history
+
+    /// <summary>The Undo shortcut as text ("Ctrl+Alt+Z"), for the "closed" notice. Set by AppHost.</summary>
     public Func<string?>? UndoShortcut { get; set; }
 
-    public bool CanUndoClose => _closed.Count > 0;
+    public bool CanUndoClose => _undo.Count > 0;
 
-    public bool CanRedoClose => _reopened.Any(IsOpen);
+    public bool CanRedoClose => _redo.Count > 0;
+
+    private void Record(UndoEntry entry)
+    {
+        _undo.Add(entry);
+        if (_undo.Count > UndoDepth) _undo.RemoveAt(0);
+        if (!_replaying) _redo.Clear(); // a fresh action starts a new future, like any undo
+        OnStateChanged();
+    }
 
     private void RememberClosed(ImagePinWindow snip)
     {
         var r = snip.ScreenBounds;
         var state = new Core.Boards.BoardSnip(snip.Id, new Core.Boards.BoardRect(r.X, r.Y, r.Width, r.Height),
             snip.CurrentZoomStep, snip.PinOpacity, snip.GetStrokePoints()) { Locked = snip.IsLocked };
-        Remember(new ClosedSnip(snip.Frame, state, snip.SavedPath), "Snip closed");
+        RememberClose(new ClosedSnip(snip.Frame, state, snip.SavedPath), "Snip closed");
     }
 
-    private void RememberClosed(NotePinWindow note) => Remember(new ClosedNote(note.ToBoardNote()), "Note closed");
+    private void RememberClosed(NotePinWindow note) => RememberClose(new ClosedNote(note.ToBoardNote()), "Note closed");
 
-    private void Remember(ClosedPin pin, string what)
+    private void RememberClose(UndoEntry entry, string what)
     {
-        _closed.Add(pin);
-        if (_closed.Count > UndoDepth) _closed.RemoveAt(0);
-        if (!_redoing) _reopened.Clear(); // a fresh close starts a new history, like any undo
-
+        Record(entry);
+        if (_replaying) return;
         string? key = UndoShortcut?.Invoke();
-        _notifier.Show("", what, key is null ? "Undo it from the tray menu." : $"{key} brings it back.");
-        OnStateChanged();
+        _notifier.Show("\uE7A7", what, key is null ? "Undo it from the tray menu." : $"{key} brings it back.");
     }
 
-    /// <summary>Undo: reopens the pin you closed last, where it was, with its zoom, opacity and drawing.</summary>
-    public void UndoClose()
+    // Moves and resizes: one undo step per gesture. The first change after the pin has been still records where it
+    // was; the gesture ends once it's been still for a moment (a drag, a burst of scroll-zoom, an edge resize).
+    private readonly Dictionary<IPinSurface, PinLayout> _stableLayout = [];
+    private readonly HashSet<IPinSurface> _changing = [];
+    private DispatcherQueueTimer? _settle;
+
+    /// <summary>Starts following a pin's moves for undo (call once it's in place on screen).</summary>
+    private void Track(IPinSurface surface)
     {
-        if (_closed.Count == 0)
-        {
-            _notifier.Show("", "Nothing to bring back");
-            return;
-        }
-
-        var pin = _closed[^1];
-        _closed.RemoveAt(_closed.Count - 1);
-        IPinSurface reopened;
-        if (pin is ClosedSnip snip)
-        {
-            ShowAll(snips: true);
-            var window = RestoreSnip(snip.Frame, snip.State);
-            window.SavedPath = snip.SavedPath;
-            reopened = window;
-        }
-        else
-        {
-            var note = ((ClosedNote)pin).State;
-            ShowAll(notes: true);
-            var b = note.Bounds;
-            var layout = new NoteLayout(b.X, b.Y, b.Width, b.Height, note.Opacity, note.ExportPath);
-            reopened = AddNote(new StoredNote(note.Id, note.Text, layout), activate: false, BoardMode ? null : _noteStore);
-        }
-
-        _reopened.Add(reopened);
-        _notifier.Show("", pin is ClosedSnip ? "Snip reopened" : "Note reopened");
-        OnStateChanged();
+        _stableLayout[surface] = surface.Layout;
+        surface.LayoutChanged += (_, _) => OnLayoutChanged(surface);
     }
 
-    /// <summary>Redo: closes again the pin you last brought back with undo.</summary>
-    public void RedoClose()
+    private void OnLayoutChanged(IPinSurface surface)
     {
-        while (_reopened.Count > 0)
-        {
-            var pin = _reopened[^1];
-            _reopened.RemoveAt(_reopened.Count - 1);
-            if (!IsOpen(pin)) continue;
+        // Peek slides pins aside and back by itself; undo/redo moves them too. Neither is a user's move.
+        if (_replaying || IsPeeking || !_stableLayout.TryGetValue(surface, out var before)) return;
+        if (_changing.Add(surface)) Record(new Moved(surface, before));
 
-            _redoing = true;
-            try
-            {
-                if (pin is ImagePinWindow snip) snip.CloseByUser();
-                else if (pin is NotePinWindow note) note.CloseNoteByUser();
-            }
-            finally
-            {
-                _redoing = false;
-            }
-
-            return;
-        }
-
-        _notifier.Show("", "Nothing to redo");
+        _settle ??= CreateSettleTimer();
+        _settle.Stop();
+        _settle.Start();
     }
 
-    private bool IsOpen(IPinSurface pin) => pin is ImagePinWindow s ? _snips.Contains(s) : pin is NotePinWindow n && _notes.Contains(n);
+    private DispatcherQueueTimer CreateSettleTimer()
+    {
+        var timer = DispatcherQueue.GetForCurrentThread().CreateTimer();
+        timer.IsRepeating = false;
+        timer.Interval = TimeSpan.FromMilliseconds(450);
+        timer.Tick += (_, _) =>
+        {
+            foreach (var surface in _changing) _stableLayout[surface] = surface.Layout;
+            _changing.Clear();
+        };
+        return timer;
+    }
+
+    private void ForgetLayout(IPinSurface surface)
+    {
+        _stableLayout.Remove(surface);
+        _changing.Remove(surface);
+    }
+
+    /// <summary>Undo: steps back one thing — a move/resize/zoom, or a close (the pin comes back where it was).</summary>
+    public void UndoClose() => Step(_undo, _redo, undoing: true);
+
+    /// <summary>Redo: steps forward again.</summary>
+    public void RedoClose() => Step(_redo, _undo, undoing: false);
+
+    private void Step(List<UndoEntry> from, List<UndoEntry> to, bool undoing)
+    {
+        EndPeekNow();
+        _settle?.Stop();
+        foreach (var surface in _changing) _stableLayout[surface] = surface.Layout;
+        _changing.Clear();
+
+        while (from.Count > 0)
+        {
+            var entry = from[^1];
+            from.RemoveAt(from.Count - 1);
+            if (TryApply(entry, to)) return;
+        }
+
+        _notifier.Show(undoing ? "\uE7A7" : "\uE7A6", undoing ? "Nothing to undo" : "Nothing to redo");
+    }
+
+    /// <summary>Applies one history entry, pushing its opposite onto <paramref name="opposite"/>. False if it no longer applies.</summary>
+    private bool TryApply(UndoEntry entry, List<UndoEntry> opposite)
+    {
+        _replaying = true;
+        try
+        {
+            switch (entry)
+            {
+                case Moved(var surface, var layout):
+                    if (!IsOpen(surface)) return false;
+                    opposite.Add(new Moved(surface, surface.Layout));
+                    surface.ApplyLayout(layout);
+                    _stableLayout[surface] = layout;
+                    _notifier.Show("\uE7A7", "Moved back");
+                    break;
+
+                case ClosedSnip snip:
+                {
+                    ShowAll(snips: true);
+                    var window = RestoreSnip(snip.Frame, snip.State);
+                    window.SavedPath = snip.SavedPath;
+                    opposite.Add(new Reopened(window));
+                    _notifier.Show("\uE7A7", "Snip reopened");
+                    break;
+                }
+
+                case ClosedNote(var note):
+                {
+                    ShowAll(notes: true);
+                    var b = note.Bounds;
+                    var layout = new NoteLayout(b.X, b.Y, b.Width, b.Height, note.Opacity, note.ExportPath);
+                    var window = AddNote(new StoredNote(note.Id, note.Text, layout), activate: false, BoardMode ? null : _noteStore);
+                    opposite.Add(new Reopened(window));
+                    _notifier.Show("\uE7A7", "Note reopened");
+                    break;
+                }
+
+                case Reopened(var surface):
+                    if (!IsOpen(surface)) return false;
+                    // Closing records the close on the undo side (we're replaying, so redo is kept).
+                    if (surface is ImagePinWindow s) s.CloseByUser();
+                    else if (surface is NotePinWindow n) n.CloseNoteByUser();
+                    else return false;
+                    break;
+            }
+        }
+        finally
+        {
+            _replaying = false;
+        }
+
+        OnStateChanged();
+        return true;
+    }
+
+    private bool IsOpen(IPinSurface pin) => pin switch
+    {
+        ImagePinWindow s => _snips.Contains(s),
+        NotePinWindow n => _notes.Contains(n),
+        TimerPinWindow t => _timers.Contains(t),
+        _ => false,
+    };
 
     // ---- Peek: slide every pin out to the screen edges and back ----------------------------------
 
@@ -690,6 +776,7 @@ public sealed class PinManager : IDisposable
         Items.Add(new NotePinItem(window));
         window.ShowAt(note.Layout, activate);
         if (AreNotesHidden) window.SetHidden(true);
+        Track(window);
         OnStateChanged();
         return window;
     }
@@ -698,6 +785,7 @@ public sealed class PinManager : IDisposable
     {
         _notes.Remove(window);
         _singleHidden.Remove(window);
+        ForgetLayout(window);
         if (Items.OfType<NotePinItem>().FirstOrDefault(i => i.Window == window) is { } item) Items.Remove(item);
         OnStateChanged();
     }

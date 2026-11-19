@@ -73,6 +73,11 @@ public sealed partial class ImagePinWindow : Window, IPinSurface
         PinImage.Source = Bitmap;
         InitInk();
 
+        AppWindow.Changed += (_, e) =>
+        {
+            if (e.DidPositionChange || e.DidSizeChange) LayoutChanged?.Invoke(this, EventArgs.Empty);
+        };
+
         Menu.Opened += (_, _) => IsShowingMenu = true;
         Menu.Closed += (_, _) => IsShowingMenu = false;
 
@@ -195,6 +200,16 @@ public sealed partial class ImagePinWindow : Window, IPinSurface
     }
 
     public void RaiseTopmost() => WindowStyler.RaiseTopmost(_hwnd);
+
+    public PinLayout Layout => new(PinLayouts.WindowRect(_hwnd), _zoomStep);
+
+    public void ApplyLayout(PinLayout layout)
+    {
+        PinLayouts.MoveWindow(_hwnd, layout.Window);
+        _zoomStep = layout.ZoomStep;
+    }
+
+    public event EventHandler? LayoutChanged;
 
     /// <summary>Shows the snip fully opaque for a screen capture without changing its opacity setting.</summary>
     public bool SetTemporarilyOpaque(bool opaque)
@@ -319,8 +334,20 @@ public sealed partial class ImagePinWindow : Window, IPinSurface
         step = Math.Clamp(step, MinZoomStep, MaxZoomStep);
         if (step == _zoomStep) return;
 
-        double zoom = Math.Pow(ZoomStep, step);
         var client = ScreenBounds;
+
+        // Windows won't make a window bigger than (about) the whole screen. Asking anyway used to keep the far-off
+        // position computed for the bigger size, flinging the snip off-screen. So growing stops at that limit.
+        int frameW = AppWindow.Size.Width - client.Width, frameH = AppWindow.Size.Height - client.Height;
+        int maxW = Win32.GetSystemMetrics(Win32.SM_CXMAXTRACK) - frameW, maxH = Win32.GetSystemMetrics(Win32.SM_CYMAXTRACK) - frameH;
+        while (step > _zoomStep && (Frame.Width * Math.Pow(ZoomStep, step) > maxW || Frame.Height * Math.Pow(ZoomStep, step) > maxH)) step--;
+        if (step == _zoomStep)
+        {
+            ShowBadge("Max size");
+            return;
+        }
+
+        double zoom = Math.Pow(ZoomStep, step);
 
         // Keep the image point under the cursor fixed while scaling.
         double rx = client.Width > 0 ? (anchor.X - client.X) / (double)client.Width : 0.5;
@@ -330,7 +357,11 @@ public sealed partial class ImagePinWindow : Window, IPinSurface
         int x = (int)Math.Round(anchor.X - rx * width);
         int y = (int)Math.Round(anchor.Y - ry * height);
 
-        WindowHelpers.SetClientScreenRect(_hwnd, AppWindow, new PixelRect(x, y, width, height), discardOldContent: true);
+        // And never so far off-screen it can't be seen or grabbed.
+        int keep = (int)Math.Round(120 * WindowHelpers.GetScale(_hwnd));
+        var target = ScreenFit.KeepReachable(new PixelRect(x, y, width, height), WindowEnumerator.GetMonitors(), keep);
+
+        WindowHelpers.SetClientScreenRect(_hwnd, AppWindow, target, discardOldContent: true);
         _zoomStep = step;
         ShowBadge($"{zoom:P0}");
     }

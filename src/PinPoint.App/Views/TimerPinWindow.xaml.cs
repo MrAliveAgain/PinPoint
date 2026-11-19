@@ -79,6 +79,11 @@ public sealed partial class TimerPinWindow : Window, IPinSurface
         AppHost.Current.Settings.Changed += OnSettingsChanged; // all timers share the silent setting
         Closed += (_, _) => AppHost.Current.Settings.Changed -= OnSettingsChanged;
 
+        AppWindow.Changed += (_, e) =>
+        {
+            if (e.DidPositionChange || e.DidSizeChange) LayoutChanged?.Invoke(this, EventArgs.Empty);
+        };
+
         // Switching back to the game while typing keeps the typed time.
         Activated += (_, e) =>
         {
@@ -154,6 +159,12 @@ public sealed partial class TimerPinWindow : Window, IPinSurface
     }
 
     public void RaiseTopmost() => WindowStyler.RaiseTopmost(_hwnd);
+
+    public PinLayout Layout => new(PinLayouts.WindowRect(_hwnd), 0);
+
+    public void ApplyLayout(PinLayout layout) => PinLayouts.MoveWindow(_hwnd, layout.Window);
+
+    public event EventHandler? LayoutChanged;
 
     public bool SetTemporarilyOpaque(bool opaque)
     {

@@ -306,8 +306,8 @@ public sealed class AppHost : IDisposable
         Commands.Add(new AppCommand
         {
             Id = CommandIds.UndoClose,
-            Title = "Undo close",
-            Description = "Bring back the snip or note you closed last (middle-click happens), right where it was. Press again for the one before.",
+            Title = "Undo",
+            Description = "Step back: undo the last move, resize or zoom of a pin, or bring back the one you closed (middle-click happens). Press again to keep going back.",
             Glyph = "",
             DefaultHotkey = "Ctrl+Alt+Z",
             CanExecute = () => Pins.CanUndoClose,
@@ -317,8 +317,8 @@ public sealed class AppHost : IDisposable
         Commands.Add(new AppCommand
         {
             Id = CommandIds.RedoClose,
-            Title = "Redo close",
-            Description = "Close again the pin you just brought back with Undo close.",
+            Title = "Redo",
+            Description = "Step forward again after an Undo.",
             Glyph = "",
             DefaultHotkey = "Ctrl+Alt+Y",
             ShowInTray = false,
