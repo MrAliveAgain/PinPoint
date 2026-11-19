@@ -423,8 +423,10 @@ public sealed class PinManager : IDisposable
 
     private List<PeekMove>? _peek;          // set while pins are out (or sliding)
     private bool _peekReturning;
-    private readonly System.Diagnostics.Stopwatch _peekClock = new();
-    private bool _peekAnimating;
+
+    // The slide is timed by its own thread with a precise clock, not WinUI's render tick: that tick nearly stops
+    // while PinPoint sits behind a game, which made the slide crawl (and the way back never run).
+    private int _peekGeneration; // bumped to cancel the running slide
 
     /// <summary>Pins are slid out to the edges (or on their way out or back).</summary>
     public bool IsPeeking => _peek is not null;
@@ -536,13 +538,14 @@ public sealed class PinManager : IDisposable
     public void EndPeekNow()
     {
         if (_peek is null) return;
+        Interlocked.Increment(ref _peekGeneration); // stop the slide first (frames run on this thread, so none can follow)
         Win32.MoveWindowsTogether([.. _peek.Where(m => Win32.IsWindow(m.Hwnd)).Select(m => (m.Hwnd, m.Home.X, m.Home.Y))]);
         FinishPeek();
     }
 
     private void FinishPeek()
     {
-        StopPeekAnimation();
+        Interlocked.Increment(ref _peekGeneration);
         _peek = null;
         _peekReturning = false;
         foreach (var note in _notes) note.HoldLayout = false;
@@ -556,38 +559,56 @@ public sealed class PinManager : IDisposable
         return PixelRect.FromRect(r);
     }
 
+    /// <summary>
+    /// Slides every peek window from its From to its To over <see cref="PeekSeconds"/>, ~140 Hz, on a short-lived
+    /// high-priority thread. A newer slide (or EndPeekNow) cancels this one mid-way.
+    /// </summary>
     private void StartPeekAnimation()
     {
-        _peekClock.Restart();
-        if (_peekAnimating) return;
-        _peekAnimating = true;
-        Microsoft.UI.Xaml.Media.CompositionTarget.Rendering += OnPeekFrame; // once per display frame
-    }
+        if (_peek is null) return;
+        int generation = Interlocked.Increment(ref _peekGeneration);
+        var plan = _peek.Select(m => (m.Hwnd, m.From, m.To)).ToArray();
+        bool returning = _peekReturning;
+        var dispatcher = DispatcherQueue.GetForCurrentThread();
 
-    private void StopPeekAnimation()
-    {
-        if (!_peekAnimating) return;
-        _peekAnimating = false;
-        Microsoft.UI.Xaml.Media.CompositionTarget.Rendering -= OnPeekFrame;
-    }
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        bool done = false;
 
-    private void OnPeekFrame(object? sender, object e)
-    {
-        if (_peek is null)
+        // One frame, on the UI thread (it owns the windows): where everything should be right now.
+        void Frame()
         {
-            StopPeekAnimation();
-            return;
+            if (_peekGeneration != generation || done) return;
+            double t = PeekLayout.EaseOut(clock.Elapsed.TotalSeconds / PeekSeconds);
+            Win32.MoveWindowsTogether([.. plan.Where(p => Win32.IsWindow(p.Hwnd))
+                .Select(p => PeekLayout.Lerp(p.From, p.To, t) is var r ? (p.Hwnd, r.X, r.Y) : default)]);
+            if (t < 1) return;
+            done = true;
+            if (returning) FinishPeek(); // back home: done
         }
 
-        double t = PeekLayout.EaseOut(_peekClock.Elapsed.TotalSeconds / PeekSeconds);
-        var frame = _peek.Where(m => Win32.IsWindow(m.Hwnd))
-            .Select(m => PeekLayout.Lerp(m.From, m.To, t) is var r ? (m.Hwnd, r.X, r.Y) : default)
-            .ToList();
-        Win32.MoveWindowsTogether(frame);
-
-        if (t < 1) return;
-        StopPeekAnimation();
-        if (_peekReturning) FinishPeek(); // back home: done
+        // The ticker only keeps time; frames run on the UI thread, which is idle behind a game, so they're prompt.
+        var thread = new Thread(() =>
+        {
+            Win32.timeBeginPeriod(1); // make the short sleeps accurate
+            try
+            {
+                while (!Volatile.Read(ref done) && Volatile.Read(ref _peekGeneration) == generation)
+                {
+                    dispatcher.TryEnqueue(DispatcherQueuePriority.High, Frame);
+                    Thread.Sleep(7);
+                }
+            }
+            finally
+            {
+                Win32.timeEndPeriod(1);
+            }
+        })
+        {
+            IsBackground = true,
+            Priority = ThreadPriority.AboveNormal,
+            Name = "PinPoint peek",
+        };
+        thread.Start();
     }
 
     // ---- Hide the pin under the mouse ------------------------------------------------------------
@@ -764,6 +785,7 @@ public sealed class PinManager : IDisposable
     /// <summary>Applies a new hidden state, showing/hiding only the kinds of pin whose visibility changed.</summary>
     private void SetHiddenState(bool windows, bool notes, bool snips)
     {
+        EndPeekNow(); // hidden pins come back where they live, never stranded at the edge
         bool windowsWere = _windowsHidden, notesWere = _notesHidden, snipsWere = _snipsHidden, allWere = IsHidden;
         _windowsHidden = windows;
         _notesHidden = notes;

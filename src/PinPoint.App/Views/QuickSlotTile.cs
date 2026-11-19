@@ -124,15 +124,25 @@ public sealed class QuickSlotTile : Window
         WindowHelpers.SetClientScreenRect(_hwnd, AppWindow, rect);
     }
 
+    public bool IsShown { get; private set; }
+
     public void ShowTile()
     {
         AppWindow.Show(activateWindow: false);
         WindowStyler.RaiseTopmost(_hwnd);
+        IsShown = true;
     }
 
-    public void HideTile() => AppWindow.Hide();
+    public void HideTile()
+    {
+        AppWindow.Hide();
+        IsShown = false;
+    }
 
-    public void RaiseTopmost() => WindowStyler.RaiseTopmost(_hwnd);
+    public void RaiseTopmost()
+    {
+        if (IsShown) WindowStyler.RaiseTopmost(_hwnd);
+    }
 
     /// <summary>The whole window (frame included) in screen pixels, for moving the group as one.</summary>
     public PixelRect WindowRect

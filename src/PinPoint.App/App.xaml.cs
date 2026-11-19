@@ -43,14 +43,21 @@ public partial class App : Application
 
         // A second launch redirects here: show the window.
         // "PinPoint.exe --exit" asks the running copy to quit properly (pinned windows put back, everything saved).
+        // "PinPoint.exe --run peekPins" runs any action in the running copy (handy for a Stream Deck, AutoHotkey,
+        // a desktop shortcut... the ids are the shortcut names in settings.json).
         AppInstance.GetCurrent().Activated += (_, e) =>
         {
-            bool exit = e.Kind == ExtendedActivationKind.Launch &&
-                e.Data is Windows.ApplicationModel.Activation.ILaunchActivatedEventArgs launch &&
-                launch.Arguments.Contains("--exit", StringComparison.OrdinalIgnoreCase);
+            string arguments = e.Kind == ExtendedActivationKind.Launch &&
+                e.Data is Windows.ApplicationModel.Activation.ILaunchActivatedEventArgs launch ? launch.Arguments ?? string.Empty : string.Empty;
+            string[] parts = arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            bool exit = parts.Contains("--exit", StringComparer.OrdinalIgnoreCase);
+            int run = Array.FindIndex(parts, p => p.Equals("--run", StringComparison.OrdinalIgnoreCase));
+            string? command = run >= 0 && run + 1 < parts.Length ? parts[run + 1].Trim('"') : null;
+
             _host.Dispatcher.TryEnqueue(() =>
             {
                 if (exit) _host.Exit();
+                else if (command is not null) _host.RunCommand(command);
                 else _host.ShowManager();
             });
         };

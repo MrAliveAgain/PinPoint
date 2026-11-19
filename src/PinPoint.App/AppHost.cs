@@ -118,6 +118,20 @@ public sealed class AppHost : IDisposable
         _manager.ShowAndActivate(page);
     }
 
+    /// <summary>Runs an action by its id (from "PinPoint.exe --run id"). Unknown ids are logged, not fatal.</summary>
+    public void RunCommand(string id)
+    {
+        var command = Commands.All.FirstOrDefault(c => string.Equals(c.Id, id, StringComparison.OrdinalIgnoreCase));
+        if (command is null)
+        {
+            Log.Warn($"--run: no action called '{id}'");
+            return;
+        }
+
+        Log.Info($"--run {command.Id}");
+        command.Execute();
+    }
+
     public void Exit()
     {
         Log.Info("Exiting");

@@ -47,7 +47,7 @@ public sealed class QuickSlots
         pins.StateChanged += (_, _) => RefreshStates();
         pins.Raised += RaiseTiles;
         pins.CaptureHook = HideForCapture;
-        pins.ExtraTopmost = () => _tiles.Select(t => t.Handle); // a game covering just the slots brings them back up too
+        pins.ExtraTopmost = () => _tiles.Where(t => t.IsShown).Select(t => t.Handle); // a game covering just the slots brings them back up too
     }
 
     public const string ToggleCommandId = "toggleQuickSlots";
@@ -126,7 +126,7 @@ public sealed class QuickSlots
         for (int i = 0; i < _tiles.Count; i++)
         {
             _tiles[i].Place(new PixelRect(x + offsets[i].X, y + offsets[i].Y, tile, tile));
-            if (show) _tiles[i].ShowTile();
+            if (show && ShouldShow(_tiles[i])) _tiles[i].ShowTile();
         }
 
         if (x != Config.X || y != Config.Y) _settings.Update(s => (s.QuickSlots.X, s.QuickSlots.Y) = (x, y));
@@ -158,9 +158,30 @@ public sealed class QuickSlots
         return string.IsNullOrEmpty(id) ? null : _commands.All.FirstOrDefault(c => c.Id == id);
     }
 
+    /// <summary>
+    /// "Hide all" means a clear screen, slots included, except a slot that is itself Hide all: that one stays,
+    /// so you can bring everything back with the mouse. During a screen capture none show.
+    /// </summary>
+    private bool ShouldShow(QuickSlotTile tile) =>
+        !_capturing && (!_pins.IsHidden || CommandAt(tile.Index)?.Id == CommandIds.ToggleHideAll);
+
+    private bool _capturing;
+
+    private void ApplyVisibility()
+    {
+        foreach (var tile in _tiles)
+        {
+            bool show = ShouldShow(tile);
+            if (show == tile.IsShown) continue;
+            if (show) tile.ShowTile();
+            else tile.HideTile();
+        }
+    }
+
     private void RefreshStates()
     {
         if (_tiles.Count == 0) return;
+        ApplyVisibility();
         double iconSize = Math.Round(Config.TileSize * 0.38);
         foreach (var tile in _tiles)
         {
@@ -337,12 +358,8 @@ public sealed class QuickSlots
     private bool HideForCapture(bool capturing)
     {
         if (_tiles.Count == 0) return false;
-        foreach (var tile in _tiles)
-        {
-            if (capturing) tile.HideTile();
-            else tile.ShowTile();
-        }
-
+        _capturing = capturing;
+        ApplyVisibility();
         return true;
     }
 }
