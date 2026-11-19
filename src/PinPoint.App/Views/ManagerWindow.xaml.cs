@@ -1,3 +1,5 @@
+using Microsoft.UI.Composition;
+using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -7,6 +9,7 @@ using PinPoint.Core.Interop;
 using PinPoint.Core.Windows;
 using PinPoint.Helpers;
 using Windows.Graphics;
+using WinRT;
 
 namespace PinPoint.Views;
 
@@ -39,10 +42,17 @@ public sealed partial class ManagerWindow : Window
         CenterOnCursorMonitor(width: 960, height: 700);
         Navigate(PinsPageTag);
 
+        Root.ActualThemeChanged += (_, _) => UpdateBackdropTheme();
         ApplyAppearance();
         var settings = AppHost.Current.Settings;
         settings.Changed += OnSettingsChanged;
-        Closed += (_, _) => settings.Changed -= OnSettingsChanged;
+        Closed += (_, _) =>
+        {
+            settings.Changed -= OnSettingsChanged;
+            _acrylic?.Dispose();
+            _acrylic = null;
+            _backdropConfig = null;
+        };
 
         // The selected nav item would otherwise open wearing the keyboard focus rectangle (a hard white box).
         Activated += (_, e) =>
@@ -91,7 +101,8 @@ public sealed partial class ManagerWindow : Window
     }
 
     private Core.Settings.AppearanceStyle? _appliedAppearance;
-    private Controls.GleamLayer? _gleam;
+    private DesktopAcrylicController? _acrylic;
+    private SystemBackdropConfiguration? _backdropConfig;
 
     private void OnSettingsChanged(object? sender, EventArgs e) => DispatcherQueue.TryEnqueue(ApplyAppearance);
 
@@ -102,27 +113,39 @@ public sealed partial class ManagerWindow : Window
         if (style == _appliedAppearance) return;
         _appliedAppearance = style;
 
-        SystemBackdrop = style switch
-        {
-            Core.Settings.AppearanceStyle.Glass => new Microsoft.UI.Xaml.Media.DesktopAcrylicBackdrop(),
-            Core.Settings.AppearanceStyle.Subtle => new Microsoft.UI.Xaml.Media.MicaBackdrop { Kind = Microsoft.UI.Composition.SystemBackdrops.MicaKind.BaseAlt },
-            _ => null,
-        };
+        _acrylic?.Dispose();
+        _acrylic = null;
+        _backdropConfig = null;
+        SystemBackdrop = style == Core.Settings.AppearanceStyle.Subtle
+            ? new Microsoft.UI.Xaml.Media.MicaBackdrop { Kind = MicaKind.BaseAlt }
+            : null;
 
-        // Light on the glass: behind the content (so text stays crisp), gentler than on the small pins.
-        if (_gleam is null)
+        if (style == Core.Settings.AppearanceStyle.Glass && DesktopAcrylicController.IsSupported())
         {
-            _gleam = new Controls.GleamLayer { Radius = 0, Strength = 0.4 };
-            Grid.SetRowSpan(_gleam, 2);
-            Root.Children.Insert(0, _gleam);
+            _backdropConfig = new SystemBackdropConfiguration { IsInputActive = true };
+            _acrylic = new DesktopAcrylicController { Kind = DesktopAcrylicKind.Base };
+            UpdateBackdropTheme();
+            _acrylic.AddSystemBackdropTarget(this.As<ICompositionSupportsSystemBackdrop>());
+            _acrylic.SetSystemBackdropConfiguration(_backdropConfig);
         }
-
-        _gleam.Enabled = style == Core.Settings.AppearanceStyle.Glass;
 
         // Solid needs an actual surface under everything; the materials want it clear.
         Root.Background = style == Core.Settings.AppearanceStyle.Solid
             ? (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["SolidBackgroundFillColorBaseBrush"]
             : null;
+    }
+
+    private void UpdateBackdropTheme()
+    {
+        if (_backdropConfig is null || _acrylic is null) return;
+
+        bool dark = Root.ActualTheme == ElementTheme.Dark;
+        _backdropConfig.Theme = dark ? SystemBackdropTheme.Dark : SystemBackdropTheme.Light;
+        _acrylic.TintColor = dark
+            ? Windows.UI.Color.FromArgb(255, 0x20, 0x22, 0x26)
+            : Windows.UI.Color.FromArgb(255, 0xF3, 0xF3, 0xF3);
+        _acrylic.TintOpacity = 0.65f;
+        _acrylic.LuminosityOpacity = 0.85f;
     }
 
     public void ShowAndActivate(string? page)

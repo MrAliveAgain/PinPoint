@@ -30,13 +30,12 @@
                         IsSettingsVisible="True"
                         OpenPaneLength="150"
                         SelectionChanged="Nav_SelectionChanged">
-            <!--
-              Let the window's material show: the pane is fully clear, and the page sits on a light translucent
-              layer (the theme's own layer colour) that keeps text crisp over whatever is behind the glass.
-            -->
+            <!-- Let the window material show through both the pane and the page. -->
             <NavigationView.Resources>
                 <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="Transparent" />
                 <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="Transparent" />
+                <SolidColorBrush x:Key="NavigationViewContentBackground" Color="Transparent" />
+                <SolidColorBrush x:Key="NavigationViewContentGridBorderBrush" Color="Transparent" />
             </NavigationView.Resources>
 
             <NavigationView.MenuItems>
