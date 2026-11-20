@@ -35,8 +35,8 @@ tools/make-icon.ps1   regenerates the app icon
 
 * **`AppHost`** is the composition root. It creates every service and owns the tray icon, hotkeys and the main window.
 * **Commands** (`Commands/AppCommand.cs`) are the main extension point. Register an `AppCommand` in `AppHost.RegisterCommands` and it automatically gets a rebindable global shortcut on the Settings page and, if you want, a tray-menu entry.
-* **`PinManager`** is the single source of truth for pins: other apps' windows plus PinPoint's own windows. It also pushes pins back on top when a topmost game grabs focus.
-* **`IPinSurface`** is what a PinPoint-owned pin window implements (today `ImagePinWindow` for snips and `NotePinWindow` for notes). PinManager drives all surfaces the same way (re-raising, hide all, click-through, fading), so a new pin kind is one window class plus a `PinItem` for the Pins list. `WindowDragger` handles drag-to-move for borderless windows.
+* **`PinManager`** is the single source of truth for pins: other apps' windows plus PinPoint's own windows. It also pushes pins back on top when a topmost game grabs focus, and keeps one undo history (`UndoEntry`: closed, moved, reopened) with a short settle timer so one drag is one step.
+* **`IPinSurface`** is what a PinPoint-owned pin window implements (today `ImagePinWindow` for snips, `NotePinWindow` for notes and `TimerPinWindow` for timers). PinManager drives all surfaces the same way (re-raising, hide all, click-through, fading), so a new pin kind is one window class plus a `PinItem` for the Pins list. `WindowDragger` handles drag-to-move for borderless windows.
 * **Drawing** on snips lives in `ImagePinWindow.Ink.cs`; the undo/redo history (`StrokeHistory`) and stroke hit-testing (`StrokeGeometry`) are in Core and unit-tested. Strokes are in snip pixels on a Viewbox-scaled canvas, so they follow zoom for free. Drawings are an overlay: saved and copied snips are the original image.
 * **Boards** have their own section below.
 * **Notes** are stored by `NoteStore` (Core, unit-tested): one `.txt` per note plus `layout.json` for position, size and opacity. Closing a note with text moves it to `notes\closed`.
@@ -57,6 +57,24 @@ tools/make-icon.ps1   regenerates the app icon
   * Thumbnails are a cache (`thumbnail-v2.png` in the board folder), redrawn when older than `board.json`.
 * **Choosing pins.** Each pin is also drawn on its own (`CollageRenderer.RenderItemPngAsync`) for `PinPicker`, which the board preview popup (`BoardPreviewFlyout`) and the export dialog (`BoardExport`) share: click to tick, hover for a full-size `PinPeekWindow`, right-click to copy or save one pin. The export dialog redraws the exact picture (debounced) as the choice changes.
 
+## Command line
+
+`--run` and `--exit` are handed to the copy that's already running (the second `PinPoint.exe` exits straight away), so they work from scripts, Stream Deck buttons and the like. `--shot` runs on its own without UI.
+
+```bash
+PinPoint.exe --run peekPins     # run any command by id (see CommandIds in AppHost)
+PinPoint.exe --exit             # quit the running copy cleanly
+PinPoint.exe --background       # start in the tray without opening the main window
+PinPoint.exe --show-quick-slots # start with the quick slots showing
+PinPoint.exe --shot out.png x y w h  # HDR-correct screenshot of a screen area, then exit
+```
+
+## Look and feel
+
+* **Glass.** Pins, notes, timers and quick slots each run their own `DesktopAcrylicController` (`PinGlass` falls back to a solid fill while faded or click-through, where acrylic can't follow). The main window uses a tuned acrylic controller too, not the stock backdrop.
+* **Gleam** (`Controls/GleamLayer`) is static light on the glass: two soft pools (lead colour top-left, trail colour bottom-right) and a 1px diagonal edge, rebuilt only when the theme or Gleam settings change. Never animate it or sample the desktop. `GleamLayer.PresetColors` is the one place the preset colours live.
+* **Glass buttons** (`LiquidGlassButtonStyle` in `Styles/Common.xaml`) draw their light with `Controls/GlassDropLayer`, from the same preset and direction as the Gleam, so buttons and window are lit together. Bodies stay clear: the window's acrylic is the transparency. Set `controls:GlassDropLayer.Primary="True"` on a button's style for the primary action.
+* **Peek** animates on its own ticker thread (with `timeBeginPeriod(1)`), not `CompositionTarget.Rendering`, which starves while a game has the GPU.
 ## Gotchas
 
 * **Clipboard images** must go in as a native `InMemoryRandomAccessStream`, followed by `Clipboard.Flush()` (see `SnipStorage.CopyPngToClipboardAsync`). A .NET `MemoryStream` wrapper looks fine but leaves the clipboard empty.

@@ -44,10 +44,12 @@ It sits in the tray and doesn't do anything until you press a shortcut.
 - **Pin any image.** Copied a picture from a website, or have a screenshot on the clipboard? <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>I</kbd> pins it like a snip. You can also drop image files onto the PinPoint window.
 - **Stays over games.** Anything in borderless or windowed mode. If a game puts itself back on top, PinPoint puts your pins back over it.
 - **Peek past your pins.** <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>D</kbd> slides every snip, note and timer out to the screen edges so you can get at what's under them, and slides them back when you press it again. Hold it instead and they're only out of the way while you hold.
-- **Quick slots.** Four little glass buttons that float wherever you put them, each running any PinPoint action in one click, so you don't have to remember shortcuts. Right-click a slot to choose what it does, or switch to a row or column of up to eight.
-- **Undo.** Moved, resized or closed a pin by accident (middle-click happens)? <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Z</kbd> steps back, like in Photoshop: pins return to where they were, drawing and all. <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Y</kbd> steps forward again.
-- **Easy to get out of the way.** Hide every pin at once (or just the notes, the snips, the pinned windows, or the one under your mouse), fade them, or make them click-through so your clicks go straight to the game. To fade several at once, Shift- or Ctrl-click them in the Pins list and drag any of their sliders.
-- **Small and quick.** No installer, no account, no internet connection. Just an exe in a folder.
+- **Quick slots.** Four little glass buttons that float wherever you put them, each running any PinPoint action in one click, so you don't have to remember shortcuts. Right-click a slot to choose what it does, or switch to a row or column of up to eight. They stay on top over your game even while your pins are hidden.
+- **Undo.** Moved, resized, zoomed or closed a pin by accident (middle-click happens)? <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Z</kbd> steps back, like in Photoshop: pins return to where they were, drawing and all. <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Y</kbd> steps forward again.
+- **Juggle lots of pins.** Click a pin to bring it in front of the others, or flip through them with <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>→</kbd> / <kbd>←</kbd> like Alt+Tab just for pins. **Bring pins to front** lifts every buried pin back on top, and <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>L</kbd> lifts whatever app window is under your mouse to the very front (press again to put it back).
+- **Easy to get out of the way.** Hide every pin at once (or just the notes, the snips, the pinned windows, or the one under your mouse), fade them, or make them click-through so your clicks go straight to the game. **Fade all pins** / **Unfade all pins** step every pin at once, or Shift- or Ctrl-click a few in the Pins list and drag any of their sliders.
+- **Looks the part.** Pick **Glass** in Settings for frosted, see-through pins, notes, timers and main window, then give it a **Gleam**: a soft light that falls across the glass from the top-left in Accent, Sky, Sunlight, Ember, Forest or Prism, at the strength you like. The buttons in the main window are lit by the same light, like drops of water on the glass, and snips get a thin smoked rim so they stand out from whatever's behind them.
+- **Small and quick.** No installer, no account, no internet connection. Just an exe in a folder. Minimizing the main window to the tray closes it properly, so PinPoint gives that memory back while you play.
 
 <p align="center">
   <img src="docs/app-window.png" alt="PinPoint's main window: the Pins page with Snip &amp; pin, Pin a window and New note buttons, Pins and Boards in the sidebar, and the list of keyboard shortcuts" width="720">
@@ -77,9 +79,13 @@ All of these can be changed in Settings.
 | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>I</kbd> | Pin the image you copied |
 | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>D</kbd> | Peek: slide pins out to the edges and back (hold to peek while held) |
 | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>H</kbd> | Hide / show all pins |
-| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Z</kbd> / <kbd>Y</kbd> | Undo / redo moving, resizing or closing a pin |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Z</kbd> / <kbd>Y</kbd> | Undo / redo moving, resizing, zooming or closing a pin |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>→</kbd> / <kbd>←</kbd> | Bring the next / previous pin to the front |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>L</kbd> | Lift the app window under your mouse to the very front (again to put it back) |
 | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>G</kbd> | Click-through on / off |
-| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>↓</kbd> / <kbd>↑</kbd> | Fade / unfade the pin under your mouse |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>↓</kbd> / <kbd>↑</kbd> | Fade / unfade the pin under your mouse (or every pin, if you're not over one) |
+
+These have no shortcut out of the box, so nothing clashes with your games. Give them one in Settings, put them on a quick slot, or use the tray menu: **New timer**, **Hide all notes**, **Hide all snips**, **Hide pinned windows**, **Hide pin under mouse**, **Bring pins to front**, **Fade all pins**, **Unfade all pins** and **Quick slots**.
 
 ## Moving snips around
 
@@ -90,7 +96,7 @@ These mouse controls are for snips (the screenshots you pin). Pinned windows lik
 | Move | Drag it |
 | Resize | Scroll |
 | Fade | Hold right-click and scroll |
-| Back to original size | Double-click |
+| Back to original size | Double-click (zooming never pushes a snip off the screen) |
 | Close | Middle-click or <kbd>Esc</kbd> |
 | Copy text | Click the **T** button (shows on hover), then drag over the words. Click **T** again to go back to moving the snip. |
 | Draw / erase | Click the **pen** button (shows on hover), then drag to draw. Right-drag over a line to erase it. Undo, redo and erase-all appear next to the pen. Click the pen again to go back to moving the snip. |
