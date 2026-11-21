@@ -72,6 +72,9 @@ public sealed class PinManager : IDisposable
     /// <summary>"Hide all pins": everything, pinned windows included.</summary>
     public bool IsHidden => _windowsHidden && _notesHidden && _snipsHidden;
 
+    /// <summary>Anything hidden at all: every pin, one kind, or single pins. Hide all brings it back first.</summary>
+    public bool IsAnyHidden => _windowsHidden || _notesHidden || _snipsHidden || _singleHidden.Count > 0;
+
     // Each kind of pin is hidden on its own; "hide all" just hides all three. That way a new pin only brings
     // back its own kind (pinning a window or snipping something doesn't make hidden notes reappear).
     private bool _windowsHidden, _notesHidden, _snipsHidden;
@@ -800,8 +803,9 @@ public sealed class PinManager : IDisposable
             return;
         }
 
-        // Showing them again brings everything back, including notes or snips hidden on their own.
-        bool hide = !IsHidden;
+        // If anything is hidden (all of it, one kind, or single pins), this brings everything back first;
+        // otherwise a hidden-notes state would be "hidden" again rather than revealed.
+        bool hide = !IsAnyHidden;
         SetHiddenState(windows: hide, notes: hide, snips: hide);
         if (!hide && _singleHidden.Count > 0) ShowSingles(); // "show all" means all
         _notifier.Show(IsHidden ? "" : "", IsHidden ? "Pins hidden" : "Pins shown");

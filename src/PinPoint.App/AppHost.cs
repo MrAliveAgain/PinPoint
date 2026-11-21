@@ -229,7 +229,7 @@ public sealed class AppHost : IDisposable
             Description = "Clear every pin out of the way, then bring them all back.",
             Glyph = "\uED1A",
             DefaultHotkey = "Ctrl+Alt+H",
-            IsChecked = () => Pins.IsHidden,
+            IsChecked = () => Pins.IsAnyHidden,
             CanExecute = () => Pins.HasPins,
             Execute = Pins.ToggleHidden,
         });
